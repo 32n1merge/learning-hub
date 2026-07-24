@@ -1,0 +1,154 @@
+<style>
+.lesson-content { max-width: 780px; margin: 0 auto; }
+.callout { border-left: 4px solid var(--color-accent); background: var(--color-surface); padding: 1.25rem 1.5rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.5rem 0; }
+.callout-success { border-left-color: var(--color-success); }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+th { color: var(--color-accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: var(--color-text-secondary); }
+.payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+code { background: var(--color-elevated); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+</style>
+
+<h2>🤖 Sensors, Automation &amp; Monitoring</h2>
+
+<p>You can't manage what you don't measure. A two-container farm has dozens of variables that need constant monitoring — and the difference between a thriving crop and a dead one can be a few hours of unmonitored pump failure or temperature spike. Automation isn't a luxury; it's <strong>your farm's immune system</strong>.</p>
+
+<h3>The Sensor Stack: What to Measure</h3>
+
+<table>
+<tr><th>Sensor</th><th>What It Measures</th><th>Placement</th><th>Accuracy Needed</th><th>Cost Each</th></tr>
+<tr><td>Temperature/Humidity (SHT40/45)</td><td>Air temp ±0.2°C, RH ±1.8%</td><td>3–4 per container at different heights</td><td>±0.3°C</td><td>$5–15</td></tr>
+<tr><td>CO₂ (SCD40/SCD41)</td><td>CO₂ ppm ±50 ppm</td><td>1 mid-container, 1 near exhaust</td><td>±50 ppm</td><td>$15–40</td></tr>
+<tr><td>pH probe</td><td>Nutrient solution acidity</td><td>Main reservoir, return line</td><td>±0.1 pH</td><td>$30–80</td></tr>
+<tr><td>EC probe</td><td>Nutrient concentration</td><td>Main reservoir</td><td>±0.1 mS/cm</td><td>$20–60</td></tr>
+<tr><td>Dissolved oxygen</td><td>O₂ in nutrient solution</td><td>Reservoir (DWC applications)</td><td>±0.2 mg/L</td><td>$50–150</td></tr>
+<tr><td>Water temperature</td><td>Reservoir temp (DS18B20)</td><td>Reservoir, each NFT return</td><td>±0.5°C</td><td>$3–8</td></tr>
+<tr><td>Water level / flow</td><td>Reservoir level, pump flow rate</td><td>Reservoir, main supply line</td><td>Level ±1cm, Flow ±5%</td><td>$10–40</td></tr>
+<tr><td>Light (PAR sensor)</td><td>PPFD at canopy level</td><td>One per lighting zone</td><td>±5%</td><td>$50–200</td></tr>
+<tr><td>Power monitor</td><td>Energy consumption per circuit</td><td>Distribution panel</td><td>±2%</td><td>$20–50</td></tr>
+</table>
+
+<div class="callout callout-success">
+<strong>📊 Total sensor cost per container:</strong> ~$150–300 for a comprehensive sensor suite using ESP32 microcontrollers and I²C sensors. That's less than the cost of losing one crop to an undetected pH crash.
+</div>
+
+<h3>Controller Architecture</h3>
+
+<div class="payoff-diagram">
+<svg viewBox="0 0 700 240" style="max-width:100%;height:auto;">
+  <rect x="20" y="15" width="170" height="60" rx="6" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="1"/>
+  <text x="105" y="42" text-anchor="middle" fill="var(--color-accent)" font-size="12" font-weight="600">ESP32 × 4</text>
+  <text x="105" y="60" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Sensor nodes (I²C/1-Wire)</text>
+
+  <rect x="230" y="15" width="170" height="60" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="315" y="42" text-anchor="middle" fill="var(--color-text-secondary)" font-size="12" font-weight="600">MQTT Broker</text>
+  <text x="315" y="60" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Mosquitto (RPi or cloud)</text>
+
+  <rect x="440" y="15" width="170" height="60" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="525" y="42" text-anchor="middle" fill="var(--color-text-secondary)" font-size="12" font-weight="600">Home Assistant</text>
+  <text x="525" y="60" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Automation engine + dashboard</text>
+
+  <!-- Arrows -->
+  <text x="200" y="50" fill="var(--color-accent)" font-size="16">→</text>
+  <text x="410" y="50" fill="var(--color-accent)" font-size="16">→</text>
+
+  <!-- Relay control -->
+  <rect x="380" y="100" width="290" height="55" rx="6" fill="#0a1a2a" stroke="var(--color-warning)" stroke-width="1"/>
+  <text x="525" y="125" text-anchor="middle" fill="var(--color-warning)" font-size="12" font-weight="600">Relay / SSR Bank</text>
+  <text x="525" y="143" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Lights · Pumps · Fans · Dampers · Humidifier · HVAC</text>
+
+  <text x="370" y="125" fill="var(--color-accent)" font-size="16">←</text>
+
+  <!-- Alerts -->
+  <rect x="50" y="100" width="310" height="55" rx="6" fill="#1a0a0a" stroke="#EF4444" stroke-width="1"/>
+  <text x="205" y="125" text-anchor="middle" fill="#EF4444" font-size="12" font-weight="600">Alerting Pipeline</text>
+  <text x="205" y="143" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Telegram/SMS on: pump fail · temp out of range · low reservoir · power loss</text>
+
+  <text x="360" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Internet-connected via 4G failover — remote monitoring keeps the farm safe when you're away</text>
+
+  <!-- Data logging -->
+  <rect x="180" y="195" width="340" height="30" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="350" y="215" text-anchor="middle" fill="var(--color-accent)" font-size="10">InfluxDB (time-series) + Grafana (dashboards) · All sensor data logged every 30s</text>
+</svg>
+</div>
+
+<h3>Automation Rules: The Critical Ones</h3>
+
+<table>
+<tr><th>Rule</th><th>Trigger</th><th>Action</th><th>Priority</th></tr>
+<tr><td>CO₂ damper control</td><td>Veg CO₂ < 600 ppm AND mushroom CO₂ > 800 ppm</td><td>Open inter-container damper, run duct fan</td><td>Medium</td></tr>
+<tr><td>CO₂ safety override</td><td>Either container CO₂ > 3,000 ppm</td><td>Close damper, vent both containers to outside, alert</td><td>CRITICAL</td></tr>
+<tr><td>High temp emergency</td><td>Container temp > 90°F</td><td>Max HVAC, dim/kill lights, alert</td><td>CRITICAL</td></tr>
+<tr><td>Pump failure detection</td><td>Flow sensor = 0 for > 60 seconds</td><td>Switch to backup pump, alert</td><td>CRITICAL</td></tr>
+<tr><td>Low reservoir</td><td>Water level < 20%</td><td>Auto-fill from holding tank (if available), alert</td><td>High</td></tr>
+<tr><td>pH drift</td><td>pH outside 5.5–6.5 for > 30 min</td><td>Dose pH adjuster, alert if persists</td><td>High</td></tr>
+<tr><td>Light schedule</td><td>Time = 06:00 / 22:00</td><td>Relay on/off LED circuits</td><td>Low</td></tr>
+<tr><td>Power loss</td><td>Grid + solar both down</td><td>Battery-only mode, kill non-critical loads, alert</td><td>CRITICAL</td></tr>
+</table>
+
+<h3>Recommended Hardware Stack</h3>
+
+<p>You don't need enterprise industrial controllers. A robust DIY stack works perfectly for a two-container farm:</p>
+
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li><strong>Microcontrollers:</strong> ESP32 dev boards — WiFi + Bluetooth, $5–10 each, Arduino or ESPHome firmware</li>
+  <li><strong>Central controller:</strong> Raspberry Pi 4 or 5 running Home Assistant + Node-RED + Mosquitto MQTT</li>
+  <li><strong>Sensors:</strong> Sensirion SHT4x (temp/humidity), Sensirion SCD4x (CO₂), Atlas Scientific or DIY pH/EC probes, DS18B20 (water temp), YF-S201 (flow), BH1750 or SQ-120 (PAR light)</li>
+  <li><strong>Relays:</strong> Solid-state relays (SSR) for lights (inductive loads), mechanical relays for pumps/fans</li>
+  <li><strong>Connectivity:</strong> WiFi primary, 4G LTE failover modem (critical for remote alerts)</li>
+  <li><strong>Power monitoring:</strong> CT clamp sensors on each circuit + INA219 voltage/current sensors for DC side</li>
+</ul>
+
+<div class="callout">
+<strong>📱 Remote access:</strong> Home Assistant's companion app lets you monitor and control your farm from anywhere. Set up a WireGuard VPN tunnel (or use Nabu Casa cloud) for secure remote access. Set alert thresholds for the critical rules above, and you'll know about problems before your plants do.
+</div>
+
+<div class="quiz-block" id="quiz-9">
+<h4>🧠 Quick Check</h4>
+<div data-q="1">
+  <p><strong>Q1:</strong> What communication protocol is typically used to connect ESP32 sensor nodes to the central controller?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A) Bluetooth Low Energy</button>
+    <button class="quiz-btn" data-opt="b">B) MQTT over WiFi</button>
+    <button class="quiz-btn" data-opt="c">C) USB serial</button>
+    <button class="quiz-btn" data-opt="d">D) NFC</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+</div>
+<div data-q="2" style="margin-top:1.5rem;">
+  <p><strong>Q2:</strong> What is the most critical alert to set up for a two-container farm?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A) Light schedule reminder</button>
+    <button class="quiz-btn" data-opt="b">B) Weekly harvest notification</button>
+    <button class="quiz-btn" data-opt="c">C) Pump failure or CO₂ safety override (crop death in hours)</button>
+    <button class="quiz-btn" data-opt="d">D) Nutrient mixing timer</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>

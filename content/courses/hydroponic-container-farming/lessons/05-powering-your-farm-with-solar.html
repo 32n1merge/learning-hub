@@ -1,0 +1,154 @@
+<style>
+.lesson-content { max-width: 780px; margin: 0 auto; }
+.callout { border-left: 4px solid var(--color-accent); background: var(--color-surface); padding: 1.25rem 1.5rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.5rem 0; }
+.callout-warn { border-left-color: var(--color-warning); }
+.callout-success { border-left-color: var(--color-success); }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+th { color: var(--color-accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: var(--color-text-secondary); }
+.payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+</style>
+
+<h2>☀️ Powering Your Farm with Solar</h2>
+
+<p>Indoor farming has a dirty secret: it uses electricity. Lights, pumps, fans, HVAC — a container farm running 24/7 draws significant power. But here's the beautiful thing: the same sunlight that powers your plants can power your farm. Let's do the math and design a solar system that makes your two-container farm <strong>energy-independent</strong>.</p>
+
+<h3>The Power Budget: What Does a Container Farm Actually Draw?</h3>
+
+<p>Let's build a realistic power budget for a single 40-foot vegetable container:</p>
+
+<table>
+<tr><th>Component</th><th>Quantity</th><th>Watts Each</th><th>Hours/Day</th><th>Daily kWh</th></tr>
+<tr><td>LED grow lights (4 tiers × 2 walls)</td><td>32 bars @ 50W</td><td>1,600W total</td><td>16 hrs</td><td>25.6</td></tr>
+<tr><td>Mini-split HVAC (24K BTU)</td><td>1 unit</td><td>~1,200W avg</td><td>varies (50% duty)</td><td>14.4</td></tr>
+<tr><td>Water pump (NFT recirculation)</td><td>2 pumps</td><td>50W each</td><td>24 hrs</td><td>2.4</td></tr>
+<tr><td>Air pump (DWC / reservoir aeration)</td><td>2 pumps</td><td>35W each</td><td>24 hrs</td><td>1.7</td></tr>
+<tr><td>Oscillating fans</td><td>6 fans</td><td>30W each</td><td>24 hrs</td><td>4.3</td></tr>
+<tr><td>Exhaust / intake fans</td><td>2 fans</td><td>75W</td><td>varies (25% duty)</td><td>0.9</td></tr>
+<tr><td>Controller, sensors, networking</td><td>1 system</td><td>30W</td><td>24 hrs</td><td>0.7</td></tr>
+<tr style="border-top: 2px solid var(--color-accent);"><td><strong>TOTAL per container</strong></td><td></td><td></td><td></td><td><strong>~50 kWh/day</strong></td></tr>
+</table>
+
+<div class="callout callout-warn">
+<strong>⚡ Two containers:</strong> The mushroom container draws less (lower light needs, no water pumps for hydroponics, but needs humidifier + exhaust). Budget ~25 kWh/day for mushrooms + 50 kWh for vegetables = <strong>~75 kWh/day total for two containers.</strong>
+</div>
+
+<h3>Sizing the Solar Array</h3>
+
+<p>Key formula: <strong>Array Size (kW) = Daily kWh ÷ (Peak Sun Hours × System Efficiency)</strong></p>
+
+<p>Assuming 4.5 peak sun hours (typical US average) and 75% system efficiency (inverter, wiring, battery losses):</p>
+
+<p style="font-size: 1.2rem; color: var(--color-accent); font-weight: 600; text-align: center; margin: 1.5rem 0;">
+  75 kWh ÷ (4.5 hrs × 0.75) = <strong>22.2 kW solar array</strong>
+</p>
+
+<table>
+<tr><th>Panel Type</th><th>Watts per Panel</th><th>Panels Needed</th><th>Area Required</th></tr>
+<tr><td>Standard residential (400W)</td><td>400W</td><td>~56 panels</td><td>~1,000 ft² (roof + ground mount)</td></tr>
+<tr><td>Commercial bifacial (550W)</td><td>550W</td><td>~41 panels</td><td>~900 ft²</td></tr>
+<tr><td>Premium (700W)</td><td>700W</td><td>~32 panels</td><td>~750 ft²</td></tr>
+</table>
+
+<div class="payoff-diagram">
+<svg viewBox="0 0 700 220" style="max-width:100%;height:auto;">
+  <rect x="15" y="15" width="160" height="80" rx="4" fill="#1a2a3a" stroke="var(--color-accent)" stroke-width="1"/>
+  <text x="95" y="45" text-anchor="middle" fill="#F59E0B" font-size="28">☀️</text>
+  <text x="95" y="70" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">22 kW Solar Array</text>
+  <text x="95" y="85" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">~56 × 400W panels</text>
+
+  <text x="190" y="60" text-anchor="middle" fill="var(--color-accent)" font-size="18">→</text>
+
+  <rect x="210" y="15" width="160" height="80" rx="4" fill="#1a2a3a" stroke="var(--color-warning)" stroke-width="1"/>
+  <text x="290" y="45" text-anchor="middle" fill="#22C55E" font-size="28">🔋</text>
+  <text x="290" y="70" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Battery Bank</text>
+  <text x="290" y="85" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">60 kWh LiFePO₄</text>
+
+  <text x="385" y="60" text-anchor="middle" fill="var(--color-accent)" font-size="18">→</text>
+
+  <rect x="405" y="15" width="160" height="80" rx="4" fill="#1a2a3a" stroke="var(--color-success)" stroke-width="1"/>
+  <text x="485" y="45" text-anchor="middle" fill="#66BBFF" font-size="28">⚡</text>
+  <text x="485" y="70" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Inverter + Distribution</text>
+  <text x="485" y="85" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">10 kW hybrid inverter</text>
+
+  <text x="580" y="60" text-anchor="middle" fill="var(--color-accent)" font-size="18">→</text>
+
+  <rect x="600" y="15" width="85" height="80" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="642" y="45" text-anchor="middle" fill="var(--color-success)" font-size="22">🌱</text>
+  <text x="642" y="65" text-anchor="middle" fill="var(--color-success)" font-size="22">🍄</text>
+
+  <text x="350" y="125" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Solar → Charge Controller → Battery → Inverter → AC Distribution Panel → Container Loads</text>
+
+  <!-- Grid backup -->
+  <rect x="250" y="145" width="200" height="30" rx="4" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <text x="350" y="165" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Optional grid-tie or generator backup</text>
+</svg>
+</div>
+
+<h3>Battery Sizing: Surviving the Night</h3>
+
+<p>Your lights run 16 hours — but solar only produces for ~5 hours. You need enough battery to cover the <strong>non-solar hours</strong>. A 60 kWh LiFePO₄ battery bank (e.g., 6 × 10 kWh server rack batteries) covers overnight operation with ~80% depth of discharge. At current prices (~$250/kWh), this is roughly a $15,000 investment — but it pays for itself in 4–7 years of avoided grid electricity.</p>
+
+<div class="callout callout-success">
+<strong>🎯 Cost estimate (2024 prices):</strong> Complete solar system for two containers — 22 kW array ($0.50/W installed), 60 kWh battery ($250/kWh), 10 kW hybrid inverter ($3,500), mounting + wiring + labor: <strong>~$40,000–50,000 total</strong>. With 30% federal tax credit (US ITC): <strong>~$28,000–35,000 net.</strong>
+</div>
+
+<h3>The Smart Play: Hybrid Off-Grid</h3>
+<p>Pure off-grid is romantic but risky — a week of cloudy weather and your farm dies. The pragmatic approach is <strong>grid-assisted solar</strong>: solar + batteries handle 90% of your needs, and the grid (or a backup generator) covers the remaining 10%. A hybrid inverter automatically switches between solar, battery, and grid based on availability and load.</p>
+
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li><strong>Sunny days:</strong> Solar powers loads + charges batteries</li>
+  <li><strong>Night:</strong> Batteries discharge to power loads</li>
+  <li><strong>Overcast stretch:</strong> Grid kicks in to prevent battery depletion</li>
+  <li><strong>Excess solar:</strong> Sell back to grid (net metering) or divert to resistive heating</li>
+</ul>
+
+<div class="quiz-block" id="quiz-5">
+<h4>🧠 Quick Check</h4>
+<div data-q="1">
+  <p><strong>Q1:</strong> A single vegetable container farm draws approximately how much power per day?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A) 10 kWh</button>
+    <button class="quiz-btn" data-opt="b">B) 50 kWh</button>
+    <button class="quiz-btn" data-opt="c">C) 100 kWh</button>
+    <button class="quiz-btn" data-opt="d">D) 200 kWh</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+</div>
+<div data-q="2" style="margin-top:1.5rem;">
+  <p><strong>Q2:</strong> Why is grid-assisted solar preferred over pure off-grid for a container farm?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A) Extended cloudy periods could kill crops without backup power</button>
+    <button class="quiz-btn" data-opt="b">B) Off-grid inverters are illegal in most states</button>
+    <button class="quiz-btn" data-opt="c">C) Solar panels don't work near metal containers</button>
+    <button class="quiz-btn" data-opt="d">D) Batteries can't store more than 10 kWh</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>

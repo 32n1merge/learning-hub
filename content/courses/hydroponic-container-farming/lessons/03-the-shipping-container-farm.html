@@ -1,0 +1,154 @@
+<style>
+.lesson-content { max-width: 780px; margin: 0 auto; }
+.callout { border-left: 4px solid var(--color-accent); background: var(--color-surface); padding: 1.25rem 1.5rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.5rem 0; }
+.callout-warn { border-left-color: var(--color-warning); }
+.payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+th { color: var(--color-accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: var(--color-text-secondary); }
+</style>
+
+<h2>📦 The Shipping Container Farm</h2>
+
+<p>A shipping container isn't just a metal box — it's a <strong>blank canvas for a controlled-environment farm</strong>. But turning a steel shipping container into a thriving grow space requires careful planning. Get the insulation, layout, and airflow right, and you've got a precision agriculture machine. Get them wrong, and you've got an expensive oven.</p>
+
+<h3>Container Anatomy: The Starting Point</h3>
+
+<table>
+<tr><th>Spec</th><th>40-Foot High Cube</th><th>Notes</th></tr>
+<tr><td>External dimensions</td><td>40' × 8' × 9.5' (L×W×H)</td><td>High cube gives 1' extra headroom</td></tr>
+<tr><td>Internal dimensions</td><td>39.5' × 7.7' × 8.8'</td><td>~304 ft² floor, ~2,675 ft³ volume</td></tr>
+<tr><td>Door opening</td><td>7.7' × 8.5'</td><td>Double doors at one end</td></tr>
+<tr><td>Weight (empty)</td><td>~8,500 lbs</td><td>Plan your foundation accordingly</td></tr>
+<tr><td>Material</td><td>Corten steel</td><td>Weathering steel, rust-resistant</td></tr>
+<tr><td>Used cost</td><td>$2,000–5,000</td><td>Single-trip or cargo-worthy grade</td></tr>
+</table>
+
+<div class="payoff-diagram">
+<svg viewBox="0 0 720 340" style="max-width:100%;height:auto;">
+  <!-- Top-down container view -->
+  <rect x="20" y="30" width="680" height="280" rx="6" fill="none" stroke="var(--color-accent)" stroke-width="2"/>
+  <text x="360" y="22" text-anchor="middle" fill="var(--color-accent)" font-size="13" font-weight="600">40' Container — Top-Down Layout (40' × 8')</text>
+
+  <!-- Door end -->
+  <rect x="680" y="30" width="20" height="280" rx="0" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="690" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9" transform="rotate(-90, 690, 175)">DOORS</text>
+
+  <!-- Work area -->
+  <rect x="620" y="45" width="55" height="250" rx="4" fill="#1a2a1a" stroke="var(--color-success)" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="647" y="175" text-anchor="middle" fill="var(--color-success)" font-size="9">WORK</text>
+  <text x="647" y="190" text-anchor="middle" fill="var(--color-success)" font-size="7">AREA</text>
+
+  <!-- Center aisle -->
+  <rect x="280" y="45" width="340" height="250" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <text x="450" y="170" text-anchor="middle" fill="var(--color-text-secondary)" font-size="8">CENTER AISLE — DUTCH BUCKETS (tomatoes, peppers)</text>
+
+  <!-- Left wall NFT -->
+  <rect x="35" y="55" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="155" y="78" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 1 — Lettuce</text>
+  <rect x="35" y="115" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="155" y="138" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 2 — Basil/Herbs</text>
+  <rect x="35" y="175" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="155" y="198" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 3 — Spinach/Kale</text>
+  <rect x="35" y="235" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="155" y="258" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 4 — Arugula/Microgreens</text>
+
+  <!-- Right wall NFT -->
+  <rect x="285" y="55" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="405" y="78" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 1 — Lettuce (mixed)</text>
+  <rect x="285" y="115" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="405" y="138" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 2 — Cilantro/Dill</text>
+  <rect x="285" y="175" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="405" y="198" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 3 — Swiss Chard</text>
+  <rect x="285" y="235" width="240" height="55" rx="3" fill="#0d2818" stroke="#22C55E" stroke-width="0.8"/>
+  <text x="405" y="258" text-anchor="middle" fill="var(--color-success)" font-size="10">NFT Tier 4 — Bok Choy</text>
+
+  <!-- Reservoir -->
+  <rect x="35" y="45" width="50" height="35" rx="3" fill="#1a3a5c" stroke="#1E90FF" stroke-width="1"/>
+  <text x="60" y="67" text-anchor="middle" fill="#66BBFF" font-size="7">RESERVOIR</text>
+
+  <!-- Legend -->
+  <text x="360" y="310" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">~1,000 ft² growing area · 4 tiers per wall · Dutch buckets down center · Nursery area near doors</text>
+</svg>
+</div>
+
+<h3>The Four Layers of Container Prep</h3>
+
+<h4>1. Insulation — Your #1 Priority</h4>
+<p>Steel conducts heat beautifully — which is terrible for a farm. Without insulation, your container becomes a solar oven in summer and a freezer in winter. The gold standard: <strong>closed-cell spray foam (R-7 per inch)</strong> applied 2–3 inches thick to walls and ceiling. This gives you R-14 to R-21, seals air gaps, and acts as a vapor barrier.</p>
+
+<div class="callout callout-warn">
+<strong>⚠️ Don't skip the floor:</strong> Concrete slabs wick cold from the ground. Insulate the floor with rigid foam board (XPS, R-10 minimum) under plywood decking. Cold roots = slow growth, even if the air is warm.
+</div>
+
+<h4>2. Interior Wall Finish</h4>
+<p>Over the spray foam, install <strong>FRP (fiberglass-reinforced plastic) panels</strong> or food-grade white poly panels. They're reflective (bouncing light back to plants), waterproof, mold-resistant, and cleanable. No drywall — it's a humidity nightmare waiting to happen.</p>
+
+<h4>3. Cut Openings Strategically</h4>
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li><strong>HVAC penetration:</strong> One 12" hole near the closed end for a mini-split air handler</li>
+  <li><strong>Intake/exhaust fans:</strong> 6–8" ducted holes with backdraft dampers</li>
+  <li><strong>Electrical entry:</strong> Weatherproof conduit entry for power + data cables</li>
+  <li><strong>Between-containers duct:</strong> (See Lesson 8!) A 8–10" duct connecting the two containers for air exchange</li>
+</ul>
+
+<h4>4. Flooring & Drainage</h4>
+<p>The floor should slope slightly (1/4" per foot) toward a central trench drain, or use individual catchment trays under each system. All runoff gets filtered and returned to the main reservoir — nothing wasted.</p>
+
+<h3>Foundation Options</h3>
+<table>
+<tr><th>Type</th><th>Cost</th><th>Best For</th></tr>
+<tr><td>Gravel pad (6" compacted)</td><td>$200–500</td><td>Temporary / rental property</td></tr>
+<tr><td>Concrete piers (6–8 points)</td><td>$500–1,500</td><td>Permanent, allows airflow underneath</td></tr>
+<tr><td>Full concrete slab</td><td>$1,500–3,000</td><td>Permanent, easiest to seal and clean</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-3">
+<h4>🧠 Quick Check</h4>
+<div data-q="1">
+  <p><strong>Q1:</strong> What's the most critical modification to a bare shipping container for farming?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A) Closed-cell spray foam insulation (walls + ceiling)</button>
+    <button class="quiz-btn" data-opt="b">B) Painting the exterior white</button>
+    <button class="quiz-btn" data-opt="c">C) Installing windows for natural light</button>
+    <button class="quiz-btn" data-opt="d">D) Adding shelves</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+</div>
+<div data-q="2" style="margin-top:1.5rem;">
+  <p><strong>Q2:</strong> With 4-tier NFT on both walls, approximately how much growing area can a 40' container achieve?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A) ~300 ft² (same as floor area)</button>
+    <button class="quiz-btn" data-opt="b">B) ~500 ft²</button>
+    <button class="quiz-btn" data-opt="c">C) ~800–1,200 ft²</button>
+    <button class="quiz-btn" data-opt="d">D) ~2,000 ft²</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>

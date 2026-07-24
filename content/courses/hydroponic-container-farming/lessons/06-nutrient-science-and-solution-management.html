@@ -1,0 +1,141 @@
+<style>
+.lesson-content { max-width: 780px; margin: 0 auto; }
+.callout { border-left: 4px solid var(--color-accent); background: var(--color-surface); padding: 1.25rem 1.5rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.5rem 0; }
+.callout-warn { border-left-color: var(--color-warning); }
+.callout-success { border-left-color: var(--color-success); }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+th { color: var(--color-accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: var(--color-text-secondary); }
+.payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+</style>
+
+<h2>🧪 Nutrient Science &amp; Solution Management</h2>
+
+<p>In soil, nutrients come from decomposing organic matter, minerals, and the complex soil food web. In hydroponics, <strong>you are the soil</strong>. You decide exactly what your plants eat, in what concentration, and when. This is precision agriculture at its most elemental — and it's both the greatest strength and the fastest way to fail if you get it wrong.</p>
+
+<h3>The 16 Essential Elements</h3>
+
+<p>Plants need 16 elements to complete their life cycle. Three come from air and water (C, H, O). The other 13 come from your nutrient solution:</p>
+
+<table>
+<tr><th>Category</th><th>Element</th><th>Chemical Form</th><th>Function</th></tr>
+<tr><td rowspan="3"><strong>Primary Macronutrients</strong></td><td>Nitrogen (N)</td><td>NO₃⁻, NH₄⁺</td><td>Leaf growth, chlorophyll, proteins</td></tr>
+<tr><td>Phosphorus (P)</td><td>H₂PO₄⁻, HPO₄²⁻</td><td>Root development, flowering, energy (ATP)</td></tr>
+<tr><td>Potassium (K)</td><td>K⁺</td><td>Water regulation, enzyme activation, disease resistance</td></tr>
+<tr><td rowspan="3"><strong>Secondary Macronutrients</strong></td><td>Calcium (Ca)</td><td>Ca²⁺</td><td>Cell wall structure, root tips</td></tr>
+<tr><td>Magnesium (Mg)</td><td>Mg²⁺</td><td>Chlorophyll core, enzyme cofactor</td></tr>
+<tr><td>Sulfur (S)</td><td>SO₄²⁻</td><td>Protein synthesis, flavor compounds</td></tr>
+<tr><td rowspan="7"><strong>Micronutrients</strong></td><td>Iron (Fe)</td><td>Fe²⁺, Fe³⁺ (chelated)</td><td>Chlorophyll synthesis, electron transport</td></tr>
+<tr><td>Manganese (Mn)</td><td>Mn²⁺</td><td>Photosynthesis, enzyme activation</td></tr>
+<tr><td>Boron (B)</td><td>H₃BO₃</td><td>Cell division, pollen germination</td></tr>
+<tr><td>Zinc (Zn)</td><td>Zn²⁺</td><td>Growth hormone production</td></tr>
+<tr><td>Copper (Cu)</td><td>Cu²⁺</td><td>Reproductive growth, lignin formation</td></tr>
+<tr><td>Molybdenum (Mo)</td><td>MoO₄²⁻</td><td>Nitrogen metabolism</td></tr>
+<tr><td>Chlorine (Cl)</td><td>Cl⁻</td><td>Photosynthesis, osmotic regulation</td></tr>
+</table>
+
+<h3>The Two Numbers That Matter: pH and EC</h3>
+
+<div class="payoff-diagram">
+<svg viewBox="0 0 700 180" style="max-width:100%;height:auto;">
+  <!-- pH scale -->
+  <text x="50" y="25" fill="var(--color-accent)" font-size="13" font-weight="600">pH — Nutrient Availability</text>
+  <rect x="20" y="35" width="660" height="30" rx="4" fill="#1a1a2e"/>
+  <rect x="245" y="35" width="180" height="30" rx="4" fill="#0a3d0a" stroke="var(--color-success)" stroke-width="1.5"/>
+  <text x="335" y="55" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="600">5.5 – 6.5 (Sweet Spot)</text>
+  <text x="50" y="80" text-anchor="middle" fill="var(--color-danger)" font-size="9">4.0</text>
+  <text x="190" y="80" text-anchor="middle" fill="var(--color-warning)" font-size="9">5.0</text>
+  <text x="335" y="80" text-anchor="middle" fill="var(--color-success)" font-size="9">6.0</text>
+  <text x="480" y="80" text-anchor="middle" fill="var(--color-warning)" font-size="9">7.0</text>
+  <text x="630" y="80" text-anchor="middle" fill="var(--color-danger)" font-size="9">8.0</text>
+
+  <!-- EC scale -->
+  <text x="50" y="120" fill="var(--color-accent)" font-size="13" font-weight="600">EC — Nutrient Strength (mS/cm)</text>
+  <rect x="20" y="130" width="660" height="30" rx="4" fill="#1a1a2e"/>
+  <rect x="130" y="130" width="420" height="30" rx="4" fill="#0a3d0a" stroke="var(--color-success)" stroke-width="1.5"/>
+  <text x="340" y="150" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="600">1.0 – 2.5 mS/cm (crop-dependent)</text>
+  <text x="85" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">0.5 Seedlings</text>
+  <text x="250" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">1.0–1.5 Leafy greens</text>
+  <text x="430" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">2.0–2.5 Tomatoes/peppers</text>
+  <text x="610" y="175" text-anchor="middle" fill="var(--color-danger)" font-size="9">&gt;3.0 Burn</text>
+</svg>
+</div>
+
+<p><strong>pH</strong> controls whether nutrients are soluble and available. At pH 7+, iron, manganese, and phosphorus precipitate out — they're in the water, but plants can't access them. At pH below 5, calcium and magnesium become unavailable. The sweet spot is <strong>5.5–6.5</strong> for most crops.</p>
+
+<p><strong>EC (Electrical Conductivity)</strong> measures total dissolved salts — a proxy for nutrient strength. Too low = deficiencies. Too high = osmotic stress (the plant can't pull water from the solution). Different crops and growth stages need different EC targets.</p>
+
+<div class="callout callout-warn">
+<strong>⚠️ pH drift is real:</strong> As plants absorb nutrients, the solution pH shifts — typically upward as nitrate is consumed. Check pH <em>daily</em> and adjust with pH Down (phosphoric acid) or pH Up (potassium hydroxide). Automated pH dosers are worth every penny for a container farm.
+</div>
+
+<h3>Mixing Nutrients: The Two-Part System</h3>
+
+<p>Never mix concentrated calcium with concentrated sulfates or phosphates — they form insoluble precipitates (gypsum, calcium phosphate) that fall out of solution and clog your system. This is why commercial hydroponic nutrients come as <strong>two-part (A + B)</strong> or even three-part formulations:</p>
+
+<ol style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li><strong>Part A:</strong> Calcium nitrate + iron chelate (keeps Ca away from sulfates/phosphates)</li>
+  <li><strong>Part B:</strong> Everything else — potassium nitrate, magnesium sulfate, monopotassium phosphate, micronutrients</li>
+  <li>Always add Part A first, dilute fully, THEN add Part B. Never mix concentrates directly.</li>
+</ol>
+
+<h3>Solution Maintenance Schedule</h3>
+<table>
+<tr><th>Task</th><th>Frequency</th><th>Notes</th></tr>
+<tr><td>Check pH &amp; EC</td><td>Daily</td><td>Adjust pH as needed; log trends</td></tr>
+<tr><td>Top off reservoir</td><td>Daily / every 2 days</td><td>Plants transpire 1–3 gallons per day per 100 ft²</td></tr>
+<tr><td>Full reservoir change</td><td>Every 1–2 weeks</td><td>Prevents salt buildup and nutrient imbalances</td></tr>
+<tr><td>Clean reservoir</td><td>Monthly</td><td>Scrub, sanitize with hydrogen peroxide or bleach solution</td></tr>
+<tr><td>Calibrate sensors</td><td>Monthly</td><td>pH probes drift; use calibration solutions</td></tr>
+<tr><td>Flush system</td><td>Between crop cycles</td><td>Run plain pH-adjusted water for 24 hrs</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-6">
+<h4>🧠 Quick Check</h4>
+<div data-q="1">
+  <p><strong>Q1:</strong> Why must calcium and sulfate/phosphate concentrates be kept in separate parts (A and B)?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A) They react explosively when combined</button>
+    <button class="quiz-btn" data-opt="b">B) They form insoluble precipitates (gypsum) that plants cannot absorb</button>
+    <button class="quiz-btn" data-opt="c">C) Calcium is toxic to plants at high concentrations</button>
+    <button class="quiz-btn" data-opt="d">D) They have different colors that make mixing difficult</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+</div>
+<div data-q="2" style="margin-top:1.5rem;">
+  <p><strong>Q2:</strong> What does EC measure in a hydroponic solution?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A) Water temperature</button>
+    <button class="quiz-btn" data-opt="b">B) Oxygen content</button>
+    <button class="quiz-btn" data-opt="c">C) Total dissolved salts / nutrient strength</button>
+    <button class="quiz-btn" data-opt="d">D) Bacterial contamination level</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>

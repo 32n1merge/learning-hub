@@ -1,0 +1,185 @@
+<style>
+.lesson-content { max-width: 780px; margin: 0 auto; }
+.callout { border-left: 4px solid var(--color-accent); background: var(--color-surface); padding: 1.25rem 1.5rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.5rem 0; }
+.callout-warn { border-left-color: var(--color-warning); }
+.callout-success { border-left-color: var(--color-success); }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+th { color: var(--color-accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: var(--color-text-secondary); }
+.payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+</style>
+
+<h2>🔄 The Two-Container Synergy</h2>
+
+<p>This is the lesson where everything clicks together. You have two shipping containers side by side — one growing vegetables, one growing mushrooms. Individually, each is a controlled-environment farm. Together, they form something greater: a <strong>closed-loop symbiotic ecosystem</strong> where the waste product of one becomes the fuel for the other.</p>
+
+<div class="payoff-diagram">
+<svg viewBox="0 0 720 420" style="max-width:100%;height:auto;">
+  <!-- Container 1 - Vegetables -->
+  <rect x="20" y="40" width="300" height="170" rx="8" fill="#0a1a0a" stroke="#22C55E" stroke-width="2"/>
+  <text x="170" y="68" text-anchor="middle" fill="#22C55E" font-size="15" font-weight="600">🌱 Vegetable Container</text>
+  <text x="170" y="88" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Hydroponic NFT + Dutch Buckets</text>
+  <text x="170" y="105" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">LED lights 16hrs/day</text>
+  <text x="170" y="122" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">65–80°F · 50–70% RH</text>
+  <text x="170" y="139" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">CONSUMES CO₂</text>
+  <text x="170" y="156" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">PRODUCES O₂</text>
+
+  <!-- Container 2 - Mushrooms -->
+  <rect x="400" y="40" width="300" height="170" rx="8" fill="#1a150a" stroke="#F59E0B" stroke-width="2"/>
+  <text x="550" y="68" text-anchor="middle" fill="#F59E0B" font-size="15" font-weight="600">🍄 Mushroom Container</text>
+  <text x="550" y="88" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Shelving racks with fruiting blocks</text>
+  <text x="550" y="105" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Minimal light 12hrs/day</text>
+  <text x="550" y="122" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">55–65°F · 85–95% RH</text>
+  <text x="550" y="139" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">PRODUCES CO₂</text>
+  <text x="550" y="156" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">CONSUMES O₂</text>
+
+  <!-- CO2 flow (top) -->
+  <path d="M400,115 C370,80 350,80 320,115" fill="none" stroke="#EF4444" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="360" y="72" text-anchor="middle" fill="#EF4444" font-size="11" font-weight="600">CO₂ →</text>
+
+  <!-- O2 flow (bottom) -->
+  <path d="M320,170 C350,205 370,205 400,170" fill="none" stroke="#66BBFF" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <text x="360" y="220" text-anchor="middle" fill="#66BBFF" font-size="11" font-weight="600">O₂ →</text>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0,0 8,4 0,8" fill="#EF4444"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0,0 8,4 0,8" fill="#66BBFF"/>
+    </marker>
+  </defs>
+
+  <!-- Shared systems -->
+  <rect x="160" y="250" width="400" height="55" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="1.5"/>
+  <text x="360" y="275" text-anchor="middle" fill="var(--color-accent)" font-size="12" font-weight="600">Shared Infrastructure</text>
+  <text x="360" y="295" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Multi-zone HVAC · Solar array · Battery bank · Water catchment · Controller</text>
+
+  <!-- Waste streams -->
+  <rect x="20" y="330" width="300" height="75" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="170" y="352" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Vegetable waste → Compost</text>
+  <text x="170" y="372" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Harvest trim → Substrate supplement</text>
+  <text x="170" y="392" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Nutrient runoff → Diluted irrigation water</text>
+
+  <rect x="400" y="330" width="300" height="75" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
+  <text x="550" y="352" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Spent substrate → Garden compost</text>
+  <text x="550" y="372" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Heat from decomposition → Winter assist</text>
+  <text x="550" y="392" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Condensate → Filtered water return</text>
+</svg>
+</div>
+
+<h3>Synergy #1: CO₂ / O₂ Gas Exchange (The Big One)</h3>
+
+<p>This is the headline feature of the two-container system:</p>
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li><strong>Vegetables consume CO₂</strong> during photosynthesis (lights on). In a sealed container, CO₂ drops rapidly and can limit growth.</li>
+  <li><strong>Mushrooms produce CO₂</strong> through respiration as they decompose substrate. A mushroom container with 500 fruiting blocks can produce enough CO₂ to raise levels to 2,000+ ppm — which is great for plants but needs exhausting for mushroom health.</li>
+  <li><strong>The solution:</strong> An 8–10 inch duct with an inline fan connecting the two containers. A CO₂ sensor in each container controls a damper: when the vegetable container drops below 600 ppm, the damper opens and mushroom-enriched air flows in. When the mushroom container exceeds 1,500 ppm, air exhausts to the vegetable side.</li>
+</ul>
+
+<div class="callout callout-success">
+<strong>💡 CO₂ Math:</strong> Ambient CO₂ is ~415 ppm. Plants grow optimally at 800–1,200 ppm (a 2–3× increase boosts growth 20–40%). Mushrooms produce roughly 0.25–0.5 kg of CO₂ per kg of substrate per flush. Routing mushroom exhaust to the vegetable container can maintain 800–1,000 ppm CO₂ naturally — without bottled CO₂ tanks or propane burners.
+</div>
+
+<h3>Synergy #2: Thermal Coupling</h3>
+
+<p>Mushrooms prefer cooler temps (55–65°F) than vegetables (65–80°F). This temperature differential can be exploited:</p>
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li>Run a multi-zone mini-split with one air handler in each container, set to different temperatures</li>
+  <li>The mushroom container acts as a <strong>heat sink</strong> — waste heat from the vegetable container's lights can be routed through the mushroom side before being exhausted</li>
+  <li>In winter, the decomposition of mushroom substrate generates metabolic heat (composting is exothermic) — this reduces heating load for both containers</li>
+  <li>Placing the containers with an insulated gap between them (or butted together with a shared insulated wall) reduces surface area exposed to outside air</li>
+</ul>
+
+<h3>Synergy #3: Water &amp; Humidity Exchange</h3>
+
+<p>Mushroom containers run at 85–95% RH and produce significant condensation. That water can be captured and reused:</p>
+<ul style="color: var(--color-text-secondary); line-height: 1.8;">
+  <li>Dehumidifier condensate from the mushroom container is essentially distilled water — perfect for topping off hydroponic reservoirs</li>
+  <li>HVAC condensate from both containers gets collected and filtered</li>
+  <li>The vegetable container's exhaust (warm, humid air) can be partially redirected to pre-heat the mushroom container's intake in cold weather</li>
+</ul>
+
+<h3>Synergy #4: Waste-to-Input Cycles</h3>
+
+<table>
+<tr><th>Waste Stream</th><th>Source</th><th>Destination</th><th>Process</th></tr>
+<tr><td>Spent mushroom substrate</td><td>Mushroom container (after 3–5 flushes)</td><td>Outdoor garden beds or compost</td><td>Hot compost 2–3 weeks → rich organic fertilizer</td></tr>
+<tr><td>Vegetable trim / culled plants</td><td>Vegetable container</td><td>Mushroom substrate supplement</td><td>Dry, grind, mix into sawdust substrate (up to 10%)</td></tr>
+<tr><td>Hydroponic reservoir flush water</td><td>Vegetable container</td><td>Diluted irrigation for outdoor plants</td><td>Dilute 1:10 with fresh water</td></tr>
+<tr><td>Mushroom condensate</td><td>Mushroom container</td><td>Hydroponic reservoir top-off</td><td>Filter (5 micron) → reservoir</td></tr>
+</table>
+
+<h3>Putting It Together: The Daily Cycle</h3>
+
+<ol style="color: var(--color-text-secondary); line-height: 2;">
+  <li><strong>6 AM — Lights on (vegetable container):</strong> Photosynthesis begins. CO₂ starts dropping. Damper between containers opens when vegetable CO₂ < 600 ppm. Mushroom-enriched air flows in. Target: 800–1,000 ppm CO₂ in veg container.</li>
+  <li><strong>10 AM–4 PM — Peak photosynthesis:</strong> Maximum CO₂ draw. Damper actively modulated by controller. Mushroom container's exhaust fans cycle to prevent CO₂ buildup above 1,500 ppm (excess vents outside).</li>
+  <li><strong>10 PM — Lights off (vegetable container):</strong> Photosynthesis stops. Plants respire (release CO₂). Damper between containers closes. Mushroom container runs independently.</li>
+  <li><strong>Overnight:</strong> Both containers maintain temperature setpoints. Batteries discharge. Controller logs all sensor data.</li>
+</ol>
+
+<div class="callout callout-warn">
+<strong>⚠️ Critical safety:</strong> CO₂ above 5,000 ppm is hazardous to humans. Both containers need CO₂ alarms and automatic ventilation overrides. Never enter a container without checking the CO₂ monitor. The controller should automatically cut the inter-container damper and vent both containers if levels exceed safe thresholds.
+</div>
+
+<div class="quiz-block" id="quiz-8">
+<h4>🧠 Quick Check</h4>
+<div data-q="1">
+  <p><strong>Q1:</strong> What is the primary synergistic benefit of connecting a mushroom container to a vegetable container?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A) Mushrooms provide shade for vegetables</button>
+    <button class="quiz-btn" data-opt="b">B) Mushroom respiration produces CO₂ that boosts vegetable photosynthesis</button>
+    <button class="quiz-btn" data-opt="c">C) Mushrooms repel pests from vegetables</button>
+    <button class="quiz-btn" data-opt="d">D) Mushrooms produce nutrients that vegetables absorb through the air</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+</div>
+<div data-q="2" style="margin-top:1.5rem;">
+  <p><strong>Q2:</strong> How can the temperature differential between containers be beneficial?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A) Cooler mushroom container acts as a heat sink; waste heat from veg lights can be routed through it</button>
+    <button class="quiz-btn" data-opt="b">B) The temperature difference generates electricity</button>
+    <button class="quiz-btn" data-opt="c">C) Hot air naturally flows from cool to warm areas</button>
+    <button class="quiz-btn" data-opt="d">D) Mushrooms grow faster when they sense nearby heat</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<div data-q="3" style="margin-top:1.5rem;">
+  <p><strong>Q3:</strong> What can be done with spent mushroom substrate after harvesting?</p>
+  <div class="quiz-opts" data-q="3" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A) It's toxic and must be disposed of as hazardous waste</button>
+    <button class="quiz-btn" data-opt="b">B) It's re-sterilized and reused indefinitely</button>
+    <button class="quiz-btn" data-opt="c">C) It's composted into rich organic fertilizer for soil beds</button>
+    <button class="quiz-btn" data-opt="d">D) It's dried and burned for heat</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>
