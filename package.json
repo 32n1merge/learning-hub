@@ -5,9 +5,16 @@
   "type": "module",
   "scripts": {
     "build": "node build.js",
-    "preview": "npm run build && npx serve dist"
+    "preview": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
-  "keywords": ["static-site", "learning"],
+  "keywords": [
+    "static-site",
+    "learning"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.114.0"
+  }
 }
