@@ -1,6 +1,6 @@
 # Domain Documentation
 
-This project uses a **single-context** domain documentation layout.
+This project uses a **single-context** domain documentation layout for a general-purpose learning library. Courses span any subject and may come from Teach sessions, contributed content, or other workflows.
 
 ## Structure
 

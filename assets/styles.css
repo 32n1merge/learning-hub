@@ -524,6 +524,23 @@ main {
 }
 
 /* =============================================
+   Coarse Pointer — Touch-Friendly Targets
+   ============================================= */
+@media (pointer: coarse) {
+  .nav-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .lesson-item a {
+    display: block;
+    padding: var(--spacing-xs) 0;
+  }
+  .lesson-nav a {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* =============================================
    Course Page
    ============================================= */
 .course-header {
@@ -618,6 +635,8 @@ main {
 
 .lesson-content {
   line-height: 1.8;
+  /* Contain wide tables and other overflow */
+  overflow-x: clip;
 }
 .lesson-content h2 {
   font-size: var(--font-size-2xl);
@@ -651,13 +670,29 @@ main {
   border-radius: var(--radius-sm);
   color: var(--color-accent-link);
 }
+.lesson-content :is(table, img, video, iframe) {
+  max-width: 100%;
+  height: auto;
+}
+.lesson-content table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+.lesson-content table > :is(caption, colgroup, thead, tbody, tfoot) {
+  display: table;
+  min-width: max-content;
+}
 .lesson-content pre {
   background: var(--color-elevated);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--spacing-md);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: var(--spacing-md);
+  max-width: 100%;
 }
 .lesson-content pre code {
   background: none;
@@ -728,20 +763,32 @@ main {
    Responsive
    ============================================= */
 @media (max-width: 640px) {
-  .site-header .container { height: 44px; }
+  body { overflow-x: hidden; }
+  .site-header .container { height: 44px; gap: 0; }
   .site-nav { gap: 0; }
-  .nav-link { padding: var(--spacing-xs); font-size: 0.75rem; }
+  .nav-link { padding: var(--spacing-xs) var(--spacing-sm); font-size: 0.75rem; }
+  .site-brand { font-size: 0.875rem; }
+  .container { padding: 0 var(--spacing-sm); }
   .search-section { padding: var(--spacing-xl) 0 var(--spacing-lg); }
   .search-input { font-size: var(--font-size-base); }
   .search-shortcut { display: none; }
   .courses-grid { grid-template-columns: 1fr; }
+  .course-card-header { flex-direction: column; gap: var(--spacing-xs); }
+  .course-card .difficulty-badge { align-self: flex-start; }
   .recently-updated-list { grid-template-columns: 1fr; }
   .lesson-article { padding: var(--spacing-md); border-radius: 0; border-left: none; border-right: none; }
   .lesson-nav { flex-direction: column; }
   .lesson-nav a { width: 100%; justify-content: center; }
   .course-header h1,
   .lesson-article h1 { font-size: var(--font-size-2xl); }
+  .breadcrumb { flex-wrap: wrap; gap: var(--spacing-xs); }
   .site-footer .container { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 380px) {
+  .site-brand { font-size: 0.813rem; }
+  .nav-link { font-size: 0.688rem; padding: var(--spacing-xs); }
+  .nav-icon-btn { min-width: 40px; min-height: 40px; }
 }
 
 @media (min-width: 641px) and (max-width: 1023px) {
