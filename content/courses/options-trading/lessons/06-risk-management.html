@@ -1,0 +1,151 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .rule-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1rem 0; }
+  .rule-box h3 { margin-top: 0 !important; }
+</style>
+
+<h2>Lesson 6: How Not to Blow Up Your Account</h2>
+
+<p>Options are leverage machines. Without risk management, you're not trading — you're gambling with a predetermined expiration date on your account. Here's how the professionals stay alive.</p>
+
+<div class="callout callout-warn">
+  <strong>The First Rule of Options Trading:</strong> Survive. You can't make money if you don't have an account. Every strategy, every trade, starts with "what's my max loss and can I afford it?"
+</div>
+
+<h3>The 1% Rule (Position Sizing)</h3>
+<div class="rule-box">
+  <h3>Never risk more than 1-2% of your account on any single trade.</h3>
+  <p>On a $25,000 account, that means max risk per trade = $250-$500. If you're buying a $2.00 option ($200 per contract), your stop-loss or max loss should be $250 — meaning you can buy 1 contract and risk the full premium, or size up with a tighter stop.</p>
+  <p><strong>WSB Reality Check:</strong> Yes, this is boring. It also means you survive 50 losing trades in a row and still have an account. The guys posting 10,000% gains are the 0.01%. The ones who went to zero don't post.</p>
+</div>
+
+<h3>The Kelly Criterion</h3>
+<p>The mathematically optimal bet size, given your edge:</p>
+<pre><code>f* = (bp − q) / b
+
+Where:
+  f* = fraction of bankroll to bet
+  b  = net odds received (profit / amount risked)
+  p  = probability of winning
+  q  = probability of losing (1 − p)
+</code></pre>
+<p><strong>Example:</strong> You have a strategy that wins 55% of the time with a 1:1 risk-reward ratio. Kelly says bet <code>(1 × 0.55 − 0.45) / 1 = 10%</code> of your account. Most traders use <strong>half-Kelly</strong> (5%) because you never know your true edge.</p>
+
+<div class="callout">
+  <strong>Why this matters:</strong> Bet too little and you underperform. Bet too much and you eventually go to zero — even with a positive edge. Kelly finds the sweet spot.
+</div>
+
+<h3>Stop-Losses and Profit Targets</h3>
+<table>
+  <tr><th>Type</th><th>What It Does</th><th>Options-Specific</th></tr>
+  <tr><td><strong>Hard Stop</strong></td><td>GTC order that exits at a specific price</td><td>Set at option price, not stock price. Options gap past stops overnight.</td></tr>
+  <tr><td><strong>Mental Stop</strong></td><td>You manually exit when it hits</td><td>Requires discipline. Most traders lack it.</td></tr>
+  <tr><td><strong>Time Stop</strong></td><td>Exit if thesis hasn't materialized by X date</td><td>Critical for options. If you expected a move in 3 days and nothing happened, theta is eating you.</td></tr>
+  <tr><td><strong>Profit Target</strong></td><td>Take profit at a predetermined gain</td><td>Take 50% at target, let the rest ride. Many option traders use 25-50% profit targets.</td></tr>
+</table>
+
+<h3>Portfolio-Level Risk</h3>
+<ul>
+  <li><strong>Correlation Risk:</strong> 10 different tech stock calls aren't 10 independent bets — they all crash together.</li>
+  <li><strong>Sector Exposure:</strong> No more than 20-25% of your portfolio in one sector.</li>
+  <li><strong>Delta Exposure:</strong> Sum your total delta across all positions. If you're net long 500 deltas and the market drops 1%, you lose ~$500.</li>
+  <li><strong>Vega Exposure:</strong> Being net long vega across positions means an IV crush hurts everything simultaneously.</li>
+  <li><strong>Max Drawdown Limit:</strong> If your account drops 20% from its peak, stop trading for a week. Reassess. The goal is survival.</li>
+</ul>
+
+<h3>Common Risk Management Mistakes</h3>
+<div class="rule-box">
+  <h3>❌ The Martingale Trap</h3>
+  <p>Doubling down after a loss to "make it back." You lose $500, so you bet $1,000 to recover. Lose that, bet $2,000. This is how accounts go to zero in three trades. The market doesn't owe you a win.</p>
+</div>
+<div class="rule-box">
+  <h3>❌ The Correlation Blind Spot</h3>
+  <p>"I'm diversified — I have calls on AAPL, MSFT, GOOGL, NVDA, and AMD." No. That's 5 tech stocks. When the sector rotates, they all get crushed simultaneously. Look at your actual correlation matrix.</p>
+</div>
+<div class="rule-box">
+  <h3>❌ Overstaying Your Welcome</h3>
+  <p>Buying a 30 DTE call, the stock moves your way in week 1, you're up 40%... and you hold. By week 3, theta has eaten your gains and you're underwater. <strong>Take profits when your thesis plays out.</strong> You can always re-enter.</p>
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. With a $25,000 account, what's the maximum you should risk per trade under the 1% rule?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">$25</button>
+    <button class="quiz-btn" data-opt="b">$100</button>
+    <button class="quiz-btn" data-opt="c">$250</button>
+    <button class="quiz-btn" data-opt="d">$2,500</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. The Kelly Criterion helps you determine:</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Which options to buy</button>
+    <button class="quiz-btn" data-opt="b">How much of your account to bet per trade</button>
+    <button class="quiz-btn" data-opt="c">When to exercise options</button>
+    <button class="quiz-btn" data-opt="d">The fair value of an option</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why is buying calls on 5 different tech stocks NOT diversification?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">They're all correlated — they move together</button>
+    <button class="quiz-btn" data-opt="b">Options don't count as real positions</button>
+    <button class="quiz-btn" data-opt="c">Calls are always bullish</button>
+    <button class="quiz-btn" data-opt="d">Tech stocks have low volatility</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/k/kellycriterion.asp" target="_blank" rel="noopener">Investopedia: Kelly Criterion</a></li>
+  <li><a href="https://www.amazon.com/dp/0471770884" target="_blank" rel="noopener">Nassim Taleb — Fooled by Randomness (book)</a></li>
+  <li><a href="https://www.investopedia.com/terms/r/riskmanagement.asp" target="_blank" rel="noopener">Investopedia: Risk Management in Finance</a></li>
+</ul>

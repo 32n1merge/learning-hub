@@ -1,0 +1,193 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .wsb-green { color: var(--color-success); }
+  .wsb-red { color: var(--color-danger); }
+</style>
+
+<h2>Lesson 1: WTF is an Option?</h2>
+
+<p>You've seen the screenshots. Some guy on r/wallstreetbets turns $5,000 into $500,000 overnight, or more commonly, $500,000 into $5,000. The instrument behind both outcomes? <strong>Options.</strong></p>
+
+<p>Let's cut through the nonsense. An option is a <span class="glossary-term">derivative contract</span> that gives you the <em>right, but not the obligation</em>, to buy or sell an underlying asset at a specific price before a specific date. That's it. You're buying (or selling) a choice.</p>
+
+<h3>Call Options</h3>
+<p>A <span class="glossary-term">call option</span> gives the buyer the right to <strong>buy</strong> 100 shares of a stock at the <span class="glossary-term">strike price</span> before <span class="glossary-term">expiration</span>.</p>
+
+<div class="callout">
+  <strong>WSB Translation:</strong> "I think this stock is going UP. I buy a call. If it moons, I print tendies. If it tanks, I lose my premium." 🚀
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="profitGrad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.15"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></linearGradient>
+      <linearGradient id="lossGrad1" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#EF4444" stop-opacity="0.15"/><stop offset="100%" stop-color="#EF4444" stop-opacity="0"/></linearGradient>
+    </defs>
+    <!-- axes -->
+    <line x1="60" y1="220" x2="460" y2="220" stroke="var(--color-border)" stroke-width="1"/>
+    <line x1="60" y1="220" x2="60" y2="10" stroke="var(--color-border)" stroke-width="1"/>
+    <line x1="60" y1="220" x2="460" y2="220" stroke="var(--color-text-muted)" stroke-width="0.5" stroke-dasharray="4,4"/>
+    <!-- labels -->
+    <text x="250" y="258" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Stock Price at Expiry →</text>
+    <text x="18" y="125" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11" transform="rotate(-90,18,125)">Profit / Loss</text>
+    <!-- strike marker -->
+    <line x1="230" y1="215" x2="230" y2="225" stroke="var(--color-accent)" stroke-width="1.5"/>
+    <text x="230" y="240" text-anchor="middle" fill="var(--color-accent)" font-size="10">Strike $100</text>
+    <!-- payoff line: flat loss until strike, then diagonal up -->
+    <polyline points="60,180 230,180 460,20" fill="none" stroke="#22C55E" stroke-width="2.5"/>
+    <!-- premium loss area -->
+    <rect x="60" y="180" width="170" height="40" fill="url(#lossGrad1)"/>
+    <!-- profit area -->
+    <polygon points="230,180 460,20 460,180" fill="url(#profitGrad1)"/>
+    <!-- annotations -->
+    <text x="145" y="200" text-anchor="middle" fill="#EF4444" font-size="10">Max Loss = Premium</text>
+    <text x="370" y="55" text-anchor="middle" fill="#22C55E" font-size="10">Unlimited Profit</text>
+    <!-- break-even -->
+    <circle cx="260" cy="165" r="3" fill="var(--color-accent)"/>
+    <text x="270" y="165" fill="var(--color-accent)" font-size="10">Break-even $105</text>
+    <text x="40" y="25" fill="var(--color-text)" font-size="13" font-weight="600">Long Call P&amp;L</text>
+  </svg>
+</div>
+
+<h3>Put Options</h3>
+<p>A <span class="glossary-term">put option</span> gives the buyer the right to <strong>sell</strong> 100 shares at the strike price before expiration.</p>
+
+<div class="callout">
+  <strong>WSB Translation:</strong> "I think this stock is going DOWN. I buy a put. If it craters, I print. If not, I'm out the premium." 📉
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="profitGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.15"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></linearGradient>
+      <linearGradient id="lossGrad2" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#EF4444" stop-opacity="0.15"/><stop offset="100%" stop-color="#EF4444" stop-opacity="0"/></linearGradient>
+    </defs>
+    <line x1="60" y1="220" x2="460" y2="220" stroke="var(--color-border)" stroke-width="1"/>
+    <line x1="60" y1="220" x2="60" y2="10" stroke="var(--color-border)" stroke-width="1"/>
+    <line x1="60" y1="220" x2="460" y2="220" stroke="var(--color-text-muted)" stroke-width="0.5" stroke-dasharray="4,4"/>
+    <text x="250" y="258" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Stock Price at Expiry →</text>
+    <text x="18" y="125" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11" transform="rotate(-90,18,125)">Profit / Loss</text>
+    <!-- strike marker -->
+    <line x1="230" y1="215" x2="230" y2="225" stroke="var(--color-accent)" stroke-width="1.5"/>
+    <text x="230" y="240" text-anchor="middle" fill="var(--color-accent)" font-size="10">Strike $100</text>
+    <!-- payoff line: high profit on left, flat loss on right -->
+    <polyline points="60,40 210,180 460,180" fill="none" stroke="#22C55E" stroke-width="2.5"/>
+    <polygon points="60,40 210,180 60,180" fill="url(#profitGrad2)"/>
+    <rect x="210" y="180" width="250" height="40" fill="url(#lossGrad2)"/>
+    <text x="380" y="200" text-anchor="middle" fill="#EF4444" font-size="10">Max Loss = Premium</text>
+    <text x="125" y="60" text-anchor="middle" fill="#22C55E" font-size="10">Profit Capped at $0 Stock</text>
+    <circle cx="190" cy="165" r="3" fill="var(--color-accent)"/>
+    <text x="160" y="155" fill="var(--color-accent)" font-size="10">Break-even $95</text>
+    <text x="40" y="25" fill="var(--color-text)" font-size="13" font-weight="600">Long Put P&amp;L</text>
+  </svg>
+</div>
+
+<h3>Buyer vs. Seller</h3>
+<table>
+  <tr><th></th><th>Buyer (Long)</th><th>Seller / Writer (Short)</th></tr>
+  <tr><td><strong>Max Profit</strong></td><td class="wsb-green">Unlimited (calls) / Very large (puts)</td><td>Limited to premium received</td></tr>
+  <tr><td><strong>Max Loss</strong></td><td>Limited to premium paid</td><td class="wsb-red">Unlimited (naked calls) / Very large (naked puts)</td></tr>
+  <tr><td><strong>Cost</strong></td><td>Pay premium upfront</td><td>Receive premium upfront (collateral required)</td></tr>
+  <tr><td><strong>Brain Cells Required</strong></td><td>Fewer</td><td>Many more</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <strong>⚠️ The single most important table in options:</strong> Buyers risk what they paid. Sellers risk <em>far more</em> than they received. The guy who sold naked calls on GME in January 2021 found this out the hard way.
+</div>
+
+<h3>The Premium</h3>
+<p>The <span class="glossary-term">premium</span> is the price you pay (or receive) for the option contract. It has two parts:</p>
+<ul>
+  <li><strong>Intrinsic Value</strong> — how much the option is worth if exercised <em>right now</em> (for a $100 strike call when the stock is at $107 → $7 intrinsic)</li>
+  <li><strong>Extrinsic Value / Time Value</strong> — the extra premium above intrinsic value, driven by time until expiration and implied volatility. This decays to $0 by expiry.</li>
+</ul>
+
+<div class="callout callout-success">
+  <strong>Key Insight:</strong> You don't need the stock to hit your strike to make money. If you bought a call and the stock moves <em>toward</em> your strike, the option's value increases. You can sell the option itself for a profit before expiration. Most traders never exercise.
+</div>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+  
+  <p class="quiz-q">1. You buy a $50 strike call for $2 when the stock is at $48. At expiration, the stock is at $57. What's your profit per share?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">$0 — option expired worthless</button>
+    <button class="quiz-btn" data-opt="b">$2 — the premium you paid</button>
+    <button class="quiz-btn" data-opt="c">$5 — ($57 − $50 − $2)</button>
+    <button class="quiz-btn" data-opt="d">$7 — you lost money somehow</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the MAXIMUM loss for someone who BUYS a put option?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The premium paid</button>
+    <button class="quiz-btn" data-opt="b">The strike price × 100</button>
+    <button class="quiz-btn" data-opt="c">Unlimited</button>
+    <button class="quiz-btn" data-opt="d">The underlying stock's full value</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. True or False: Most options traders hold contracts until expiration and exercise them.</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">True — that's how options work</button>
+    <button class="quiz-btn" data-opt="b">False — most close their position before expiry</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var quizBlock = document.getElementById('quiz-1');
+  if (!quizBlock) return;
+  quizBlock.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var optsDiv = btn.parentElement;
+    var qNum = optsDiv.getAttribute('data-q');
+    var answer = optsDiv.getAttribute('data-answer');
+    var feedback = quizBlock.querySelector('.quiz-feedback[data-q="' + qNum + '"]');
+    // disable all buttons for this question
+    var allBtns = optsDiv.querySelectorAll('.quiz-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === answer) {
+      btn.classList.add('correct');
+      feedback.innerHTML = '<span style="color:var(--color-success)">✅ Correct! Well done.</span>';
+    } else {
+      btn.classList.add('wrong');
+      var correctBtn = optsDiv.querySelector('.quiz-btn[data-opt="' + answer + '"]');
+      if (correctBtn) correctBtn.classList.add('correct');
+      feedback.innerHTML = '<span style="color:var(--color-danger)">❌ Not quite. The correct answer is highlighted in green.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/o/option.asp" target="_blank" rel="noopener">Investopedia: Options Definition</a></li>
+  <li><a href="https://www.optionseducation.org/" target="_blank" rel="noopener">The Options Industry Council — free education</a></li>
+  <li><a href="https://www.cboe.com/education/" target="_blank" rel="noopener">CBOE Education Center</a></li>
+</ul>

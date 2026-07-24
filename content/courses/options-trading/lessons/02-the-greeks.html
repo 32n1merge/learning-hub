@@ -1,0 +1,192 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .greek-card { display: grid; grid-template-columns: 80px 1fr; gap: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.25rem 0; align-items: start; }
+  .greek-symbol { font-size: 3rem; font-weight: 700; line-height: 1; text-align: center; }
+  .greek-info h3 { margin: 0 0 0.3rem !important; }
+  .greek-info p { margin: 0.25rem 0; }
+  .greek-delta { color: #22C55E; }
+  .greek-gamma { color: #F59E0B; }
+  .greek-theta { color: #EF4444; }
+  .greek-vega { color: #8B5CF6; }
+  .greek-rho { color: var(--color-accent); }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout strong { color: var(--color-accent); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Greeks</h2>
+
+<p>Options don't just go up and down with the stock. They have their own physics — five forces called <strong>"The Greeks"</strong> that determine how an option's price moves. Understanding these is the difference between gambling and trading.</p>
+
+<div class="callout">
+  <strong>Why They Matter:</strong> You can be right about the stock's direction and still lose money if the Greeks work against you. The Greeks explain <em>how</em> you make or lose money.
+</div>
+
+<!-- DELTA -->
+<div class="greek-card">
+  <div class="greek-symbol greek-delta">Δ</div>
+  <div class="greek-info">
+    <h3>Delta (Δ) — Directional Exposure</h3>
+    <p><strong>What it measures:</strong> How much the option's price changes for a $1 move in the underlying stock.</p>
+    <p><strong>Range:</strong> 0 to 1.0 for calls, -1.0 to 0 for puts.</p>
+    <p><strong>WSB Translation:</strong> "How many shares this option acts like." A 0.50 delta call gains ~$0.50 for every $1 the stock rises.</p>
+    <p><strong>Key facts:</strong></p>
+    <ul>
+      <li>Deep ITM options → delta near ±1.0 (basically stock)</li>
+      <li>ATM options → delta near ±0.50 (coin flip)</li>
+      <li>Deep OTM options → delta near 0 (lottery tickets)</li>
+      <li>Delta also roughly estimates probability of expiring ITM</li>
+    </ul>
+  </div>
+</div>
+
+<!-- GAMMA -->
+<div class="greek-card">
+  <div class="greek-symbol greek-gamma">Γ</div>
+  <div class="greek-info">
+    <h3>Gamma (Γ) — Acceleration</h3>
+    <p><strong>What it measures:</strong> How much <em>delta itself</em> changes for a $1 move in the stock. The rate of change of delta.</p>
+    <p><strong>WSB Translation:</strong> "How fast your position accelerates in your favor — or against you."</p>
+    <p><strong>Key facts:</strong></p>
+    <ul>
+      <li>Highest for ATM options near expiration</li>
+      <li>Low for deep ITM or deep OTM options</li>
+      <li>Long gamma = delta increases as the stock moves your way (positive feedback)</li>
+      <li>Short gamma = delta moves against you as the stock moves (negative feedback — dangerous!)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- THETA -->
+<div class="greek-card">
+  <div class="greek-symbol greek-theta">Θ</div>
+  <div class="greek-info">
+    <h3>Theta (Θ) — Time Decay</h3>
+    <p><strong>What it measures:</strong> How much value the option loses each day as expiration approaches. Always negative for option buyers.</p>
+    <p><strong>WSB Translation:</strong> "The rent you pay to hold this position overnight. Every. Single. Day."</p>
+    <p><strong>Key facts:</strong></p>
+    <ul>
+      <li>Accelerates as expiration approaches (the "theta curve" is exponential)</li>
+      <li>Highest for ATM options</li>
+      <li>Buyers hate theta; sellers love it</li>
+      <li>Last 30 days before expiry: brutal decay. Last week: absolutely savage.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- VEGA -->
+<div class="greek-card">
+  <div class="greek-symbol greek-vega">ν</div>
+  <div class="greek-info">
+    <h3>Vega (ν) — Volatility Sensitivity</h3>
+    <p><strong>What it measures:</strong> How much the option's price changes for a 1% change in implied volatility (IV).</p>
+    <p><strong>WSB Translation:</strong> "How much this option pumps when the stock gets crazy."</p>
+    <p><strong>Key facts:</strong></p>
+    <ul>
+      <li>Highest for ATM options with longer time to expiration</li>
+      <li>Buying options when IV is low, selling when IV is high = the edge</li>
+      <li>Earnings plays are vega plays — IV crushes after the announcement (IV crush)</li>
+      <li>Long vega = you want volatility to spike. Short vega = you want calm.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- RHO -->
+<div class="greek-card">
+  <div class="greek-symbol greek-rho">ρ</div>
+  <div class="greek-info">
+    <h3>Rho (ρ) — Interest Rate Sensitivity</h3>
+    <p><strong>What it measures:</strong> How much the option's price changes for a 1% change in the risk-free interest rate.</p>
+    <p><strong>WSB Translation:</strong> "The one Greek nobody cares about unless you trade LEAPS or work at a hedge fund."</p>
+    <p>For retail traders with short-dated options, rho is negligible. For LEAPS (1+ year options), it starts to matter. Higher rates → calls more expensive, puts cheaper.</p>
+  </div>
+</div>
+
+<h3>Greek Cheat Sheet</h3>
+<table>
+  <tr><th>Position</th><th>Delta</th><th>Gamma</th><th>Theta</th><th>Vega</th></tr>
+  <tr><td>Long Call</td><td>+</td><td>+</td><td>−</td><td>+</td></tr>
+  <tr><td>Short Call</td><td>−</td><td>−</td><td>+</td><td>−</td></tr>
+  <tr><td>Long Put</td><td>−</td><td>+</td><td>−</td><td>+</td></tr>
+  <tr><td>Short Put</td><td>+</td><td>−</td><td>+</td><td>−</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Practical Example:</strong> You buy an ATM SPY call expiring in 7 days for $2.00. Delta is 0.50, theta is -$0.15/day. SPY goes up $1 today → you gain $0.50 from delta. But theta took $0.15. Net: +$0.35. Next day SPY is flat → you just lose $0.15 to theta. This is why timing matters.
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You buy an OTM call with 3 days until expiration. Which Greek is your biggest enemy?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Delta</button>
+    <button class="quiz-btn" data-opt="b">Gamma</button>
+    <button class="quiz-btn" data-opt="c">Theta</button>
+    <button class="quiz-btn" data-opt="d">Rho</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. IV Crush after earnings primarily destroys which Greek?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Delta — the stock didn't move enough</button>
+    <button class="quiz-btn" data-opt="b">Vega — implied volatility collapses</button>
+    <button class="quiz-btn" data-opt="c">Theta — time passed during the announcement</button>
+    <button class="quiz-btn" data-opt="d">Gamma — the option accelerated wrong</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. A deep ITM call has a delta near what value?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">1.0 — it moves almost dollar-for-dollar with the stock</button>
+    <button class="quiz-btn" data-opt="b">0.50 — same as ATM</button>
+    <button class="quiz-btn" data-opt="c">0.10 — it has little directional exposure</button>
+    <button class="quiz-btn" data-opt="d">-1.0 — it goes opposite the stock</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var quizBlock = document.getElementById('quiz-2');
+  if (!quizBlock) return;
+  quizBlock.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var optsDiv = btn.parentElement;
+    var qNum = optsDiv.getAttribute('data-q');
+    var answer = optsDiv.getAttribute('data-answer');
+    var feedback = quizBlock.querySelector('.quiz-feedback[data-q="' + qNum + '"]');
+    var allBtns = optsDiv.querySelectorAll('.quiz-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === answer) {
+      btn.classList.add('correct');
+      feedback.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var correctBtn = optsDiv.querySelector('.quiz-btn[data-opt="' + answer + '"]');
+      if (correctBtn) correctBtn.classList.add('correct');
+      feedback.innerHTML = '<span style="color:var(--color-danger)">❌ Not quite. The green answer is correct.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/g/greeks.asp" target="_blank" rel="noopener">Investopedia: Options Greeks</a></li>
+  <li><a href="https://www.tastytrade.com/" target="_blank" rel="noopener">tastytrade — options education with a focus on Greeks</a></li>
+</ul>

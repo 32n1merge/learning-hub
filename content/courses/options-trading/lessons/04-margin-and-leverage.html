@@ -1,0 +1,160 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .margin-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.25rem 0; }
+  .margin-box h3 { margin-top: 0 !important; }
+  .leverage-formula { font-family: var(--font-mono); background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+</style>
+
+<h2>Lesson 4: Margin &amp; Leverage</h2>
+
+<p>Margin is how retail traders punch above their weight — and how they get absolutely destroyed. It's the double-edged sword that makes options the most dangerous game in finance.</p>
+
+<div class="callout callout-warn">
+  <strong>TL;DR:</strong> Margin lets you control more shares than you can actually afford. When it goes right, you look like a genius. When it goes wrong — and it will — you can lose more than you put in. Much more.
+</div>
+
+<h3>What is Margin?</h3>
+<p><strong>Margin</strong> is a loan from your broker secured by the assets in your account. There are two key concepts:</p>
+
+<div class="margin-box">
+  <h3>1. Buying on Margin (Leverage)</h3>
+  <p>You deposit $10,000. Your broker lets you buy up to $20,000 worth of stock (2:1 leverage for equities under Reg T). You borrow the other $10,000 and pay interest on it.</p>
+  <p><strong>Example:</strong> You use $20,000 to buy 200 shares of a $100 stock with $10,000 of your own money + $10,000 borrowed. If the stock goes to $120, your position is worth $24,000. After repaying the $10,000 loan, your equity is $14,000 — a <strong>40% return</strong> on your $10,000 instead of 20%. But if it drops to $80, your position is worth $16,000. After repaying $10,000, you have $6,000 — a <strong>−40% loss</strong> instead of −20%.</p>
+</div>
+
+<div class="margin-box">
+  <h3>2. Initial Margin vs. Maintenance Margin</h3>
+  <table>
+    <tr><th>Term</th><th>Definition</th><th>Reg T Standard</th></tr>
+    <tr><td><strong>Initial Margin</strong></td><td>Minimum equity required to open a position</td><td>50% of purchase price</td></tr>
+    <tr><td><strong>Maintenance Margin</strong></td><td>Minimum equity you must maintain in your account</td><td>25% (brokers can set higher — usually 30%)</td></tr>
+    <tr><td><strong>Margin Call</strong></td><td>Broker demands more money or liquidates your positions</td><td>Triggered below maintenance</td></tr>
+  </table>
+</div>
+
+<h3>Options Margin Requirements</h3>
+<p>Options margin is different from stock margin. Here's what matters:</p>
+
+<table>
+  <tr><th>Option Position</th><th>Margin Required</th></tr>
+  <tr><td><strong>Long calls/puts (buying)</strong></td><td>Premium paid only — no additional margin. Max loss is defined.</td></tr>
+  <tr><td><strong>Naked short call</strong></td><td>Massive. Formula: Premium + max(20% of underlying − OTM amount, 10% of underlying). Potentially unlimited loss.</td></tr>
+  <tr><td><strong>Naked short put</strong></td><td>Premium + max(20% of underlying − OTM amount, 10% of underlying). Loss capped at strike × 100.</td></tr>
+  <tr><td><strong>Covered call</strong></td><td>None beyond owning the shares. Shares serve as collateral.</td></tr>
+  <tr><td><strong>Cash-secured put</strong></td><td>Cash equal to strike × 100 must be held. No leverage.</td></tr>
+  <tr><td><strong>Spread (defined risk)</strong></td><td>Width of the spread × 100. Defined and known upfront.</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <strong>⚠️ The Naked Option Trap:</strong> Selling a naked call on a $20 stock might seem safe until it gets acquired at $65 and you owe $4,500 per contract. Selling naked options requires the highest options approval level for good reason.
+</div>
+
+<h3>Pattern Day Trader (PDT) Rule</h3>
+<p>If you make 4+ day trades in a 5-day rolling period in a margin account, you're flagged as a <strong>Pattern Day Trader</strong> and must maintain at least <strong>$25,000</strong> in equity. Drop below that and you're restricted to closing positions only. This is a FINRA rule, not a broker policy.</p>
+
+<div class="callout callout-success">
+  <strong>Pro tip:</strong> Cash accounts aren't subject to PDT. But you can only trade with settled cash (T+1 for options). Many small-account traders use cash accounts to avoid the $25K minimum.
+</div>
+
+<h3>Buying Power and Leverage Ratios</h3>
+<p>Options buying power reduction depends on the position type, not a fixed ratio like stock margin:</p>
+<ul>
+  <li><strong>Long options:</strong> 100% of premium (no leverage)</li>
+  <li><strong>Defined-risk spreads:</strong> Max loss × 100 (still defined)</li>
+  <li><strong>Naked options:</strong> 10-20% of underlying equivalent (massive leverage)</li>
+</ul>
+
+<p>The key insight: <strong>buying options is cash-only (you can't lose more than you paid), but selling options unleashes margin leverage</strong>. This is why WSB loss porn almost always involves selling options or using portfolio margin.</p>
+
+<h3>Portfolio Margin</h3>
+<p>For accounts over $125,000, brokers may offer <strong>portfolio margin</strong> instead of Reg T. This uses risk-based calculations: a diversified portfolio of offsetting positions requires far less margin than individual positions. It can boost leverage to 6:1 or higher — and make blow-ups that much more spectacular.</p>
+
+<div class="margin-box">
+  <h3>Real WSB Math: The $50K → $0 Speedrun</h3>
+  <p>You deposit $50,000. You sell 10 naked puts on a $50 stock, collecting $2.00 each ($2,000 total premium). Margin requirement: ~$10,000 per contract = $100,000 total. You need portfolio margin to even open this.</p>
+  <p>Stock drops to $35. Each put is $15 ITM = $15,000 loss per contract × 10 = <strong>$150,000 loss</strong>. After subtracting the $2,000 premium and your $50,000 deposit... you owe your broker <strong>$98,000</strong>.</p>
+  <p>This is not hypothetical. This happens every time there's a sharp selloff.</p>
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the maximum loss on a LONG call option?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The strike price × 100</button>
+    <button class="quiz-btn" data-opt="b">The premium paid</button>
+    <button class="quiz-btn" data-opt="c">Unlimited — that's why options are dangerous</button>
+    <button class="quiz-btn" data-opt="d">25% of the underlying stock value</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. The Pattern Day Trader rule triggers at how many day trades in a 5-day period?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">2</button>
+    <button class="quiz-btn" data-opt="b">3</button>
+    <button class="quiz-btn" data-opt="c">4</button>
+    <button class="quiz-btn" data-opt="d">10</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which position has the LEAST margin required?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A long call — only the premium is at risk</button>
+    <button class="quiz-btn" data-opt="b">A naked short call — you receive premium</button>
+    <button class="quiz-btn" data-opt="c">A naked short put — it's cash-secured</button>
+    <button class="quiz-btn" data-opt="d">A covered call — the shares offset the risk</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.finra.org/rules-guidance/key-topics/day-trading" target="_blank" rel="noopener">FINRA: Day Trading Margin Requirements</a></li>
+  <li><a href="https://www.investopedia.com/terms/m/margin.asp" target="_blank" rel="noopener">Investopedia: Margin</a></li>
+  <li><a href="https://www.investopedia.com/terms/p/patterndaytrader.asp" target="_blank" rel="noopener">Investopedia: Pattern Day Trader</a></li>
+</ul>

@@ -1,0 +1,158 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .signal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; margin: 0.75rem 0; }
+  .signal-card h3 { margin-top: 0 !important; }
+</style>
+
+<h2>Lesson 7: Reading the Tape — Order Flow &amp; Volume</h2>
+
+<p>You can stare at charts all day, but the real edge in options trading comes from understanding <strong>what other traders are doing with their money</strong>. This is "reading the tape" — interpreting order flow, volume, and open interest to spot where the smart (and dumb) money is moving.</p>
+
+<h3>Volume</h3>
+<p><strong>Volume</strong> is the number of contracts traded during a given period. More volume = more liquidity = tighter bid-ask spreads = easier to enter and exit.</p>
+
+<div class="callout">
+  <strong>How to use it:</strong> High volume on a specific strike can signal institutional activity. If a far OTM call suddenly prints 10,000 contracts with no news, someone knows something — or is hedging something massive.
+</div>
+
+<h3>Open Interest</h3>
+<p><strong>Open Interest (OI)</strong> is the total number of outstanding contracts that haven't been closed or exercised. It's a measure of how much money is committed to a particular strike.</p>
+
+<table>
+  <tr><th>OI Change</th><th>Volume</th><th>Price</th><th>Interpretation</th></tr>
+  <tr><td>OI ↑</td><td>High</td><td>↑</td><td>New money entering long positions — <strong>bullish</strong></td></tr>
+  <tr><td>OI ↑</td><td>High</td><td>↓</td><td>New money entering short positions — <strong>bearish</strong></td></tr>
+  <tr><td>OI ↓</td><td>High</td><td>↑</td><td>Existing shorts covering — <strong>bullish</strong> (short squeeze potential)</td></tr>
+  <tr><td>OI ↓</td><td>High</td><td>↓</td><td>Existing longs exiting — <strong>bearish</strong></td></tr>
+</table>
+
+<div class="callout callout-success">
+  <strong>Practical use:</strong> Before entering a trade, check OI on your target strike. High OI means there's a pool of liquidity — your order won't move the market. Low OI means you might struggle to exit.
+</div>
+
+<h3>Unusual Options Activity</h3>
+<p>When volume on a specific contract is vastly higher than its open interest and average volume, it's flagged as <strong>"unusual options activity"</strong> — and it's often the first sign of a big move.</p>
+
+<div class="signal-card">
+  <h3>Bullish Signals</h3>
+  <ul>
+    <li>Large OTM call buying with rising IV — someone expects a breakout</li>
+    <li>Put selling at strikes below the market — someone is willing to buy the dip</li>
+    <li>Call spreads being opened — bullish but measured</li>
+  </ul>
+</div>
+<div class="signal-card">
+  <h3>Bearish Signals</h3>
+  <ul>
+    <li>Large OTM put buying with rising IV — someone expects a crash</li>
+    <li>Call selling at strikes above the market — capping upside</li>
+    <li>Put spreads being opened — bearish but defined risk</li>
+  </ul>
+</div>
+
+<h3>Put/Call Ratio</h3>
+<p>The <strong>put/call ratio</strong> divides total put volume by total call volume:</p>
+<ul>
+  <li><strong>Above 1.0:</strong> More puts than calls being traded — bearish sentiment. But at extremes (>1.5), it can be a <strong>contrarian bullish</strong> signal (everyone is already hedged/panicked).</li>
+  <li><strong>Below 0.6:</strong> More calls than puts — bullish sentiment. At extremes (<0.4), can be <strong>contrarian bearish</strong> (everyone is already long and complacent).</li>
+</ul>
+
+<div class="callout callout-warn">
+  <strong>⚠️ Important:</strong> Put/call ratio alone is meaningless without context. A high ratio during earnings season is normal (people hedge). A rising ratio during a bull market is more significant.
+</div>
+
+<h3>The Options Chain as a Map</h3>
+<p>Skilled traders read the options chain like a topographical map:</p>
+<ul>
+  <li><strong>Max Pain:</strong> The strike where the most options expire worthless — market makers have incentive to pin the stock here at expiration.</li>
+  <li><strong>Call Walls:</strong> Strikes with massive call OI act as resistance (dealers hedge by selling stock as calls go ITM).</li>
+  <li><strong>Put Walls:</strong> Strikes with massive put OI act as support (dealers hedge by buying stock as puts go ITM).</li>
+  <li><strong>Gamma Exposure (GEX):</strong> When dealers are net long gamma, they stabilize the market (buying dips, selling rips). When they're net short gamma, moves amplify in both directions.</li>
+</ul>
+
+<div class="callout callout-success">
+  <strong>Free Tools:</strong> <a href="https://www.barchart.com/options/unusual-activity" target="_blank" rel="noopener">Barchart Unusual Options</a>, <a href="https://marketchameleon.com/" target="_blank" rel="noopener">Market Chameleon</a>, <a href="https://www.cboe.com/delayed_quotes/spx/quote_table" target="_blank" rel="noopener">CBOE SPX Options</a>. Most brokers also have built-in unusual activity scanners.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Open interest increasing while option prices are rising suggests:</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">New money is entering — the trend is supported</button>
+    <button class="quiz-btn" data-opt="b">Existing positions are closing — the move is exhausted</button>
+    <button class="quiz-btn" data-opt="c">The options are about to expire</button>
+    <button class="quiz-btn" data-opt="d">Market makers are unwinding hedges</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. An extreme put/call ratio (above 1.5) can be a contrarian bullish signal because:</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Puts are always a buy signal</button>
+    <button class="quiz-btn" data-opt="b">High put volume means the stock will go up</button>
+    <button class="quiz-btn" data-opt="c">It means everyone is already hedged and panicked — selling pressure may be exhausted</button>
+    <button class="quiz-btn" data-opt="d">Puts have negative delta which cancels out</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. "Max Pain" refers to:</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Your emotional state after a bad trade</button>
+    <button class="quiz-btn" data-opt="b">The strike price where the most options expire worthless</button>
+    <button class="quiz-btn" data-opt="c">The maximum loss on a spread</button>
+    <button class="quiz-btn" data-opt="d">The highest premium you can pay for an option</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/o/openinterest.asp" target="_blank" rel="noopener">Investopedia: Open Interest</a></li>
+  <li><a href="https://www.investopedia.com/terms/p/putcallratio.asp" target="_blank" rel="noopener">Investopedia: Put/Call Ratio</a></li>
+  <li><a href="https://spotgamma.com/" target="_blank" rel="noopener">SpotGamma — professional gamma exposure analysis</a></li>
+</ul>

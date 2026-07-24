@@ -1,0 +1,248 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 1rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout strong { color: var(--color-accent); }
+  .quiz-block { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.5rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  #score-display { background: var(--color-accent); color: #000; padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); font-size: 1.2rem; font-weight: 700; display: none; text-align: center; margin: 1.5rem 0; }
+  .score-legend { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-sm); display: none; }
+  .score-legend.grade-a { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+  .score-legend.grade-b { display: block; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+  .score-legend.grade-c { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+  .badge { display: inline-block; font-size: 1.4rem; margin-left: 0.5rem; }
+</style>
+
+<h2>🎓 The Grand Quiz</h2>
+
+<p>You've made it through all seven lessons. Now it's time to find out if you were paying attention — or if you were just staring at the pretty payoff diagrams.</p>
+<p>This quiz covers every lesson. <strong>12 questions. No time limit. No partial credit.</strong> Score at the end.</p>
+
+<div class="quiz-block" id="final-quiz">
+  <h3>Section 1: Options Fundamentals</h3>
+
+  <!-- Q1 -->
+  <p class="quiz-q">1. You buy a $120 strike call for $3 when the stock is at $115. At expiration, the stock is at $128. Your profit or loss per share is:</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">−$3 (your premium)</button>
+    <button class="quiz-btn" data-opt="b">$8 (stock gain only)</button>
+    <button class="quiz-btn" data-opt="c">$5 ($128 − $120 − $3)</button>
+    <button class="quiz-btn" data-opt="d">$11 ($128 − $115 − $3)</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <!-- Q2 -->
+  <p class="quiz-q">2. What is the MAXIMUM possible loss for someone who SELLS (writes) a naked call option?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The premium received</button>
+    <button class="quiz-btn" data-opt="b">The strike price × 100</button>
+    <button class="quiz-btn" data-opt="c">Double the premium received</button>
+    <button class="quiz-btn" data-opt="d">Theoretically unlimited</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <!-- Q3 -->
+  <p class="quiz-q">3. The premium of an option consists of:</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Delta value + gamma value</button>
+    <button class="quiz-btn" data-opt="b">Intrinsic value + extrinsic (time) value</button>
+    <button class="quiz-btn" data-opt="c">Strike price + stock price</button>
+    <button class="quiz-btn" data-opt="d">Bid + ask</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <h3>Section 2: The Greeks</h3>
+
+  <!-- Q4 -->
+  <p class="quiz-q">4. An option with a delta of 0.70 means:</p>
+  <div class="quiz-opts" data-q="3" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The option's price moves ~$0.70 for every $1 move in the stock</button>
+    <button class="quiz-btn" data-opt="b">There is a 70% chance you lose money</button>
+    <button class="quiz-btn" data-opt="c">The option costs $0.70 per share</button>
+    <button class="quiz-btn" data-opt="d">The option expires in 70 days</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <!-- Q5 -->
+  <p class="quiz-q">5. You bought an option and you check on it the next day. The stock hasn't moved at all, but your option is worth less. Which Greek is responsible?</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Delta</button>
+    <button class="quiz-btn" data-opt="b">Theta</button>
+    <button class="quiz-btn" data-opt="c">Gamma</button>
+    <button class="quiz-btn" data-opt="d">Vega</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <!-- Q6 -->
+  <p class="quiz-q">6. "IV Crush" after an earnings announcement primarily impacts which Greek?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Delta — the stock's direction</button>
+    <button class="quiz-btn" data-opt="b">Gamma — the acceleration</button>
+    <button class="quiz-btn" data-opt="c">Vega — implied volatility sensitivity</button>
+    <button class="quiz-btn" data-opt="d">Rho — interest rate sensitivity</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <h3>Section 3: Strategies &amp; Risk</h3>
+
+  <!-- Q7 -->
+  <p class="quiz-q">7. An iron condor consists of:</p>
+  <div class="quiz-opts" data-q="6" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A call spread and a put at the same strike</button>
+    <button class="quiz-btn" data-opt="b">Four naked options at different strikes</button>
+    <button class="quiz-btn" data-opt="c">A short OTM put spread + a short OTM call spread</button>
+    <button class="quiz-btn" data-opt="d">A straddle + a strangle</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <!-- Q8 -->
+  <p class="quiz-q">8. A cash-secured put requires you to:</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Own the underlying stock</button>
+    <button class="quiz-btn" data-opt="b">Have a margin account</button>
+    <button class="quiz-btn" data-opt="c">Buy a put at a lower strike</button>
+    <button class="quiz-btn" data-opt="d">Hold enough cash to buy 100 shares at the strike price</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <!-- Q9 -->
+  <p class="quiz-q">9. The Pattern Day Trader rule requires a minimum of how much equity if flagged?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">$10,000</button>
+    <button class="quiz-btn" data-opt="b">$25,000</button>
+    <button class="quiz-btn" data-opt="c">$50,000</button>
+    <button class="quiz-btn" data-opt="d">$100,000</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <h3>Section 4: Market Mechanics</h3>
+
+  <!-- Q10 -->
+  <p class="quiz-q">10. Open Interest measures:</p>
+  <div class="quiz-opts" data-q="9" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The total number of outstanding option contracts</button>
+    <button class="quiz-btn" data-opt="b">The number of contracts traded today</button>
+    <button class="quiz-btn" data-opt="c">The number of contracts exercised</button>
+    <button class="quiz-btn" data-opt="d">The number of market makers in the option</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <!-- Q11 -->
+  <p class="quiz-q">11. "Max Pain" theory suggests that:</p>
+  <div class="quiz-opts" data-q="10" data-answer="b">
+    <button class="quiz-btn" data-opt="a">You should always buy the most painful strike</button>
+    <button class="quiz-btn" data-opt="b">Market makers have incentive to pin the stock at the strike where most options expire worthless</button>
+    <button class="quiz-btn" data-opt="c">Options always cause maximum pain to buyers</button>
+    <button class="quiz-btn" data-opt="d">The stock will move to the strike with highest open interest</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <!-- Q12 -->
+  <p class="quiz-q">12. What is the biggest risk of placing your entire account into far OTM weekly options?</p>
+  <div class="quiz-opts" data-q="11" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The bid-ask spread is wide</button>
+    <button class="quiz-btn" data-opt="b">Your broker might flag you as PDT</button>
+    <button class="quiz-btn" data-opt="c">You can lose 100% of your account — and statistically, you will</button>
+    <button class="quiz-btn" data-opt="d">You'll have to pay taxes on the gains</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+</div>
+
+<div id="score-display"></div>
+<div id="score-legend" class="score-legend"></div>
+
+<script>
+(function() {
+  var total = 12;
+  var correct = 0;
+  var answered = {};
+  var qb = document.getElementById('final-quiz');
+  var scoreDiv = document.getElementById('score-display');
+  var legendDiv = document.getElementById('score-legend');
+
+  function updateScore() {
+    var allAnswered = Object.keys(answered).length === total;
+    if (!allAnswered) return;
+    
+    var pct = Math.round((correct / total) * 100);
+    scoreDiv.style.display = 'block';
+    
+    var grade, emoji, color, className;
+    if (pct >= 83) {
+      grade = 'A — You are ready for the trading floor.';
+      emoji = '🏆';
+      color = 'var(--color-success)';
+      className = 'grade-a';
+    } else if (pct >= 58) {
+      grade = 'B — Solid fundamentals. Review the sections you missed.';
+      emoji = '📚';
+      color = 'var(--color-warning)';
+      className = 'grade-b';
+    } else {
+      grade = 'C or below — Back to Lesson 1, degen. The market does not forgive.';
+      emoji = '💀';
+      color = 'var(--color-danger)';
+      className = 'grade-c';
+    }
+    
+    scoreDiv.innerHTML = 'Score: ' + correct + '/' + total + ' (' + pct + '%) <span class="badge">' + emoji + '</span>';
+    legendDiv.className = 'score-legend ' + className;
+    legendDiv.innerHTML = '<strong>' + grade + '</strong><br><small>' + 
+      (correct >= 10 ? 'You understand options better than 95% of WSB. But knowing and doing are different things. Trade small, manage risk, and never stop learning.' : 
+       correct >= 7 ? 'You have the basics. Review the Greeks (Lesson 2) and Strategies (Lesson 5) — those are where most trades live or die.' :
+       'Options are complex instruments. Re-read the first three lessons and take the quiz again. There is no shame in learning — only in gambling without knowing.') + '</small>';
+  }
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = parseInt(opts.getAttribute('data-q'));
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    
+    if (answered[qn]) return; // already answered
+    
+    var allBtns = opts.querySelectorAll('.quiz-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+    
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      correct++;
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    
+    updateScore();
+  });
+})();
+</script>
+
+<h3 style="margin-top:2.5rem">Community &amp; Continuing Education</h3>
+<p>This course gave you the foundation. Real wisdom comes from practice and community:</p>
+<ul>
+  <li><strong>r/options</strong> — The serious options subreddit. Less memes, more actual discussion.</li>
+  <li><strong>r/thetagang</strong> — For premium sellers. The anti-WSB, focused on consistent income.</li>
+  <li><strong>r/wallstreetbets</strong> — For the loss porn and occasional genius. Entertain, don't emulate.</li>
+  <li><strong><a href="https://www.tastytrade.com/" target="_blank" rel="noopener">tastytrade</a></strong> — Free options education platform. Daily live shows, research, strategy guides.</li>
+  <li><strong><a href="https://optionalpha.com/" target="_blank" rel="noopener">Option Alpha</a></strong> — Data-driven options education. Free courses and backtesting tools.</li>
+  <li><strong>Paper Trading</strong> — Every major broker (Thinkorswim, Tastyworks, Webull) offers paper trading. <strong>Use it.</strong> Test strategies risk-free for 3-6 months before deploying real capital.</li>
+</ul>
+
+<div class="callout">
+  <strong>Final Word:</strong> Options are the most powerful retail trading instruments ever created. They can hedge risk, generate income, and produce life-changing returns. They can also destroy accounts, marriages, and mental health. The difference isn't intelligence — it's discipline, risk management, and the humility to know that nobody beats the market every time. <strong>Position size is everything. Survive first. Profit second.</strong>
+</div>

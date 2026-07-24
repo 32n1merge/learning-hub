@@ -1,0 +1,170 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .strategy-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.25rem 0; }
+  .strategy-card h3 { margin-top: 0 !important; display: flex; align-items: center; gap: 0.5rem; }
+  .strat-tag { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 99px; font-weight: 500; }
+  .strat-bullish { background: rgba(34,197,94,0.15); color: #22C55E; }
+  .strat-bearish { background: rgba(239,68,68,0.15); color: #EF4444; }
+  .strat-neutral { background: rgba(245,158,11,0.15); color: #F59E0B; }
+  .strat-wsb { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: WSB's Greatest Hits — The Strategies</h2>
+
+<p>Options strategies range from "grandma's retirement portfolio" to "full degen YOLO." Here's the full menu, from sensible to suicidal.</p>
+
+<!-- 1. COVERED CALL -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-neutral">NEUTRAL/BULLISH</span> 1. The Covered Call</h3>
+  <p><strong>Setup:</strong> Own 100 shares + sell 1 OTM call.</p>
+  <p><strong>Max Profit:</strong> Strike − purchase price + premium received.</p>
+  <p><strong>Max Loss:</strong> Stock purchase price − premium received (stock goes to zero).</p>
+  <p><strong>WSB Verdict:</strong> Boring. Reliable. The "wheel strategy" loves this. You collect premium while you hold. If called away, switch to selling puts.</p>
+  <div class="callout callout-success"><strong>Best for:</strong> Stocks you'd be happy to own anyway. Income generation.</div>
+</div>
+
+<!-- 2. CASH-SECURED PUT -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-bullish">BULLISH</span> 2. The Cash-Secured Put (CSP)</h3>
+  <p><strong>Setup:</strong> Hold cash = strike × 100. Sell 1 OTM put.</p>
+  <p><strong>Max Profit:</strong> Premium received.</p>
+  <p><strong>Max Loss:</strong> (Strike × 100) − premium. You buy the stock at the strike.</p>
+  <p><strong>WSB Verdict:</strong> "I want to buy the dip, but get paid to wait." Paired with covered calls = "The Wheel."</p>
+</div>
+
+<!-- 3. VERTICAL SPREAD -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-bullish">BULLISH</span> 3. Bull Put Spread / Bear Call Spread (Credit Spreads)</h3>
+  <p><strong>Setup:</strong> Sell a put (or call), buy a further OTM put (or call).</p>
+  <p><strong>Max Profit:</strong> Credit received.</p>
+  <p><strong>Max Loss:</strong> Width of spread − credit received. <strong>Defined and known.</strong></p>
+  <p><strong>WSB Verdict:</strong> The sensible way to sell premium. High probability, defined risk. Too boring for most WSB posters.</p>
+  <div class="callout"><strong>Example:</strong> Sell $100 put for $3, buy $95 put for $1. Net credit: $2. Max loss: $5 − $2 = $3. Risk $3 to make $2 — 60% ROC if it works.</div>
+</div>
+
+<!-- 4. DEBIT SPREAD -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-bullish">DIRECTIONAL</span> 4. Bull Call Spread (Debit Spread)</h3>
+  <p><strong>Setup:</strong> Buy an ITM/ATM call, sell a higher OTM call.</p>
+  <p><strong>Max Profit:</strong> Width of spread − debit paid.</p>
+  <p><strong>Max Loss:</strong> Debit paid. Capped and known.</p>
+  <p><strong>WSB Verdict:</strong> Cheaper than a naked call, but caps your upside. Trains you out of the "unlimited gainz" mindset.</p>
+</div>
+
+<!-- 5. IRON CONDOR -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-neutral">NEUTRAL</span> 5. The Iron Condor</h3>
+  <p><strong>Setup:</strong> Sell an OTM put spread + sell an OTM call spread. Four legs.</p>
+  <p><strong>Max Profit:</strong> Total credit received.</p>
+  <p><strong>Max Loss:</strong> Width of widest spread − credit.</p>
+  <p><strong>WSB Verdict:</strong> "I think nothing will happen." Great for range-bound stocks. High probability, managed risk. Most profitable in high IV environments where you can sell wide.</p>
+</div>
+
+<!-- 6. THE YOLO -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-wsb">MAXIMUM DEGEN</span> 6. The YOLO (All-In OTM Calls/Puts)</h3>
+  <p><strong>Setup:</strong> Put your entire account into far OTM weekly calls (or puts).</p>
+  <p><strong>Max Profit:</strong> Theoretically unlimited (calls). Realistically: your screenshot hits r/wallstreetbets.</p>
+  <p><strong>Max Loss:</strong> Your entire account. Every time. Statistically.</p>
+  <p><strong>WSB Verdict:</strong> This is the content machine. <strong>Do not do this with money you need.</strong> The expected value is negative, the probability of profit is maybe 5-10%. But when it hits... legendary.</p>
+  <div class="callout callout-warn"><strong>⚠️ Reality check:</strong> For every DFV (Roaring Kitty) who turned $53K into $48M with GME calls, there are thousands who lost everything. You see the winners because survivors post. The losers delete the app.</div>
+</div>
+
+<!-- 7. STRADDLE / STRANGLE -->
+<div class="strategy-card">
+  <h3><span class="strat-tag strat-wsb">VOLATILITY PLAY</span> 7. Straddle / Strangle</h3>
+  <p><strong>Straddle:</strong> Buy ATM call + ATM put. Profits if the stock moves <em>a lot</em> in either direction.</p>
+  <p><strong>Strangle:</strong> Buy OTM call + OTM put. Cheaper but needs even bigger move.</p>
+  <p><strong>WSB Verdict:</strong> The earnings play. "I have no idea which way this goes but I know it will MOVE." IV crush is the enemy — you need the move to exceed the combined premium.</p>
+</div>
+
+<h3>Strategy Decision Matrix</h3>
+<table>
+  <tr><th>Your View</th><th>IV is Low</th><th>IV is High</th></tr>
+  <tr><td>Bullish</td><td>Buy calls, bull call spread</td><td>Sell puts, bull put spread</td></tr>
+  <tr><td>Bearish</td><td>Buy puts, bear put spread</td><td>Sell calls, bear call spread</td></tr>
+  <tr><td>Neutral</td><td>Sit on your hands</td><td>Iron condor, covered strangle</td></tr>
+  <tr><td>Expecting Big Move</td><td>Buy straddle/strangle</td><td>Calendar spread</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A covered call involves:</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Buying a call and buying the stock</button>
+    <button class="quiz-btn" data-opt="b">Selling a naked call without owning shares</button>
+    <button class="quiz-btn" data-opt="c">Owning 100 shares and selling a call against them</button>
+    <button class="quiz-btn" data-opt="d">Buying a call and a put at the same strike</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. An iron condor profits most when:</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The stock stays in a range and does nothing</button>
+    <button class="quiz-btn" data-opt="b">The stock makes a massive move up</button>
+    <button class="quiz-btn" data-opt="c">The stock makes a massive move down</button>
+    <button class="quiz-btn" data-opt="d">The stock is delisted</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. A straddle is best used before:</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A quiet weekend with no news</button>
+    <button class="quiz-btn" data-opt="b">An earnings announcement or major binary event</button>
+    <button class="quiz-btn" data-opt="c">A long holiday weekend</button>
+    <button class="quiz-btn" data-opt="d">A period of extremely low volatility</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is in green.</span>';
+    }
+  });
+})();
+</script>
+
+<h3 style="margin-top:2rem">Further Reading</h3>
+<ul>
+  <li><a href="https://www.optionsplaybook.com/" target="_blank" rel="noopener">The Options Playbook — every strategy explained</a></li>
+  <li><a href="https://www.tastytrade.com/concepts-strategies/" target="_blank" rel="noopener">tastytrade: Options Strategies</a></li>
+</ul>
