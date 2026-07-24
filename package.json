@@ -1,0 +1,13 @@
+{
+  "name": "learning-hub",
+  "version": "1.0.0",
+  "description": "Static website library for Teach sessions",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "preview": "npm run build && npx serve dist"
+  },
+  "keywords": ["static-site", "learning"],
+  "author": "",
+  "license": "MIT"
+}
