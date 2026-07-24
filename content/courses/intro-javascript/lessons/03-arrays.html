@@ -1,0 +1,50 @@
+<h2>Arrays in JavaScript</h2>
+
+<p>Arrays are ordered collections of values. They can hold multiple values in a single variable and are zero-indexed.</p>
+
+<h3>Creating Arrays</h3>
+
+<pre><code>const fruits = ["apple", "banana", "orange"];
+const numbers = [1, 2, 3, 4, 5];
+const mixed = [1, "two", true, null];</code></pre>
+
+<h3>Accessing Array Elements</h3>
+
+<pre><code>const colors = ["red", "green", "blue"];
+
+console.log(colors[0]); // Output: red
+console.log(colors[1]); // Output: green
+console.log(colors.length); // Output: 3</code></pre>
+
+<h3>Array Methods</h3>
+
+<p>JavaScript arrays have many built-in methods:</p>
+
+<pre><code>const numbers = [1, 2, 3, 4, 5];
+
+// push - add to end
+numbers.push(6); // [1, 2, 3, 4, 5, 6]
+
+// pop - remove from end
+numbers.pop(); // [1, 2, 3, 4, 5]
+
+// map - transform each element
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+
+// filter - keep elements matching condition
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+
+// reduce - accumulate to single value
+const sum = numbers.reduce((acc, n) => acc + n, 0); // 15</code></pre>
+
+<h3>Iterating Over Arrays</h3>
+
+<pre><code>const names = ["Alice", "Bob", "Charlie"];
+
+// for...of loop
+for (const name of names) {
+  console.log(name);
+}
+
+// forEach method
+names.forEach(name => console.log(name));</code></pre>

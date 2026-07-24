@@ -1,0 +1,39 @@
+<h2>Functions in JavaScript</h2>
+
+<p>Functions are reusable blocks of code that perform specific tasks. They are fundamental building blocks in JavaScript programming.</p>
+
+<h3>Function Declaration</h3>
+
+<pre><code>function greet(name) {
+  return "Hello, " + name + "!";
+}
+
+const message = greet("Alice");
+console.log(message); // Output: Hello, Alice!</code></pre>
+
+<h3>Function Expression</h3>
+
+<p>You can also define functions as expressions:</p>
+
+<pre><code>const add = function(a, b) {
+  return a + b;
+};
+
+console.log(add(5, 3)); // Output: 8</code></pre>
+
+<h3>Arrow Functions</h3>
+
+<p>ES6 introduced arrow functions, a concise syntax for writing functions:</p>
+
+<pre><code>const multiply = (a, b) => a * b;
+
+console.log(multiply(4, 5)); // Output: 20</code></pre>
+
+<h3>Default Parameters</h3>
+
+<pre><code>function greet(name = "Guest") {
+  return "Hello, " + name + "!";
+}
+
+console.log(greet());        // Output: Hello, Guest!
+console.log(greet("Bob"));   // Output: Hello, Bob!</code></pre>
