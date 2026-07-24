@@ -33,6 +33,13 @@ async function build() {
 
 async function readCourses() {
   const coursesDir = path.join(CONTENT_DIR, 'courses');
+  
+  if (!await fileExists(coursesDir)) {
+    console.warn('Warning: content/courses directory not found, creating it...');
+    await fs.mkdir(coursesDir, { recursive: true });
+    return [];
+  }
+  
   const courseDirs = await fs.readdir(coursesDir);
   
   const courses = [];
@@ -42,29 +49,38 @@ async function readCourses() {
     
     if (stat.isDirectory()) {
       const metadataPath = path.join(coursePath, 'metadata.json');
+      
+      if (!await fileExists(metadataPath)) {
+        console.warn(`Warning: ${metadataPath} not found, skipping course ${dir}`);
+        continue;
+      }
+      
       const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf-8'));
       
       // Read lessons
       const lessonsDir = path.join(coursePath, 'lessons');
-      const lessonFiles = await fs.readdir(lessonsDir);
       const lessons = [];
       
-      for (const file of lessonFiles.sort()) {
-        if (file.endsWith('.html')) {
-          const lessonPath = path.join(lessonsDir, file);
-          const content = await fs.readFile(lessonPath, 'utf-8');
-          const lessonMetadataPath = path.join(lessonsDir, file.replace('.html', '.json'));
-          let lessonMetadata = { title: file.replace('.html', '') };
-          
-          if (await fileExists(lessonMetadataPath)) {
-            lessonMetadata = JSON.parse(await fs.readFile(lessonMetadataPath, 'utf-8'));
+      if (await fileExists(lessonsDir)) {
+        const lessonFiles = await fs.readdir(lessonsDir);
+        
+        for (const file of lessonFiles.sort()) {
+          if (file.endsWith('.html')) {
+            const lessonPath = path.join(lessonsDir, file);
+            const content = await fs.readFile(lessonPath, 'utf-8');
+            const lessonMetadataPath = path.join(lessonsDir, file.replace('.html', '.json'));
+            let lessonMetadata = { title: file.replace('.html', '') };
+            
+            if (await fileExists(lessonMetadataPath)) {
+              lessonMetadata = JSON.parse(await fs.readFile(lessonMetadataPath, 'utf-8'));
+            }
+            
+            lessons.push({
+              slug: file.replace('.html', ''),
+              ...lessonMetadata,
+              content
+            });
           }
-          
-          lessons.push({
-            slug: file.replace('.html', ''),
-            ...lessonMetadata,
-            content
-          });
         }
       }
       
@@ -93,10 +109,11 @@ async function generateHomePage(courses) {
   
   const courseCards = courses.map(course => `
     <article class="course-card">
-      <h2><a href="/courses/${course.slug}/index.html">${course.title}</a></h2>
+      <h2><a href="/courses/${course.slug}/index.html">${course.icon || ''} ${course.title}</a></h2>
       <p>${course.description}</p>
       <div class="course-meta">
         <span>${course.lessons.length} lesson${course.lessons.length !== 1 ? 's' : ''}</span>
+        ${course.lastUpdated ? `<span>Updated: ${course.lastUpdated}</span>` : ''}
         ${course.tags ? `<span class="tags">${course.tags.map(t => `<span class="tag">${t}</span>`).join('')}</span>` : ''}
       </div>
     </article>
@@ -112,7 +129,7 @@ async function generateCoursePage(course) {
   const courseDir = path.join(DIST_DIR, 'courses', course.slug);
   await fs.mkdir(courseDir, { recursive: true });
   
-  const lessonList = course.lessons.map((lesson, index) => `
+  const lessonList = course.lessons.map(lesson => `
     <li class="lesson-item">
       <a href="${lesson.slug}.html">${lesson.title}</a>
       ${lesson.description ? `<p>${lesson.description}</p>` : ''}

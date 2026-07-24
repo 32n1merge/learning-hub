@@ -1,5 +1,7 @@
 {
   "title": "Introduction to JavaScript",
   "description": "Learn the fundamentals of JavaScript programming language",
-  "tags": ["javascript", "programming", "beginner"]
+  "tags": ["javascript", "programming", "beginner"],
+  "lastUpdated": "2024-01-15",
+  "icon": "📘"
 }
