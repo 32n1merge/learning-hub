@@ -7,19 +7,22 @@
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-  <header>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <header role="banner">
     <div class="container">
       <h1><a href="/">Learning Hub</a></h1>
-      <nav>
-        <a href="/">Home</a> / 
+      <nav role="navigation" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span aria-hidden="true"> / </span>
         <a href="/courses/intro-javascript/index.html">Introduction to JavaScript</a>
       </nav>
     </div>
   </header>
   
-  <main class="container">
-    <article class="lesson">
-      <h1>Functions</h1>
+  <main id="main-content" class="container" role="main">
+    <article class="lesson" aria-labelledby="lesson-title">
+      <h1 id="lesson-title">Functions</h1>
       <div class="lesson-content">
         <h2>Functions in JavaScript</h2>
 
@@ -63,15 +66,15 @@ console.log(greet("Bob"));   // Output: Hello, Bob!</code></pre>
 
       </div>
       
-      <nav class="lesson-nav">
+      <nav class="lesson-nav" aria-label="Lesson navigation">
         <a href="01-variables.html" class="nav-prev">← Variables and Data Types</a>
-        <a href="/courses/intro-javascript/index.html" class="nav-back">Back to course</a>
+        <a href="/courses/intro-javascript/index.html" class="nav-back">← Back to course</a>
         <a href="03-arrays.html" class="nav-next">Arrays →</a>
       </nav>
     </article>
   </main>
   
-  <footer>
+  <footer role="contentinfo">
     <div class="container">
       <p>Learning Hub — A curated collection of Teach sessions</p>
     </div>

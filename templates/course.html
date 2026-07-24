@@ -7,33 +7,35 @@
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-  <header>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <header role="banner">
     <div class="container">
       <h1><a href="/">Learning Hub</a></h1>
-      <nav>
-        <a href="/">← Home</a>
+      <nav role="navigation" aria-label="Course navigation">
+        <a href="/">← Back to Home</a>
       </nav>
     </div>
   </header>
   
-  <main class="container">
-    <article class="course">
-      <h1>{{COURSE_TITLE}}</h1>
+  <main id="main-content" class="container" role="main">
+    <article class="course" aria-labelledby="course-title">
+      <h1 id="course-title">{{COURSE_TITLE}}</h1>
       <p class="course-description">{{COURSE_DESCRIPTION}}</p>
       <div class="course-meta">
         <span>{{LESSON_COUNT_TEXT}}</span>
       </div>
       
-      <section class="lessons">
-        <h2>Lessons</h2>
-        <ul>
+      <section class="lessons" aria-labelledby="lessons-heading">
+        <h2 id="lessons-heading">Lessons</h2>
+        <ul role="list">
           {{LESSON_LIST}}
         </ul>
       </section>
     </article>
   </main>
   
-  <footer>
+  <footer role="contentinfo">
     <div class="container">
       <p>Learning Hub — A curated collection of Teach sessions</p>
     </div>

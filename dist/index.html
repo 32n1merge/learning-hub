@@ -5,27 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Learning Hub</title>
   <link rel="stylesheet" href="/assets/styles.css">
+  <script>
+    // Add no-js class for progressive enhancement
+    document.documentElement.classList.remove('no-js');
+  </script>
 </head>
-<body>
-  <header>
+<body class="no-js">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <header role="banner">
     <div class="container">
       <h1><a href="/">Learning Hub</a></h1>
       <p class="tagline">Your personal library of knowledge</p>
     </div>
   </header>
   
-  <main class="container">
-    <section class="search-section">
+  <main id="main-content" class="container" role="main">
+    <section class="search-section" aria-label="Search courses">
+      <label for="search-input" class="visually-hidden">Search courses</label>
       <input 
         type="text" 
         id="search-input" 
         class="search-input" 
         placeholder="Search courses by title, description, tags, or category..."
-        aria-label="Search courses"
+        aria-label="Search courses by title, description, tags, or category"
       >
     </section>
     
-    <section class="courses-grid" id="courses-grid">
+    <section class="courses-grid" id="courses-grid" aria-label="Course list">
       
     <article class="course-card" data-search-text="introduction to javascript learn the fundamentals of javascript programming language javascript programming beginner ">
       
@@ -53,14 +60,14 @@
     </section>
   </main>
   
-  <footer>
+  <footer role="contentinfo">
     <div class="container">
       <p>Learning Hub — A curated collection of Teach sessions</p>
     </div>
   </footer>
   
   <script>
-    // Client-side search functionality
+    // Client-side search functionality (progressive enhancement)
     (function() {
       const searchInput = document.getElementById('search-input');
       const coursesGrid = document.getElementById('courses-grid');
@@ -83,6 +90,7 @@
           if (!noResults) {
             noResults = document.createElement('div');
             noResults.className = 'no-results';
+            noResults.setAttribute('role', 'status');
             noResults.textContent = 'No courses match your search.';
             coursesGrid.appendChild(noResults);
           }
