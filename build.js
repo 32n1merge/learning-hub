@@ -104,38 +104,80 @@ async function fileExists(path) {
   }
 }
 
-async function generateHomePage(courses) {
-  const template = await fs.readFile(path.join(TEMPLATES_DIR, 'home.html'), 'utf-8');
-  
-  const courseCards = courses.map(course => {
-    // Build searchable text from all metadata
-    const searchableText = [
-      course.title,
-      course.description,
-      ...(course.tags || []),
-      course.category || ''
-    ].join(' ').toLowerCase();
-    
-    const coverImageHtml = course.coverImage 
-      ? `<img src="${course.coverImage}" alt="${course.title}" class="course-cover">`
-      : '';
-    
-    return `
+function buildCourseCard(course) {
+  const searchableText = [
+    course.title,
+    course.description,
+    ...(course.tags || []),
+    course.category || ''
+  ].join(' ').toLowerCase();
+
+  const coverImageHtml = course.coverImage
+    ? `<img src="${course.coverImage}" alt="${course.title}" class="course-cover">`
+    : '';
+
+  const difficultyBadge = course.difficulty
+    ? `<span class="difficulty-badge difficulty-${course.difficulty}">${course.difficulty}</span>`
+    : '';
+
+  const tagsHtml = course.tags
+    ? `<div class="course-card-tags">${course.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`
+    : '';
+
+  return `
     <article class="course-card" data-search-text="${searchableText.replace(/"/g, '&quot;')}">
       ${coverImageHtml}
-      <h2><a href="/courses/${course.slug}/index.html">${course.icon || ''} ${course.title}</a></h2>
-      <p>${course.description}</p>
-      <div class="course-meta">
-        <span>${course.lessons.length} lesson${course.lessons.length !== 1 ? 's' : ''}</span>
-        ${course.lastUpdated ? `<span>Updated: ${course.lastUpdated}</span>` : ''}
-        ${course.tags ? `<span class="tags">${course.tags.map(t => `<span class="tag">${t}</span>`).join('')}</span>` : ''}
+      <div class="course-card-body">
+        <div class="course-card-header">
+          <h2><a href="/courses/${course.slug}/index.html">${course.icon || ''} ${course.title}</a></h2>
+          ${difficultyBadge}
+        </div>
+        <p>${course.description}</p>
+        <div class="course-card-meta">
+          <span class="meta-item">${course.lessons.length} lesson${course.lessons.length !== 1 ? 's' : ''}</span>
+          ${course.estimatedDuration ? `<span class="meta-item meta-duration">${course.estimatedDuration}</span>` : ''}
+          ${course.lastUpdated ? `<span class="meta-item">Updated: ${course.lastUpdated}</span>` : ''}
+        </div>
+        ${tagsHtml}
       </div>
-    </article>
-  `;
-  }).join('\n');
-  
-  const html = template.replace('{{COURSE_CARDS}}', courseCards);
-  
+    </article>`;
+}
+
+function buildRecentlyUpdated(courses) {
+  const sorted = [...courses]
+    .filter(c => c.lastUpdated)
+    .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+    .slice(0, 3);
+
+  if (sorted.length === 0) return '';
+
+  const cards = sorted.map(c => `
+    <div class="recently-updated-card">
+      <a href="/courses/${c.slug}/index.html" class="recently-updated-link">
+        <span class="recently-updated-icon">${c.icon || '📄'}</span>
+        <span class="recently-updated-title">${c.title}</span>
+        <span class="recently-updated-date">${c.lastUpdated}</span>
+      </a>
+    </div>
+  `).join('');
+
+  return `
+    <section class="recently-updated">
+      <h2 class="section-title">Recently Updated</h2>
+      <div class="recently-updated-list">${cards}</div>
+    </section>`;
+}
+
+async function generateHomePage(courses) {
+  const template = await fs.readFile(path.join(TEMPLATES_DIR, 'home.html'), 'utf-8');
+
+  const courseCards = courses.map(buildCourseCard).join('\n');
+  const recentlyUpdatedHtml = buildRecentlyUpdated(courses);
+
+  const html = template
+    .replace('{{COURSE_CARDS}}', courseCards)
+    .replace('{{RECENTLY_UPDATED}}', recentlyUpdatedHtml);
+
   await fs.writeFile(path.join(DIST_DIR, 'index.html'), html);
 }
 
@@ -143,22 +185,31 @@ async function generateCoursePage(course) {
   const template = await fs.readFile(path.join(TEMPLATES_DIR, 'course.html'), 'utf-8');
   const courseDir = path.join(DIST_DIR, 'courses', course.slug);
   await fs.mkdir(courseDir, { recursive: true });
-  
+
   const lessonList = course.lessons.map(lesson => `
     <li class="lesson-item">
       <a href="${lesson.slug}.html">${lesson.title}</a>
       ${lesson.description ? `<p>${lesson.description}</p>` : ''}
+      ${lesson.readingTime ? `<span class="reading-time">${lesson.readingTime}</span>` : ''}
     </li>
   `).join('\n');
-  
+
   const lessonCountText = `${course.lessons.length} lesson${course.lessons.length !== 1 ? 's' : ''}`;
-  
+  const difficultyHtml = course.difficulty
+    ? `<span class="difficulty-badge difficulty-${course.difficulty}">${course.difficulty}</span>`
+    : '';
+  const durationHtml = course.estimatedDuration
+    ? `<span class="meta-item meta-duration">${course.estimatedDuration}</span>`
+    : '';
+
   const html = template
     .replace(/\{\{COURSE_TITLE\}\}/g, course.title)
     .replace(/\{\{COURSE_DESCRIPTION\}\}/g, course.description)
+    .replace(/\{\{COURSE_DIFFICULTY\}\}/g, difficultyHtml)
+    .replace(/\{\{COURSE_DURATION\}\}/g, durationHtml)
     .replace(/\{\{LESSON_COUNT_TEXT\}\}/g, lessonCountText)
     .replace(/\{\{LESSON_LIST\}\}/g, lessonList);
-  
+
   await fs.writeFile(path.join(courseDir, 'index.html'), html);
 }
 
