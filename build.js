@@ -107,8 +107,22 @@ async function fileExists(path) {
 async function generateHomePage(courses) {
   const template = await fs.readFile(path.join(TEMPLATES_DIR, 'home.html'), 'utf-8');
   
-  const courseCards = courses.map(course => `
-    <article class="course-card">
+  const courseCards = courses.map(course => {
+    // Build searchable text from all metadata
+    const searchableText = [
+      course.title,
+      course.description,
+      ...(course.tags || []),
+      course.category || ''
+    ].join(' ').toLowerCase();
+    
+    const coverImageHtml = course.coverImage 
+      ? `<img src="${course.coverImage}" alt="${course.title}" class="course-cover">`
+      : '';
+    
+    return `
+    <article class="course-card" data-search-text="${searchableText.replace(/"/g, '&quot;')}">
+      ${coverImageHtml}
       <h2><a href="/courses/${course.slug}/index.html">${course.icon || ''} ${course.title}</a></h2>
       <p>${course.description}</p>
       <div class="course-meta">
@@ -117,7 +131,8 @@ async function generateHomePage(courses) {
         ${course.tags ? `<span class="tags">${course.tags.map(t => `<span class="tag">${t}</span>`).join('')}</span>` : ''}
       </div>
     </article>
-  `).join('\n');
+  `;
+  }).join('\n');
   
   const html = template.replace('{{COURSE_CARDS}}', courseCards);
   

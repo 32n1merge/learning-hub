@@ -15,7 +15,17 @@
   </header>
   
   <main class="container">
-    <section class="courses-grid">
+    <section class="search-section">
+      <input 
+        type="text" 
+        id="search-input" 
+        class="search-input" 
+        placeholder="Search courses by title, description, tags, or category..."
+        aria-label="Search courses"
+      >
+    </section>
+    
+    <section class="courses-grid" id="courses-grid">
       {{COURSE_CARDS}}
     </section>
   </main>
@@ -25,5 +35,39 @@
       <p>Learning Hub — A curated collection of Teach sessions</p>
     </div>
   </footer>
+  
+  <script>
+    // Client-side search functionality
+    (function() {
+      const searchInput = document.getElementById('search-input');
+      const coursesGrid = document.getElementById('courses-grid');
+      const courseCards = coursesGrid.querySelectorAll('.course-card');
+      
+      searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        
+        courseCards.forEach(card => {
+          const searchableText = card.dataset.searchText || '';
+          const isVisible = !query || searchableText.includes(query);
+          card.style.display = isVisible ? '' : 'none';
+        });
+        
+        // Update no results message
+        const visibleCards = Array.from(courseCards).filter(c => c.style.display !== 'none');
+        let noResults = coursesGrid.querySelector('.no-results');
+        
+        if (visibleCards.length === 0 && query) {
+          if (!noResults) {
+            noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.textContent = 'No courses match your search.';
+            coursesGrid.appendChild(noResults);
+          }
+        } else if (noResults) {
+          noResults.remove();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
