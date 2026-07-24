@@ -1,7 +1,7 @@
 {
   "name": "learning-hub",
   "version": "1.0.0",
-  "description": "Static website library for Teach sessions",
+  "description": "Static learning library across subjects",
   "type": "module",
   "scripts": {
     "build": "node build.js",
