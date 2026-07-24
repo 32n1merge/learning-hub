@@ -3,42 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{COURSE_TITLE}} — Learning Hub</title>
+  <title>{{COURSE_TITLE}} — 32N1 Learn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/styles.css">
+  <script>
+    (function() {
+      var stored = localStorage.getItem('theme-preference');
+      if (stored === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else if (!stored && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  
-  <header role="banner">
+
+  <header class="site-header" role="banner">
     <div class="container">
-      <h1><a href="/">Learning Hub</a></h1>
-      <nav role="navigation" aria-label="Course navigation">
-        <a href="/">← Back to Home</a>
+      <a href="/" class="site-brand" aria-label="32N1 Learn Home">32N1 Learn</a>
+      <nav class="site-nav" role="navigation" aria-label="Main navigation">
+        <a href="/#courses-grid" class="nav-link">Courses</a>
+        <a href="/#topics" class="nav-link">Topics</a>
+        <button class="nav-icon-btn theme-toggle" aria-label="Toggle theme" title="Toggle theme" onclick="toggleTheme()">
+          <span class="icon-dark" aria-hidden="true">🌙</span>
+          <span class="icon-light" aria-hidden="true">☀️</span>
+        </button>
       </nav>
     </div>
   </header>
-  
-  <main id="main-content" class="container" role="main">
-    <article class="course" aria-labelledby="course-title">
-      <h1 id="course-title">{{COURSE_TITLE}}</h1>
-      <p class="course-description">{{COURSE_DESCRIPTION}}</p>
-      <div class="course-meta">
-        <span>{{LESSON_COUNT_TEXT}}</span>
-      </div>
-      
+
+  <main id="main-content" role="main">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="separator" aria-hidden="true">/</span>
+        <span aria-current="page">{{COURSE_TITLE}}</span>
+      </nav>
+
+      <article class="course-header" aria-labelledby="course-title">
+        <h1 id="course-title">{{COURSE_TITLE}}</h1>
+        <p class="course-description">{{COURSE_DESCRIPTION}}</p>
+        <div class="course-meta-bar">
+          {{COURSE_DIFFICULTY}}
+          {{COURSE_DURATION}}
+          <span class="meta-item">{{LESSON_COUNT_TEXT}}</span>
+        </div>
+      </article>
+
       <section class="lessons" aria-labelledby="lessons-heading">
         <h2 id="lessons-heading">Lessons</h2>
         <ul role="list">
           {{LESSON_LIST}}
         </ul>
       </section>
-    </article>
+    </div>
   </main>
-  
-  <footer role="contentinfo">
+
+  <footer class="site-footer" role="contentinfo">
     <div class="container">
-      <p>Learning Hub — A curated collection of Teach sessions</p>
+      <span class="footer-brand">32N1 Learn</span>
+      <span>A curated collection of engineering knowledge</span>
+      <span class="footer-meta">Powered by 32N1</span>
     </div>
   </footer>
+
+  <script>
+    function toggleTheme() {
+      var html = document.documentElement;
+      var isDark = !html.hasAttribute('data-theme') || html.getAttribute('data-theme') !== 'light';
+      if (isDark) {
+        html.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme-preference', 'light');
+      } else {
+        html.removeAttribute('data-theme');
+        localStorage.setItem('theme-preference', 'dark');
+      }
+    }
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('theme-preference')) {
+        if (e.matches) document.documentElement.setAttribute('data-theme', 'light');
+        else document.documentElement.removeAttribute('data-theme');
+      }
+    });
+  </script>
 </body>
 </html>

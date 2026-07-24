@@ -3,76 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learning Hub</title>
+  <title>32N1 Learn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/styles.css">
   <script>
-    // Add no-js class for progressive enhancement
-    document.documentElement.classList.remove('no-js');
+    // Theme init — run before paint to prevent flash
+    (function() {
+      const stored = localStorage.getItem('theme-preference');
+      if (stored === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else if (!stored) {
+        if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      }
+      document.documentElement.classList.remove('no-js');
+    })();
   </script>
 </head>
 <body class="no-js">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  
-  <header role="banner">
+
+  <header class="site-header" role="banner">
     <div class="container">
-      <h1><a href="/">Learning Hub</a></h1>
-      <p class="tagline">Your personal library of knowledge</p>
+      <a href="/" class="site-brand" aria-label="32N1 Learn Home">32N1 Learn</a>
+      <nav class="site-nav" role="navigation" aria-label="Main navigation">
+        <a href="/#courses-grid" class="nav-link">Courses</a>
+        <a href="#topics" class="nav-link">Topics</a>
+        <button class="nav-icon-btn search-toggle" aria-label="Search (⌘K)" title="Search (⌘K)" onclick="document.getElementById('search-input').focus()">
+          <span aria-hidden="true">⌘K</span>
+        </button>
+        <button class="nav-icon-btn theme-toggle" aria-label="Toggle theme" title="Toggle theme" onclick="toggleTheme()">
+          <span class="icon-dark" aria-hidden="true">🌙</span>
+          <span class="icon-light" aria-hidden="true">☀️</span>
+        </button>
+      </nav>
     </div>
   </header>
-  
-  <main id="main-content" class="container" role="main">
+
+  <main id="main-content" role="main">
     <section class="search-section" aria-label="Search courses">
-      <label for="search-input" class="visually-hidden">Search courses</label>
-      <input 
-        type="text" 
-        id="search-input" 
-        class="search-input" 
-        placeholder="Search courses by title, description, tags, or category..."
-        aria-label="Search courses by title, description, tags, or category"
-      >
+      <div class="search-wrapper">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <label for="search-input" class="visually-hidden">Search courses</label>
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Search courses..."
+          aria-label="Search courses by title, description, or tags"
+        >
+        <span class="search-shortcut" aria-hidden="true"><kbd>⌘</kbd><kbd>K</kbd></span>
+      </div>
     </section>
-    
-    <section class="courses-grid" id="courses-grid" aria-label="Course list">
-      {{COURSE_CARDS}}
-    </section>
-  </main>
-  
-  <footer role="contentinfo">
+
     <div class="container">
-      <p>Learning Hub — A curated collection of Teach sessions</p>
+      <section class="courses-grid" id="courses-grid" aria-label="Course list">
+        {{COURSE_CARDS}}
+      </section>
+
+      {{RECENTLY_UPDATED}}
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <span class="footer-brand">32N1 Learn</span>
+      <span>A curated collection of engineering knowledge</span>
+      <span class="footer-meta">Powered by 32N1</span>
     </div>
   </footer>
-  
+
   <script>
-    // Client-side search functionality (progressive enhancement)
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = !html.hasAttribute('data-theme') || html.getAttribute('data-theme') !== 'light';
+      if (isDark) {
+        html.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme-preference', 'light');
+      } else {
+        html.removeAttribute('data-theme');
+        localStorage.setItem('theme-preference', 'dark');
+      }
+    }
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('theme-preference')) {
+        if (e.matches) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
+      }
+    });
+
+    // Search
     (function() {
-      const searchInput = document.getElementById('search-input');
-      const coursesGrid = document.getElementById('courses-grid');
-      const courseCards = coursesGrid.querySelectorAll('.course-card');
-      
-      searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        
-        courseCards.forEach(card => {
-          const searchableText = card.dataset.searchText || '';
-          const isVisible = !query || searchableText.includes(query);
-          card.style.display = isVisible ? '' : 'none';
+      var input = document.getElementById('search-input');
+      var grid = document.getElementById('courses-grid');
+      var cards = grid ? Array.from(grid.querySelectorAll('.course-card')) : [];
+
+      input.addEventListener('input', function(e) {
+        var query = e.target.value.toLowerCase().trim();
+        var visible = 0;
+
+        cards.forEach(function(card) {
+          var text = card.getAttribute('data-search-text') || '';
+          var match = !query || text.indexOf(query) !== -1;
+          card.style.display = match ? '' : 'none';
+          if (match) visible++;
         });
-        
-        // Update no results message
-        const visibleCards = Array.from(courseCards).filter(c => c.style.display !== 'none');
-        let noResults = coursesGrid.querySelector('.no-results');
-        
-        if (visibleCards.length === 0 && query) {
+
+        var noResults = grid.querySelector('.no-results');
+        if (visible === 0 && query) {
           if (!noResults) {
             noResults = document.createElement('div');
             noResults.className = 'no-results';
             noResults.setAttribute('role', 'status');
             noResults.textContent = 'No courses match your search.';
-            coursesGrid.appendChild(noResults);
+            grid.appendChild(noResults);
           }
         } else if (noResults) {
           noResults.remove();
+        }
+      });
+
+      // Keyboard shortcut: ⌘K / Ctrl+K
+      document.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+        // Arrow key navigation through visible cards
+        if (document.activeElement === input && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+          e.preventDefault();
+          var visibleCards = cards.filter(function(c) { return c.style.display !== 'none'; });
+          if (visibleCards.length > 0) {
+            var links = visibleCards.map(function(c) { return c.querySelector('h2 a'); }).filter(Boolean);
+            if (links.length > 0) {
+              links[0].focus();
+            }
+          }
         }
       });
     })();
