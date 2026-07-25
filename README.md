@@ -1,6 +1,6 @@
 # Learning Hub
 
-A static knowledge library of Teach sessions, deployed to Cloudflare Pages. Serves as a personal learning archive — not a platform, not dynamic, just clean pre-built HTML.
+A static learning library for useful courses across any subject, deployed to Cloudflare Pages. Serves as a personal learning library — not a platform, not dynamic, just clean pre-built HTML. Courses may come from Teach sessions, contributed content, or other workflows.
 
 ## Adding a New Course
 
