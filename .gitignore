@@ -2,6 +2,7 @@ node_modules/
 dist/
 .venv/
 browsers/
+test-results/
 
 # wrangler files
 .wrangler
