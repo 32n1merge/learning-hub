@@ -12,5 +12,3 @@ browsers/
 
 # test artifacts
 test-results/
-tests/*.py
-tests/__pycache__/
