@@ -1,0 +1,5 @@
+{
+  "title": "Advanced Techniques for Serious Automation",
+  "description": "Order-only prerequisites, grouped targets, .ONESHELL, parallel builds, conditionals, and Make's function library including $(shell), $(foreach), and $(eval).",
+  "readingTime": "12 min"
+}

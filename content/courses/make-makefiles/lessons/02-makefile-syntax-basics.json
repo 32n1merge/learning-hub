@@ -1,0 +1,5 @@
+{
+  "title": "Makefile Syntax — Rules, Targets, and Recipes",
+  "description": "Anatomy of a rule, your first Makefile, phony targets, comments, and the make command-line flags you'll use daily.",
+  "readingTime": "10 min"
+}

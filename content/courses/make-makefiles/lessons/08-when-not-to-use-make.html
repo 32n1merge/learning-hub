@@ -1,0 +1,182 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: When Make Is NOT the Right Tool</h2>
+
+<p>Make is 50 years old and still dominant — but it's not always the best answer. Knowing when <em>not</em> to use it is part of mastery. This lesson is a decision framework plus the alternatives you'll meet in the wild.</p>
+
+<h3>Make's Weaknesses, Honestly</h3>
+
+<ul>
+  <li><strong>Recipes are shell scripts.</strong> If your platform lacks POSIX shells (classic Windows <code>cmd.exe</code>), recipes break unless you bring your own shell (WSL, MSYS2, Git Bash).</li>
+  <li><strong>Whitespace sensitivity.</strong> The TAB requirement and <code>ifeq</code> column-0 rules are notorious footguns — every team has a "makefile broke because of spaces" story.</li>
+  <li><strong>Timestamp-based.</strong> It can miss changes when timestamps lie (Lesson 4). Content-addressable systems don't.</li>
+  <li><strong>Scales only so far.</strong> Huge dependency graphs (tens of thousands of files) make Make's re-evaluation slow — Ninja was invented for Chrome's scale.</li>
+  <li><strong>Not a package manager.</strong> Make won't fetch, version, or resolve your dependencies. That's CMake/Conan/vcpkg/npm territory.</li>
+  <li><strong>Debugging is primitive.</strong> <code>-d</code> output is a firehose; there's no step-debugger for Makefiles.</li>
+</ul>
+
+<h3>The Decision Framework</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
+      </marker>
+    </defs>
+
+    <rect x="180" y="15" width="200" height="40" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="280" y="40" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="bold">What are you building?</text>
+
+    <rect x="20" y="90" width="160" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="100" y="112" text-anchor="middle" fill="var(--color-text)" font-size="11">Files from files</text>
+    <text x="100" y="128" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">small-ish graph</text>
+    <rect x="200" y="90" width="160" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="280" y="112" text-anchor="middle" fill="var(--color-text)" font-size="11">Huge graph / cross-platform</text>
+    <text x="280" y="128" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Chrome-scale, Windows+Unix</text>
+    <rect x="380" y="90" width="160" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="460" y="112" text-anchor="middle" fill="var(--color-text)" font-size="11">Just task commands</text>
+    <text x="460" y="128" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">no real file deps</text>
+
+    <rect x="20" y="185" width="160" height="52" rx="8" fill="var(--color-success)"/>
+    <text x="100" y="207" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">✅ Use Make</text>
+    <text x="100" y="223" text-anchor="middle" fill="#000" font-size="10">pattern rules + deps</text>
+
+    <rect x="200" y="185" width="160" height="52" rx="8" fill="var(--color-warning)"/>
+    <text x="280" y="207" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">⚠️ CMake/Ninja/Meson</text>
+    <text x="280" y="223" text-anchor="middle" fill="#000" font-size="10">or Bazel for hermeticity</text>
+
+    <rect x="380" y="185" width="160" height="52" rx="8" fill="var(--color-danger)"/>
+    <text x="460" y="207" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Task / Just / scripts</text>
+    <text x="460" y="223" text-anchor="middle" fill="#fff" font-size="10">or the language's own tool</text>
+
+    <line x1="250" y1="55" x2="110" y2="90" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr8)"/>
+    <line x1="290" y1="55" x2="280" y2="90" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr8)"/>
+    <line x1="330" y1="55" x2="450" y2="90" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr8)"/>
+    <line x1="100" y1="142" x2="100" y2="185" stroke="var(--color-success)" stroke-width="1.5" marker-end="url(#arr8)"/>
+    <line x1="280" y1="142" x2="280" y2="185" stroke="var(--color-warning)" stroke-width="1.5" marker-end="url(#arr8)"/>
+    <line x1="460" y1="142" x2="460" y2="185" stroke="var(--color-danger)" stroke-width="1.5" marker-end="url(#arr8)"/>
+  </svg>
+</div>
+
+<h3>The Alternatives, and When They Win</h3>
+
+<table>
+  <tr><th>Tool</th><th>Best for</th><th>Why over Make</th></tr>
+  <tr><td><strong>CMake</strong></td><td>Cross-platform C/C++ with generators</td><td>Discovers compilers/libraries, generates Make or Ninja files, <code>cmake --build</code> abstracts away build specifics.</td></tr>
+  <tr><td><strong>Ninja</strong></td><td>Very large builds</td><td>Blazing fast incremental builds at Chrome-scale; usually a CMake/Meson backend, not written by hand.</td></tr>
+  <tr><td><strong>Meson</strong></td><td>Modern C/C++/Rust projects</td><td>Clean declarative syntax, built-in tests/installs, Ninja backend.</td></tr>
+  <tr><td><strong>Bazel / Buck / Pants</strong></td><td>Monorepos, hermetic builds</td><td>Content-addressed caching, sandboxed actions, language-agnostic, remote execution. Heavy machinery.</td></tr>
+  <tr><td><strong>Task / Just / Makefile.js</strong></td><td>Task-running without file deps</td><td>YAML (Task), friendly syntax (Just), no TAB gotchas, cross-platform recipes.</td></tr>
+  <tr><td><strong>Language-native tools</strong></td><td>Ecosystem builds</td><td><code>cargo build</code>, <code>npm build</code>, <code>go build</code> — the toolchain already knows its graph; a Makefile wrapper adds little.</td></tr>
+  <tr><td><strong>CI pipelines</strong></td><td>Orchestration (build → test → deploy)</td><td>GitHub Actions, GitLab CI, etc. have caching, matrices, and native steps. Make can <em>run inside</em> a step, but don't replace the pipeline with Make.</td></tr>
+</table>
+
+<h3>Where Make Still Wins (and Why It's Still Here)</h3>
+
+<ul>
+  <li><strong>Ubiquity:</strong> every Unix-like system ships it. Zero dependencies, zero install.</li>
+  <li><strong>Declarative file graphs:</strong> for "files derived from files," nothing is simpler or more portable than a Makefile.</li>
+  <li><strong>As a thin task-runner:</strong> <code>make lint test deploy</code> conventions are instantly readable by any developer.</li>
+  <li><strong>As glue:</strong> even in CMake/Ninja projects, a top-level Makefile often wraps the real build for humans.</li>
+</ul>
+
+<div class="callout">
+  <strong>Key idea:</strong> the question isn't "is Make good?" — it's "does my problem have a file-dependency graph?" If yes, Make (or a Make-like tool) is probably right. If you're orchestrating <em>commands</em>, not files, a task runner or CI system serves you better. And if your project is genuinely huge or cross-platform, let CMake/Ninja own the graph while Make stays the friendly front door.
+</div>
+
+<div class="callout-warn">
+  <strong>Anti-pattern:</strong> wrapping every <code>npm</code>/<code>cargo</code>/<code>go</code> command in a Make target adds a layer without adding dependency analysis. If the underlying tool already knows its graph, prefer its native commands — or limit Make to genuinely cross-cutting targets (lint, test, clean, docker).
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which of these is a genuine weakness of Make?</p>
+  <div class="quiz-opts" data-q="0" data-answer="d">
+    <button class="quiz-btn" data-opt="a">It's too slow for small projects</button>
+    <button class="quiz-btn" data-opt="b">It can't run shell commands</button>
+    <button class="quiz-btn" data-opt="c">It doesn't support variables</button>
+    <button class="quiz-btn" data-opt="d">Recipes depend on a POSIX shell, and timestamp checks can miss changes when clocks lie</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. You're building Chrome-scale C++ where incremental build speed is everything. Best tool?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A giant shell script</button>
+    <button class="quiz-btn" data-opt="b">Ninja (often driven by CMake or Meson)</button>
+    <button class="quiz-btn" data-opt="c">A Makefile with more targets</button>
+    <button class="quiz-btn" data-opt="d">GitHub Actions</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. A team wants friendly task commands (lint, test, docker) with no file dependencies. Best fit?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Write a Makefile anyway — it's the only option</button>
+    <button class="quiz-btn" data-opt="b">CMake with a Ninja backend</button>
+    <button class="quiz-btn" data-opt="c">A task runner like Task or Just — or a Makefile with a help target, if the team already knows Make</button>
+    <button class="quiz-btn" data-opt="d">Bazel</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://ninja-build.org/" target="_blank" rel="noopener">Ninja — a small build system with a focus on speed</a></li>
+  <li><a href="https://cmake.org/" target="_blank" rel="noopener">CMake — cross-platform build generator</a></li>
+  <li><a href="https://github.com/go-task/task" target="_blank" rel="noopener">Task — a task runner / simpler alternative to Make</a></li>
+  <li><a href="https://github.com/casey/just" target="_blank" rel="noopener">Just — a command runner with a friendlier syntax</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

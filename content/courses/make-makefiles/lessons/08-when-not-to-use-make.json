@@ -1,0 +1,5 @@
+{
+  "title": "When Make Is NOT the Right Tool",
+  "description": "Make's honest weaknesses, a build-vs-orchestrate decision framework, and the alternatives: CMake, Ninja, Meson, Bazel, Task, Just, and native toolchains.",
+  "readingTime": "10 min"
+}

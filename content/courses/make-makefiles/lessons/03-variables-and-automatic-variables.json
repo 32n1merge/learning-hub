@@ -1,0 +1,5 @@
+{
+  "title": "Variables and Automatic Variables",
+  "description": "The four assignment operators (=, :=, ?=, +=), command-line overrides, and the automatic variables $@, $&lt;, $^ that make rules reusable.",
+  "readingTime": "10 min"
+}

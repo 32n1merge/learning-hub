@@ -1,0 +1,196 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: Variables and Automatic Variables</h2>
+
+<p>Real Makefiles would be unreadable if you typed every compiler command in full. <span class="glossary-term">Variables</span> let you define values once and reuse them — and Make's <span class="glossary-term">automatic variables</span> hand you the current rule's target and prerequisites for free.</p>
+
+<h3>Defining and Using Variables</h3>
+
+<pre><code>CC      = gcc
+CFLAGS  = -Wall -O2
+TARGET  = myapp
+
+$(TARGET): main.o util.o
+	$(CC) $(CFLAGS) -o $(TARGET) main.o util.o</code></pre>
+
+<p>Reference a variable with <code>$(NAME)</code> (or <code>${NAME}</code>). Make expands it wherever it appears — in targets, prerequisites, and recipes.</p>
+
+<h3>The Four Assignment Operators</h3>
+
+<p>This is where newcomers get confused. The operator you choose changes <em>when</em> the value is expanded:</p>
+
+<table>
+  <tr><th>Operator</th><th>Name</th><th>Behavior</th></tr>
+  <tr><td><code>=</code></td><td>Recursive</td><td>Expanded every time it's used; can reference variables defined <em>later</em>. Flexible but can surprise you.</td></tr>
+  <tr><td><code>:=</code></td><td>Simple</td><td>Expanded immediately at definition time. Predictable — recommended for most cases.</td></tr>
+  <tr><td><code>?=</code></td><td>Conditional</td><td>Set only if not already defined. Perfect for user-overridable defaults.</td></tr>
+  <tr><td><code>+=</code></td><td>Append</td><td>Adds text to an existing variable.</td></tr>
+</table>
+
+<pre><code># Simple (:=) — evaluated NOW
+PREFIX := /usr/local
+
+# Conditional (?=) — only set if the user didn't pass one
+PREFIX ?= /opt/app
+
+# Append (+=) — adds to whatever's there
+CFLAGS += -g</code></pre>
+
+<div class="callout">
+  <strong>Key idea:</strong> use <code>:=</code> by default for predictability. Use <code>?=</code> for anything you want users to override on the command line (<code>make PREFIX=/tmp/foo</code>). Reach for <code>=</code> only when you genuinely need lazy evaluation.
+</div>
+
+<h3>Command-Line Overrides</h3>
+
+<p>Any variable can be overridden at invocation time, without editing the file:</p>
+
+<pre><code>$ make CFLAGS="-O0 -g" TARGET=debug-app</code></pre>
+
+<p>Command-line values beat file assignments (unless the file uses the <code>override</code> directive — rare, and usually a smell). This is how packaging systems and CI pipelines customize one Makefile for many environments.</p>
+
+<h3>Automatic Variables: $@, $&lt;, $^, and Friends</h3>
+
+<p>Inside a recipe, Make provides <span class="glossary-term">automatic variables</span> that describe the rule currently being executed. They're the secret to writing rules that work for <em>any</em> file:</p>
+
+<table>
+  <tr><th>Variable</th><th>Meaning</th></tr>
+  <tr><td><code>$@</code></td><td>The target of the current rule.</td></tr>
+  <tr><td><code>$&lt;</code></td><td>The first prerequisite.</td></tr>
+  <tr><td><code>$^</code></td><td>All prerequisites, deduplicated.</td></tr>
+  <tr><td><code>$+</code></td><td>All prerequisites, duplicates kept.</td></tr>
+  <tr><td><code>$?</code></td><td>Prerequisites that are <em>newer than the target</em> — the ones that triggered the rebuild.</td></tr>
+  <tr><td><code>$*</code></td><td>The "stem" matched by a pattern rule (Lesson 5).</td></tr>
+</table>
+
+<pre><code># A rule that compiles any single .c file into a .o file
+%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@
+
+# A link rule: $^ expands to all objects
+myapp: main.o util.o
+	$(CC) $(CFLAGS) -o $@ $^</code></pre>
+
+<p>When Make runs the pattern rule for <code>util.o</code>: <code>$@</code> becomes <code>util.o</code>, <code>$&lt;</code> becomes <code>util.c</code>. One rule, any number of files.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 190" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="30" width="500" height="130" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="60" text-anchor="middle" fill="var(--color-accent)" font-size="14" font-weight="bold">% pattern rule — one template, many files</text>
+    <text x="270" y="90" text-anchor="middle" fill="var(--color-text)" font-family="var(--font-mono)" font-size="13">%.o : %.c</text>
+    <text x="270" y="120" text-anchor="middle" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="12">$@ = main.o   $&lt; = main.c</text>
+    <text x="270" y="145" text-anchor="middle" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="12">$@ = util.o   $&lt; = util.c</text>
+  </svg>
+</div>
+
+<h3>Environment Variables and Make</h3>
+
+<p>Make automatically imports environment variables as Make variables. If your shell has <code>CFLAGS</code> exported, Make sees it — though file assignments take precedence. This is handy but can cause "works on my machine" surprises; a common hardening step is:</p>
+
+<pre><code>unexport CFLAGS   # ignore CFLAGS from the environment</code></pre>
+
+<h3>Naming Conventions That Matter</h3>
+
+<p>Make has strong conventions for certain variables, and following them unlocks free features:</p>
+
+<ul>
+  <li><code>CC</code> — the C compiler (defaults to <code>cc</code>).</li>
+  <li><code>CXX</code> — the C++ compiler.</li>
+  <li><code>CFLAGS</code> / <code>CXXFLAGS</code> — compiler flags.</li>
+  <li><code>LDFLAGS</code> / <code>LDLIBS</code> — linker flags and libraries.</li>
+  <li><code>PREFIX</code>, <code>DESTDIR</code> — install locations.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Pro tip:</strong> <code>make -p</code> prints the entire default database — every built-in variable and implicit rule. It's the best way to discover what Make knows out of the box.
+</div>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does the <code>:=</code> assignment operator do?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Appends to a variable</button>
+    <button class="quiz-btn" data-opt="b">Sets a variable only if it's not already defined</button>
+    <button class="quiz-btn" data-opt="c">Expands the value immediately at definition time</button>
+    <button class="quiz-btn" data-opt="d">Forces a variable to keep its old value</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. In the rule <code>%.o: %.c</code> being executed for <code>main.o</code>, what does <code>$@</code> expand to?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">main.o</button>
+    <button class="quiz-btn" data-opt="b">main.c</button>
+    <button class="quiz-btn" data-opt="c">%.o</button>
+    <button class="quiz-btn" data-opt="d">The first object file in the Makefile</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. How do you override a Makefile variable without editing the file?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">You can't — variables are fixed at parse time</button>
+    <button class="quiz-btn" data-opt="b">Set it with <code>export</code> in the Makefile</button>
+    <button class="quiz-btn" data-opt="c">Use <code>make --set VAR=value</code></button>
+    <button class="quiz-btn" data-opt="d">Pass it on the command line: <code>make CFLAGS="-O0 -g"</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Using-Variables" target="_blank" rel="noopener">GNU Make Manual — Using Variables</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Automatic-Variables" target="_blank" rel="noopener">GNU Make Manual — Automatic Variables</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Flavors" target="_blank" rel="noopener">GNU Make Manual — The Two Flavors of Variables</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

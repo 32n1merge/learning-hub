@@ -1,0 +1,228 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: A Real-World Project Makefile</h2>
+
+<p>Let's assemble everything so far into a Makefile that wouldn't look out of place in a serious C project: out-of-tree builds, automatic dependencies, user-overridable install paths, a test target, and tidy cleanup. Then we'll dissect each part.</p>
+
+<h3>The Project Layout</h3>
+
+<pre><code>project/
+├── Makefile
+├── src/
+│   ├── main.c
+│   ├── util.c
+│   └── util.h
+└── tests/
+    └── test_util.c</code></pre>
+
+<h3>The Makefile</h3>
+
+<pre><code># ---- User-overridable configuration ----
+CC      ?= cc
+CFLAGS  ?= -O2 -g
+PREFIX  ?= /usr/local
+CFLAGS  += -Wall -Wextra -MMD -MP
+
+# ---- Source discovery ----
+SRCS    := $(wildcard src/*.c)
+OBJS    := $(SRCS:.c=.o)
+DEPS    := $(OBJS:.o=.d)
+
+BIN     := bin/app
+
+.PHONY: all clean test install uninstall
+
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
+
+# Compile any src/*.c into its .o; -MMD -MP emits a .d dep file
+%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@
+
+# ---- Tests: link the test binary against the same objects ----
+TEST_BIN := bin/test_util
+$(TEST_BIN): tests/test_util.c $(OBJS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+# ---- Install / uninstall ----
+install: $(BIN)
+	install -Dm755 $(BIN) $(DESTDIR)$(PREFIX)/bin/$(notdir $(BIN))
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(notdir $(BIN))
+
+clean:
+	rm -rf bin $(OBJS) $(DEPS)
+
+# ---- Pull in compiler-generated header dependencies ----
+-include $(DEPS)</code></pre>
+
+<h3>Dissecting It, Piece by Piece</h3>
+
+<table>
+  <tr><th>Line</th><th>Why it's there</th></tr>
+  <tr><td><code>CC ?= cc</code></td><td><code>?=</code> sets a default that a user can override (<code>make CC=clang</code>).</td></tr>
+  <tr><td><code>CFLAGS ?= -O2 -g</code> then <code>CFLAGS += ...</code></td><td>Provide a sane default, then always append warnings and dep-generation flags.</td></tr>
+  <tr><td><code>SRCS := $(wildcard src/*.c)</code></td><td>Auto-discover sources — add a file, no Makefile edit.</td></tr>
+  <tr><td><code>OBJS := $(SRCS:.c=.o)</code></td><td>Substitution reference: the same list with <code>.o</code> endings.</td></tr>
+  <tr><td><code>@mkdir -p $(dir $@)</code></td><td><code>@</code> silences the echo; <code>$(dir $@)</code> extracts <code>bin/</code> from the target path.</td></tr>
+  <tr><td><code>$(BIN): $(OBJS)</code></td><td>Link only after every object is built — the graph handles ordering.</td></tr>
+  <tr><td><code>test: $(TEST_BIN)</code></td><td>Building the test binary is a prerequisite of running it. <code>make test</code> always tests a fresh build.</td></tr>
+  <tr><td><code>install -Dm755 ...</code></td><td><code>-D</code> creates parent dirs; <code>m755</code> sets executable mode; <code>DESTDIR</code> supports packaging (staged installs).</td></tr>
+  <tr><td><code>-include $(DEPS)</code></td><td>Loads the auto-generated header dependencies (Lesson 5), tolerating their absence on a clean build.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Key idea:</strong> this Makefile is <em>data</em>, not a script. The developer declares sources, flags, and targets; Make derives ordering, parallelism, and incremental behavior. Note how few commands are actually written — most lines are declarations.
+</div>
+
+<h3>Why It Works: The Graph in Action</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
+      </marker>
+    </defs>
+
+    <rect x="200" y="20" width="160" height="40" rx="8" fill="var(--color-accent)"/>
+    <text x="280" y="46" text-anchor="middle" fill="#000" font-size="13" font-weight="bold">bin/app</text>
+
+    <rect x="30" y="110" width="140" height="40" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="100" y="135" text-anchor="middle" fill="var(--color-text)" font-size="12">src/main.o</text>
+    <rect x="220" y="110" width="140" height="40" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="290" y="135" text-anchor="middle" fill="var(--color-text)" font-size="12">src/util.o</text>
+
+    <rect x="10" y="205" width="120" height="32" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="70" y="226" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">src/main.c</text>
+    <rect x="185" y="205" width="120" height="32" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="245" y="226" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">src/util.c</text>
+    <rect x="355" y="205" width="120" height="32" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="415" y="226" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">src/util.h</text>
+
+    <line x1="280" y1="60" x2="120" y2="110" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr6)"/>
+    <line x1="280" y1="60" x2="270" y2="110" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr6)"/>
+    <line x1="85" y1="150" x2="72" y2="205" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr6)"/>
+    <line x1="275" y1="150" x2="240" y2="205" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr6)"/>
+    <line x1="305" y1="150" x2="400" y2="205" stroke="var(--color-accent)" stroke-width="1.5" marker-end="url(#arr6)"/>
+    <line x1="115" y1="150" x2="175" y2="205" stroke="var(--color-accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr6)"/>
+
+    <text x="460" y="120" fill="var(--color-text-secondary)" font-size="11">dashed = header dep</text>
+    <text x="460" y="136" fill="var(--color-text-secondary)" font-size="11">(.d files, Lesson 5)</text>
+  </svg>
+</div>
+
+<p>Edit <code>util.h</code> → both objects rebuild (via the <code>.d</code> files) → <code>app</code> relinks. Edit only <code>main.c</code> → just <code>main.o</code> and the link. Run <code>make -j8</code> and independent objects compile concurrently. That's the payoff.</p>
+
+<h3>Going Further: Layering and Includes</h3>
+
+<p>As projects grow, developers split configuration out of the main file:</p>
+
+<pre><code># Makefile
+include config.mk          # version numbers, feature toggles
+-include local.mk          # optional per-developer overrides</code></pre>
+
+<p>Make's <code>include</code> works like C's <code>#include</code>: the included file's rules and variables merge into the same build. You can even generate files and include them (Lesson 7).</p>
+
+<div class="callout-warn">
+  <strong>Avoid recursive make</strong> (<code>make -C subdir</code>) for building: a sub-make can't see the parent's up-to-date state, so you lose cross-directory incremental builds and parallelism suffers. Keep one Makefile per project (or use <code>include</code>) unless you have a strong reason — this is one of the most-debated topics in Make land.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does <code>CC ?= cc</code> accomplish?</p>
+  <div class="quiz-opts" data-q="0" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Appends cc to the compiler path</button>
+    <button class="quiz-btn" data-opt="b">Errors if cc is not installed</button>
+    <button class="quiz-btn" data-opt="c">Only works with the cc compiler</button>
+    <button class="quiz-btn" data-opt="d">Sets CC to cc only if the user hasn't already defined it (e.g. via command line)</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. In the real-world Makefile, why does the <code>test</code> target have <code>$(TEST_BIN)</code> as a prerequisite?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Because test binaries must be linked before everything else</button>
+    <button class="quiz-btn" data-opt="b">So running <code>make test</code> always builds the freshest test binary first</button>
+    <button class="quiz-btn" data-opt="c">Because phony targets cannot have recipes</button>
+    <button class="quiz-btn" data-opt="d">It's unnecessary — Make always runs tests on the latest code</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why is "recursive make" (sub-makes per directory) discouraged?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It's much slower to type</button>
+    <button class="quiz-btn" data-opt="b">Sub-makes cannot read variables</button>
+    <button class="quiz-btn" data-opt="c">Sub-makes lose visibility into the parent's up-to-date state, hurting incremental builds and parallelism</button>
+    <button class="quiz-btn" data-opt="d">GNU Make doesn't support the -C flag</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Recursion" target="_blank" rel="noopener">GNU Make Manual — Recursive Use of Make (and why it's controversial)</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Include" target="_blank" rel="noopener">GNU Make Manual — Including Other Makefiles</a></li>
+  <li><a href="https://make.mad-scientist.net/papers/advanced-auto-dependency-generation/" target="_blank" rel="noopener">Advanced Auto-Dependency Generation (Paul D. Smith)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

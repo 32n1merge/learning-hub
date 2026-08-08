@@ -1,0 +1,198 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Pattern Rules, Wildcards, and Implicit Rules</h2>
+
+<p>Writing one rule per file is madness. <span class="glossary-term">Pattern rules</span> let you write <em>one</em> rule that matches <em>every</em> file of a given shape — and Make even ships a library of <span class="glossary-term">implicit rules</span> for common languages so you often don't need to write recipes at all.</p>
+
+<h3>Pattern Rules: One Rule, Infinite Files</h3>
+
+<p>A pattern rule uses <code>%</code> as a wildcard that matches any (possibly empty) string — the <span class="glossary-term">stem</span>:</p>
+
+<pre><code>%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
+
+<p>This says: "any <code>.o</code> file can be built from the corresponding <code>.c</code> file." When Make needs <code>util.o</code>, it matches the pattern with stem <code>util</code>, finds <code>util.c</code>, and runs the recipe with <code>$@</code> = <code>util.o</code>, <code>$&lt;</code> = <code>util.c</code>, <code>$*</code> = <code>util</code>.</p>
+
+<p>The stem is available as <code>$*</code> — handy when a recipe needs the name without the extension:</p>
+
+<pre><code>%.html: %.md
+	pandoc $&lt; -o $@ --metadata title="$*"</code></pre>
+
+<h3>Wildcards and the $(wildcard) Function</h3>
+
+<p>Shell wildcards (<code>*</code>, <code>?</code>, <code>[...]</code>) work in targets and prerequisites — but <em>not</em> the way you'd expect. They're expanded by the shell <em>inside recipes</em>, while in the rest of the Makefile they need the <code>$(wildcard ...)</code> function:</p>
+
+<pre><code># Works: wildcard function expands at parse time
+SRCS := $(wildcard src/*.c)
+OBJS := $(SRCS:.c=.o)
+
+# The classic bug: this often expands to nothing in prerequisites
+# app: src/*.o    ← DON'T write this</code></pre>
+
+<p><code>$(SRCS:.c=.o)</code> is <span class="glossary-term">substitution reference</span> — a shorthand that replaces <code>.c</code> with <code>.o</code> in every word of <code>SRCS</code>. The result: a list of object files that always matches your sources, automatically.</p>
+
+<h3>A Realistic "Auto-Growing" Makefile</h3>
+
+<p>Add a new <code>.c</code> file and this Makefile just works — no edits needed:</p>
+
+<pre><code>SRCS := $(wildcard src/*.c)
+OBJS := $(SRCS:.c=.o)
+
+app: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@
+
+clean:
+	rm -f app $(OBJS)</code></pre>
+
+<h3>Implicit Rules: Make's Built-in Library</h3>
+
+<p>Make knows how to build common file types out of the box. The most famous: <em>a <code>.o</code> from a <code>.c</code></em>. In fact, the pattern rule above is nearly identical to Make's built-in:</p>
+
+<pre><code># built-in: uses CC, CFLAGS, CPPFLAGS, TARGET_ARCH
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $&lt; -o $@</code></pre>
+
+<p>Because of that, you can often <em>omit</em> recipes entirely:</p>
+
+<pre><code>app: main.o util.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+# no %.o: %.c rule needed — Make's implicit rule handles it</code></pre>
+
+<p>Built-in implicit rules cover <code>.c → .o</code>, <code>.cpp → .o</code>, <code>.c → executable</code>, <code>.tex → .pdf</code>, <code>.y → .c</code> (yacc), <code>.l → .c</code> (lex), and more. See them all with <code>make -p</code>.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> implicit rules are just pattern rules that ship with Make, driven by convention-named variables (<code>CC</code>, <code>CFLAGS</code>…). That's why naming your variables <code>CC</code> and <code>CFLAGS</code> matters — you plug into free behavior.
+</div>
+
+<h3>Automatic Dependency Generation (the Header Problem Solved)</h3>
+
+<p>Lesson 4's "missing dependency" bug has a clean fix. Compilers can emit a <span class="glossary-term">dependency file</span> (.d) listing every header a source includes:</p>
+
+<pre><code>DEPS := $(OBJS:.o=.d)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -MMD -MP -c $&lt; -o $@
+
+# pull generated .d files in as extra prerequisites
+-include $(DEPS)</code></pre>
+
+<ul>
+  <li><code>-MMD</code> — write a <code>.d</code> file next to each <code>.o</code>, listing included headers.</li>
+  <li><code>-MP</code> — add phony targets for missing headers, avoiding errors during cleanup.</li>
+  <li><code>-include</code> — include the <code>.d</code> files if they exist, without erroring on first build.</li>
+</ul>
+
+<p>Now edit any header and Make recompiles every object that includes it — precisely, automatically, no hand-maintained lists. This single pattern is the difference between a hobby Makefile and a professional one.</p>
+
+<h3>Other Graph Tools: VPATH, .DEFAULT_GOAL, .DEFAULT</h3>
+
+<ul>
+  <li><code>VPATH = src include</code> — directories Make searches for prerequisites it can't find in the current directory. Great for keeping sources separate from build output.</li>
+  <li><code>.DEFAULT_GOAL := app</code> — explicitly choose the default target instead of relying on "first rule wins."</li>
+  <li><code>.DEFAULT:</code> — a rule run when Make needs a target with no other matching rule. Usually a debugging aid.</li>
+</ul>
+
+<pre><code>VPATH = src
+app: main.o
+	$(CC) -o $@ $^
+
+# Make finds src/main.c via VPATH and builds main.o in the current dir</code></pre>
+
+<div class="callout-warn">
+  <strong>Watch out:</strong> wildcards in <em>prerequisites</em> only expand if the files exist when Make parses the file. New files added later (e.g. by a codegen step) won't be picked up mid-build — regenerate the list or restart Make. This is why the "two-pass Makefile" pattern exists in advanced projects.
+</div>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. In the pattern rule <code>%.o: %.c</code> building <code>util.o</code>, what does <code>$*</code> expand to?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">util.o</button>
+    <button class="quiz-btn" data-opt="b">util</button>
+    <button class="quiz-btn" data-opt="c">util.c</button>
+    <button class="quiz-btn" data-opt="d">The full path to util.c</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What does <code>SRCS := $(wildcard src/*.c)</code> do?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Compiles all .c files in src</button>
+    <button class="quiz-btn" data-opt="b">Deletes all .c files in src</button>
+    <button class="quiz-btn" data-opt="c">Expands to the list of existing .c files in src at parse time</button>
+    <button class="quiz-btn" data-opt="d">Matches any .c file that will exist in the future</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does <code>-include $(DEPS)</code> use <code>-include</code> instead of plain <code>include</code>?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">So Make doesn't error when the .d files don't exist yet (first build)</button>
+    <button class="quiz-btn" data-opt="b">To include the files in the background</button>
+    <button class="quiz-btn" data-opt="c">So the dependencies are ignored completely</button>
+    <button class="quiz-btn" data-opt="d">It's just stylistic — both work identically</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Pattern-Rules" target="_blank" rel="noopener">GNU Make Manual — Pattern Rules</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Wildcard-Function" target="_blank" rel="noopener">GNU Make Manual — The function $(wildcard)</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Automatic-Prerequisites" target="_blank" rel="noopener">GNU Make Manual — Generating Prerequisites Automatically</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

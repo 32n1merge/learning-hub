@@ -1,0 +1,217 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: Advanced Techniques for Serious Automation</h2>
+
+<p>You now know enough Make to build real projects. This lesson collects the power tools: order-only prerequisites, grouped targets, shell control, parallelism, conditionals, and Make's function library — the features that separate "Makefile author" from "Makefile wizard."</p>
+
+<h3>Order-Only Prerequisites: "Ensure Exists, Don't Trigger Rebuild"</h3>
+
+<p>Normally, a newer prerequisite triggers a rebuild — always. But some prerequisites shouldn't: a directory you need to exist shouldn't cause the target to rebuild every time. Put them after <code>|</code>:</p>
+
+<pre><code>bin/app: $(OBJS) | bin
+	$(CC) -o $@ $^
+
+bin:
+	mkdir -p bin</code></pre>
+
+<p><code>bin</code> is an <span class="glossary-term">order-only prerequisite</span>: Make ensures it exists (and builds it if missing), but its timestamp never triggers a rebuild of <code>bin/app</code>. Perfect for output directories — without it, your binary would relink on every <code>make</code>.</p>
+
+<h3>Grouped Targets: One Command, Many Outputs</h3>
+
+<p>Some tools emit several files from a single invocation (a parser and its header; a report and its chart). GNU Make 4.3+ lets a recipe claim <em>all</em> targets at once with <code>&amp;:</code>:</p>
+
+<pre><code>parser.c parser.h &: grammar.y
+	yacc -d grammar.y    # produces both files
+	mv y.tab.c parser.c
+	mv y.tab.h parser.h</code></pre>
+
+<p>With <code>&amp;:</code>, if <em>either</em> output is stale, the recipe runs once and both files are considered updated. (Without it, Make may run the recipe twice or get confused — a classic multi-output trap.)</p>
+
+<h3>Controlling the Shell: .ONESHELL and .SHELLFLAGS</h3>
+
+<p>By default, each recipe line runs in its <em>own</em> shell. That's why <code>cd dir</code> on one line doesn't affect the next — and why you'll see <code>cd dir &amp;&amp; cmd</code> crammed on one line. Two remedies:</p>
+
+<pre><code>.ONESHELL:              # run the whole recipe in ONE shell
+.SHELLFLAGS = -e -c     # stop on the first failing command
+
+target:
+	cd build
+	./configure
+	make -C . install</code></pre>
+
+<p><code>.ONESHELL</code> is clean but changes semantics — with it, a failing line no longer aborts the recipe by itself, so pair it with <code>.SHELLFLAGS = -e -c</code> to get fail-fast behavior. For most recipes, the classic <code>cd dir &amp;&amp; cmd</code> is simpler.</p>
+
+<h3>Parallel Builds: -j, the Jobserver, and -l</h3>
+
+<p>Make can run independent recipes concurrently — the graph guarantees only truly independent work is parallelized:</p>
+
+<pre><code>make -j8          # up to 8 jobs at once
+make -j           # unlimited (risky; usually omit)
+make -l 4         # only start jobs if load average &lt; 4</code></pre>
+
+<p>GNU Make shares a <span class="glossary-term">jobserver</span> with sub-makes, so nested invocations don't oversubscribe your CPU. Typical use: <code>make -j$(nproc)</code> on Linux or <code>make -j$(sysctl -n hw.ncpu)</code> on macOS. Your recipe must be safe to run in parallel: no two targets writing the same file, and shared intermediates should be explicit prerequisites.</p>
+
+<div class="callout-warn">
+  <strong>Parallel safety:</strong> if two recipes both <code>mkdir -p bin</code>, that's fine. If two both <em>write</em> <code>generated.h</code>, you have a race. Rules of thumb: put shared outputs in the dependency graph, and use order-only prerequisites for directories.
+</div>
+
+<h3>Conditionals: ifeq / ifneq / ifdef</h3>
+
+<p>Make evaluates conditionals at parse time — before any recipe runs:</p>
+
+<pre><code>ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else
+    EXE :=
+endif
+
+ifdef DEBUG
+    CFLAGS += -g -O0
+else
+    CFLAGS += -O2
+endif</code></pre>
+
+<p>Conditionals are how one Makefile serves many environments. Note the syntax quirks: <code>ifeq</code> needs the comma inside the parens, and the <code>else</code>/<code>endif</code> must start at column 0.</p>
+
+<h3>The Function Library: $(shell), $(foreach), $(call), and Friends</h3>
+
+<p>Make's real power lies in its <span class="glossary-term">functions</span> — text processing that runs at parse time:</p>
+
+<table>
+  <tr><th>Function</th><th>What it does</th></tr>
+  <tr><td><code>$(shell cmd)</code></td><td>Run a shell command, capture stdout (e.g. <code>$(shell git rev-parse HEAD)</code>).</td></tr>
+  <tr><td><code>$(wildcard *.c)</code></td><td>Expand filesystem wildcards.</td></tr>
+  <tr><td><code>$(foreach var,list,body)</code></td><td>Loop over words, building output.</td></tr>
+  <tr><td><code>$(call name,args...)</code></td><td>Call a user-defined function.</td></tr>
+  <tr><td><code>$(filter pat...,text)</code></td><td>Keep words matching a pattern.</td></tr>
+  <tr><td><code>$(patsubst a%,b%,text)</code></td><td>Pattern substitution on words.</td></tr>
+  <tr><td><code>$(notdir path)</code> / <code>$(dir path)</code></td><td>Strip to filename / keep directory.</td></tr>
+  <tr><td><code>$(addprefix pre,list)</code></td><td>Prefix every word (e.g. <code>obj/</code>).</td></tr>
+</table>
+
+<p>A taste — user-defined functions and <code>$(foreach)</code>:</p>
+
+<pre><code># User-defined function: compile one file
+define COMPILE
+$(1).o: $(1).c
+	$(CC) $(CFLAGS) -c $$&lt; -o $$@
+endef
+
+# Generate a rule for each source (note $$ escapes in define)
+$(foreach src,$(SOURCES),$(eval $(call COMPILE,$(basename $(src)))))
+
+# Capture version at parse time
+VERSION := $(shell git describe --tags --always)</code></pre>
+
+<p>Yes, that's the deep end — <code>$(eval)</code> writes rules at parse time, and <code>$$</code> defers expansion inside <code>define</code> blocks. You rarely need this, but when you do, nothing else can do it.</p>
+
+<h3>Self-Documenting Makefiles: The help Target</h3>
+
+<p>Teams love a <code>make help</code>. The trick: put a <code>##</code> comment next to each target, then use <code>$(shell grep ...)</code> to render them:</p>
+
+<pre><code>.PHONY: help
+help:                 ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
+	  | awk -F':.*?## ' '{printf "  %-14s %s\n", $$1, $$2}'
+
+build:                ## Compile the project
+	$(CC) -o app $(OBJS)
+test:                 ## Run the test suite
+	./app --test</code></pre>
+
+<p>Running <code>make help</code> prints a tidy, always-current command list — the poor man's CLI, and genuinely useful in repos where "how do I build this?" is a FAQ.</p>
+
+<div class="callout-success">
+  <strong>Pro tip:</strong> this pattern turns Make into a lightweight task runner (build/test/lint/clean/deploy targets) for projects in <em>any</em> language — one of the most common uses of Make in modern repos. Lesson 8 discusses when that's appropriate and when it isn't.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does the <code>|</code> in <code>bin/app: $(OBJS) | bin</code> do?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Makes bin/app depend on bin's contents</button>
+    <button class="quiz-btn" data-opt="b">Declares bin an order-only prerequisite: ensure it exists, but never let it trigger a rebuild</button>
+    <button class="quiz-btn" data-opt="c">Pipes the recipe output into bin</button>
+    <button class="quiz-btn" data-opt="d">Makes bin a phony target</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why is <code>.ONESHELL</code> usually paired with <code>.SHELLFLAGS = -e -c</code>?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">To make recipes run faster</button>
+    <button class="quiz-btn" data-opt="b">To enable parallel builds</button>
+    <button class="quiz-btn" data-opt="c">To disable shell expansion</button>
+    <button class="quiz-btn" data-opt="d">So the recipe stops on the first failing command, restoring fail-fast behavior</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What does <code>$(shell git rev-parse HEAD)</code> evaluate to?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The word "HEAD"</button>
+    <button class="quiz-btn" data-opt="b">The git executable's path</button>
+    <button class="quiz-btn" data-opt="c">The current commit hash, captured when Make parses the file</button>
+    <button class="quiz-btn" data-opt="d">Nothing — functions can't run shell commands</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Parallel" target="_blank" rel="noopener">GNU Make Manual — Parallel Execution</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Functions" target="_blank" rel="noopener">GNU Make Manual — Functions for Transforming Text</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Conditional-Syntax" target="_blank" rel="noopener">GNU Make Manual — Conditional Syntax</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

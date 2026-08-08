@@ -1,0 +1,209 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: Makefile Syntax — Rules, Targets, and Recipes</h2>
+
+<p>Every Makefile is built from <span class="glossary-term">rules</span>. A rule says: <em>this target depends on these prerequisites, and here's how to build it.</em> That's the entire syntax, and it's compact enough to learn in one sitting.</p>
+
+<h3>The Anatomy of a Rule</h3>
+
+<pre><code>target: prerequisites...
+&lt;TAB&gt;recipe line 1
+&lt;TAB&gt;recipe line 2</code></pre>
+
+<p>Three parts:</p>
+<ul>
+  <li><strong>Target</strong> — the file (or named action) this rule produces.</li>
+  <li><strong>Prerequisites</strong> — files that must exist and be up to date before the target is built.</li>
+  <li><strong>Recipe</strong> — shell commands, each on its own line, <strong>indented with a TAB character</strong>.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>The classic gotcha:</strong> recipe lines must start with a TAB, not spaces. If you indent with spaces, Make fails with <code>*** missing separator. Stop.</code> This trips up everyone at least once — configure your editor to insert a literal tab in Makefiles.
+</div>
+
+<h3>Your First Makefile</h3>
+
+<p>Save this as <code>Makefile</code>:</p>
+
+<pre><code>hello.txt: hello.in
+	cp hello.in hello.txt</code></pre>
+
+<p>Run <code>make</code> and you'll see:</p>
+
+<pre><code>$ make
+cp hello.in hello.txt</code></pre>
+
+<p>Make ran the recipe because <code>hello.txt</code> didn't exist yet. Run it again:</p>
+
+<pre><code>$ make
+make: 'hello.txt' is up to date.</code></pre>
+
+<p>Because <code>hello.txt</code> is now <em>newer</em> than <code>hello.in</code>, there's nothing to do. This is the incremental-build behavior from Lesson 1, and you just witnessed it.</p>
+
+<h3>Multiple Rules and the Default Goal</h3>
+
+<p>Makefiles usually define many rules. The first target in the file is the <span class="glossary-term">default goal</span> — what plain <code>make</code> builds:</p>
+
+<pre><code>all: hello.txt report.md
+
+hello.txt: hello.in
+	cp hello.in hello.txt
+
+report.md: data.csv
+	python3 render_report.py data.csv report.md</code></pre>
+
+<p>Here <code>all</code> has no recipe of its own — it just groups prerequisites, so <code>make</code> builds both <code>hello.txt</code> and <code>report.md</code>. You can still build one specifically: <code>make hello.txt</code>.</p>
+
+<h3>Phony Targets: Actions That Aren't Files</h3>
+
+<p>Some targets don't produce a file at all — they're actions. <code>clean</code> is the classic example:</p>
+
+<pre><code>.PHONY: clean
+clean:
+	rm -f hello.txt report.md</code></pre>
+
+<p><code>.PHONY</code> tells Make: "this target doesn't correspond to a real file, so always run its recipe — don't check timestamps." Without it, a stray file named <code>clean</code> would make <code>make clean</code> silently do nothing. Declare every action-style target as <code>.PHONY</code>.</p>
+
+<h3>Comments and Command-Line Basics</h3>
+
+<p><code>#</code> starts a comment. And the <code>make</code> command itself has a few flags you'll use constantly:</p>
+
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td><code>make</code></td><td>Build the default goal (first target).</td></tr>
+  <tr><td><code>make target</code></td><td>Build a specific target (e.g. <code>make clean</code>).</td></tr>
+  <tr><td><code>make -n</code></td><td>Dry run — print commands without executing them.</td></tr>
+  <tr><td><code>make -B</code></td><td>Force — rebuild everything regardless of timestamps.</td></tr>
+  <tr><td><code>make -f mymake</code></td><td>Use a file with a different name.</td></tr>
+  <tr><td><code>make -C subdir</code></td><td>Change directory first, then run Make there.</td></tr>
+  <tr><td><code>make -j4</code></td><td>Run up to 4 recipes in parallel (Lesson 7).</td></tr>
+</table>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
+      </marker>
+    </defs>
+    <rect x="30" y="70" width="150" height="60" rx="10" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="105" y="94" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="bold">target</text>
+    <text x="105" y="114" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">file to produce</text>
+
+    <rect x="380" y="20" width="150" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="455" y="47" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">prerequisites</text>
+
+    <rect x="380" y="136" width="150" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="455" y="163" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">prerequisites</text>
+
+    <line x1="180" y1="85" x2="380" y2="42" stroke="var(--color-accent)" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="180" y1="115" x2="380" y2="158" stroke="var(--color-accent)" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+    <rect x="210" y="170" width="140" height="24" rx="6" fill="var(--color-accent)"/>
+    <text x="280" y="186" text-anchor="middle" fill="#000" font-size="11">recipe commands</text>
+    <line x1="280" y1="170" x2="280" y2="130" stroke="var(--color-accent)" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<h3>Rules With Multiple Targets</h3>
+
+<p>One rule can produce several files at once — useful when a single command generates multiple outputs:</p>
+
+<pre><code>output.a output.b: input.txt
+	split_input input.txt</code></pre>
+
+<p>Make treats this as a shorthand for two rules sharing the same recipe. If either output is missing, both are rebuilt.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> A rule with no prerequisites and a recipe is just "run this command" (<code>clean</code>). A rule with prerequisites and no recipe is just "make sure these exist" (<code>all</code>). The language is small; the power comes from composing rules into graphs.
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What must every recipe line in a Makefile start with?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Four spaces</button>
+    <button class="quiz-btn" data-opt="b">A TAB character</button>
+    <button class="quiz-btn" data-opt="c">A colon</button>
+    <button class="quiz-btn" data-opt="d">A hash symbol</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. When you run plain <code>make</code>, which target gets built by default?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The target named "all" if it exists</button>
+    <button class="quiz-btn" data-opt="b">Every target in the file</button>
+    <button class="quiz-btn" data-opt="c">The first target defined in the Makefile</button>
+    <button class="quiz-btn" data-opt="d">The target named "default"</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What does declaring a target as <code>.PHONY</code> do?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Makes Make always run its recipe, even if a file with that name exists</button>
+    <button class="quiz-btn" data-opt="b">Makes Make skip the target entirely</button>
+    <button class="quiz-btn" data-opt="c">Makes the target a prerequisite of everything</button>
+    <button class="quiz-btn" data-opt="d">Marks the target as undeletable</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Rule-Syntax" target="_blank" rel="noopener">GNU Make Manual — Rule Syntax</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Introduction" target="_blank" rel="noopener">GNU Make Manual — Introduction to Makefiles</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

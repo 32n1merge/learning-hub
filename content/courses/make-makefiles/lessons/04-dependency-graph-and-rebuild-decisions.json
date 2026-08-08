@@ -1,0 +1,5 @@
+{
+  "title": "The Dependency Graph — How Make Decides What to Rebuild",
+  "description": "Timestamps, depth-first graph walking, header dependencies, phony targets, and debugging with -n, -d, and -W.",
+  "readingTime": "10 min"
+}

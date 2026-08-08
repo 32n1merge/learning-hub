@@ -1,0 +1,270 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 1rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout strong { color: var(--color-accent); }
+  .quiz-block { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.5rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  #score-display { background: var(--color-accent); color: #000; padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); font-size: 1.2rem; font-weight: 700; display: none; text-align: center; margin: 1.5rem 0; }
+  .score-legend { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-sm); display: none; }
+  .score-legend.grade-a { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+  .score-legend.grade-b { display: block; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+  .score-legend.grade-c { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+  .badge { display: inline-block; font-size: 1.4rem; margin-left: 0.5rem; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+</style>
+
+<h2>🎓 The Grand Quiz</h2>
+
+<p>Eight lessons, one brain. Time to prove you can <em>think</em> in Make.</p>
+<p>This quiz covers every lesson. <strong>16 questions. No time limit. No partial credit.</strong> Your score appears at the end.</p>
+
+<div class="quiz-block" id="final-quiz">
+  <h3>Section 1: Foundations (Lessons 1–2)</h3>
+
+  <p class="quiz-q">1. What is the single core idea that makes Make powerful?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It compiles code faster than any other tool</button>
+    <button class="quiz-btn" data-opt="b">It caches compiler output in memory</button>
+    <button class="quiz-btn" data-opt="c">You declare a file-dependency graph, and Make derives the minimal rebuild work from it</button>
+    <button class="quiz-btn" data-opt="d">It watches directories and auto-runs scripts</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Your recipe line is indented with four spaces and Make says "missing separator." Why?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The recipe is too long</button>
+    <button class="quiz-btn" data-opt="b">Recipe lines must start with a TAB character, not spaces</button>
+    <button class="quiz-btn" data-opt="c">The target name contains a dot</button>
+    <button class="quiz-btn" data-opt="d">You forgot the .PHONY declaration</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <h3>Section 2: Variables &amp; the Graph (Lessons 3–4)</h3>
+
+  <p class="quiz-q">3. Which assignment operator expands a variable immediately at definition time?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">=</button>
+    <button class="quiz-btn" data-opt="b">+=</button>
+    <button class="quiz-btn" data-opt="c">?=</button>
+    <button class="quiz-btn" data-opt="d">:=</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. In <code>%.o: %.c</code> building <code>main.o</code>, what does <code>$&lt;</code> expand to?</p>
+  <div class="quiz-opts" data-q="3" data-answer="a">
+    <button class="quiz-btn" data-opt="a">main.c</button>
+    <button class="quiz-btn" data-opt="b">main.o</button>
+    <button class="quiz-btn" data-opt="c">cc</button>
+    <button class="quiz-btn" data-opt="d">The stem "main"</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <p class="quiz-q">5. Make decides to rebuild a target when...</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The Makefile changed since the last build</button>
+    <button class="quiz-btn" data-opt="b">The target is missing or a prerequisite has a newer timestamp</button>
+    <button class="quiz-btn" data-opt="c">Any source file in the tree changed</button>
+    <button class="quiz-btn" data-opt="d">The target's content hash differs from last time</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <h3>Section 3: Patterns &amp; Real Projects (Lessons 5–6)</h3>
+
+  <p class="quiz-q">6. Which snippet auto-discovers all C sources?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">SRCS := src/*.c</button>
+    <button class="quiz-btn" data-opt="b">SRCS := $(find src *.c)</button>
+    <button class="quiz-btn" data-opt="c">SRCS := $(wildcard src/*.c)</button>
+    <button class="quiz-btn" data-opt="d">SRCS := src/*.c +</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <p class="quiz-q">7. How do you make header edits trigger recompiles of every file that includes them?</p>
+  <div class="quiz-opts" data-q="6" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Add every header to every rule by hand</button>
+    <button class="quiz-btn" data-opt="b">Run make -B after every edit</button>
+    <button class="quiz-btn" data-opt="c">Add headers to the .PHONY list</button>
+    <button class="quiz-btn" data-opt="d">Use compiler-generated .d dependency files (-MMD -MP) and -include them</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. What does <code>CC ?= cc</code> mean?</p>
+  <div class="quiz-opts" data-q="7" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Use cc unless CC is already defined (e.g. by the user on the command line)</button>
+    <button class="quiz-btn" data-opt="b">Always use cc, ignoring everything else</button>
+    <button class="quiz-btn" data-opt="c">Ask the user which compiler to use</button>
+    <button class="quiz-btn" data-opt="d">Compile with cc only in debug mode</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3>Section 4: Advanced &amp; Judgment (Lessons 7–8)</h3>
+
+  <p class="quiz-q">9. What is an order-only prerequisite (the <code>| bin</code> in <code>app: $(OBJS) | bin</code>) for?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Speeding up builds by skipping checks</button>
+    <button class="quiz-btn" data-opt="b">Ensuring something exists (like a directory) without ever triggering rebuilds</button>
+    <button class="quiz-btn" data-opt="c">Declaring phony targets inline</button>
+    <button class="quiz-btn" data-opt="d">Piping the target into another rule</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. With <code>.ONESHELL</code> enabled, why should you also set <code>.SHELLFLAGS = -e -c</code>?</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">To make recipes run in parallel</button>
+    <button class="quiz-btn" data-opt="b">To disable shell globbing</button>
+    <button class="quiz-btn" data-opt="c">To restore fail-fast behavior so a failing line stops the recipe</button>
+    <button class="quiz-btn" data-opt="d">To use bash instead of sh</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <p class="quiz-q">11. You need to run up to 8 build jobs at once. What command?</p>
+  <div class="quiz-opts" data-q="10" data-answer="d">
+    <button class="quiz-btn" data-opt="a">make --fast</button>
+    <button class="quiz-btn" data-opt="b">make -B</button>
+    <button class="quiz-btn" data-opt="c">make -n8</button>
+    <button class="quiz-btn" data-opt="d">make -j8</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. A project has no real file dependencies — just commands like lint, docker, and deploy. What's the most fitting tool?</p>
+  <div class="quiz-opts" data-q="11" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A task runner like Task or Just — or a Makefile if the team already knows Make</button>
+    <button class="quiz-btn" data-opt="b">Ninja — it's the fastest at everything</button>
+    <button class="quiz-btn" data-opt="c">Bazel — hermetic builds are always better</button>
+    <button class="quiz-btn" data-opt="d">A CI pipeline only</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <p class="quiz-q">13. When is the "recursive make" pattern (sub-makes per directory) most likely to hurt you?</p>
+  <div class="quiz-opts" data-q="12" data-answer="c">
+    <button class="quiz-btn" data-opt="a">On very small projects</button>
+    <button class="quiz-btn" data-opt="b">When using -j parallelism on one machine</button>
+    <button class="quiz-btn" data-opt="c">When cross-directory dependencies need precise incremental rebuilds — sub-makes can't see the parent's state</button>
+    <button class="quiz-btn" data-opt="d">When the Makefile is shorter than 50 lines</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. What does the <code>@</code> prefix on a recipe line do?</p>
+  <div class="quiz-opts" data-q="13" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Runs the line in the background</button>
+    <button class="quiz-btn" data-opt="b">Suppresses echoing the command before running it</button>
+    <button class="quiz-btn" data-opt="c">Marks the line as order-only</button>
+    <button class="quiz-btn" data-opt="d">Ignores errors on that line</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <p class="quiz-q">15. A teammate changes a header, runs make, and nothing rebuilds — stale behavior appears later. Most likely cause?</p>
+  <div class="quiz-opts" data-q="14" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Make is broken; switch to Ninja</button>
+    <button class="quiz-btn" data-opt="b">The header is .PHONY so it's skipped</button>
+    <button class="quiz-btn" data-opt="c">The Makefile uses := too much</button>
+    <button class="quiz-btn" data-opt="d">The header dependency isn't declared (missing from prerequisites or .d files) — the classic missing-dependency bug</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. Best summary of when to use Make?</p>
+  <div class="quiz-opts" data-q="15" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Never — it's a 1976 relic</button>
+    <button class="quiz-btn" data-opt="b">Always — it's the only build tool</button>
+    <button class="quiz-btn" data-opt="c">When your problem is "files derived from files" — and as a thin task-runner front door even in bigger projects</button>
+    <button class="quiz-btn" data-opt="d">Only for C projects on Linux</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+</div>
+
+<div id="score-display"></div>
+<div class="score-legend" id="score-legend"></div>
+
+<h3 style="margin-top:2.5rem">Where to Go Next</h3>
+<p>You've got the model. Now practice it in the wild:</p>
+<ul>
+  <li><strong>Rewrite something you already build by hand.</strong> Take a manual compile/run routine and turn it into a Makefile — any language works.</li>
+  <li><strong>Add a <code>help</code> target</strong> to a repo you maintain (Lesson 7 pattern) and watch teammates start using <code>make</code>.</li>
+  <li><strong>Introduce automatic dependency generation</strong> (<code>-MMD -MP</code> + <code>-include</code>) to a C/C++ project that hand-lists headers.</li>
+  <li><strong>Read a famous Makefile.</strong> The Linux kernel's, a well-known OSS project's, or the GNU Make source's own Makefile — each is a masterclass.</li>
+  <li><strong>Try the alternatives once each</strong> (Ninja, CMake, Just, Task) so your "when not to use Make" instinct is grounded in experience, not hearsay.</li>
+</ul>
+
+<div class="callout">
+  <strong>Final Word:</strong> Make is one of the most durable tools in software — not because it's perfect, but because its model (declarative file graphs, incremental rebuilds) is fundamentally right. Master the core, respect its limits, and you'll write build pipelines that outlast frameworks and fads.
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('final-quiz');
+  if (!qb) return;
+  var correct = 0;
+  var total = 16;
+  var answered = {};
+
+  function updateScore() {
+    var answeredCount = Object.keys(answered).length;
+    if (answeredCount &lt; total) return;
+    var pct = Math.round(correct / total * 100);
+    var scoreDiv = document.getElementById('score-display');
+    var legendDiv = document.getElementById('score-legend');
+    scoreDiv.style.display = 'block';
+    var grade, emoji, color, className;
+    if (pct &gt;= 90) {
+      grade = 'A — Makefile wizard. You understand the graph.';
+      emoji = '🏆';
+      className = 'grade-a';
+    } else if (pct &gt;= 75) {
+      grade = 'B — Solid. You can build real projects with Make.';
+      emoji = '🚀';
+      className = 'grade-b';
+    } else {
+      grade = 'C or below — Worth a second pass through the lessons.';
+      emoji = '💡';
+      color = 'var(--color-danger)';
+      className = 'grade-c';
+    }
+
+    scoreDiv.innerHTML = 'Score: ' + correct + '/' + total + ' (' + pct + '%) <span class="badge">' + emoji + '</span>';
+    legendDiv.className = 'score-legend ' + className;
+    legendDiv.innerHTML = '<strong>' + grade + '</strong><br><small>' +
+      (pct &gt;= 90 ? 'You are ready to apply these ideas: go build something with a Makefile this week — and try the advanced techniques (order-only prerequisites, .ONESHELL, the help target) on a real project.' :
+       pct &gt;= 75 ? 'You have the core ideas. Re-read Lessons 5 (pattern rules and auto-deps) and 7 (advanced techniques) — those are where everyday Makefiles get their power.' :
+       'Go back through the lessons — especially Lesson 2 (syntax) and Lesson 4 (the dependency graph) — then take the quiz again. Make is a small language; a couple of passes will cement it.') + '</small>';
+  }
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = parseInt(opts.getAttribute('data-q'));
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+
+    if (answered[qn]) return;
+
+    var allBtns = opts.querySelectorAll('.quiz-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      correct++;
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+
+    updateScore();
+  });
+})();
+</script>

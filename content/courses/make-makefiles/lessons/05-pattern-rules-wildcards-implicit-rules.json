@@ -1,0 +1,5 @@
+{
+  "title": "Pattern Rules, Wildcards, and Implicit Rules",
+  "description": "One rule for every file with %, the $(wildcard) function, Make's built-in implicit rules, and automatic header dependency generation.",
+  "readingTime": "10 min"
+}

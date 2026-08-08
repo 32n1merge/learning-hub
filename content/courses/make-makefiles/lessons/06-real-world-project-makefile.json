@@ -1,0 +1,5 @@
+{
+  "title": "A Real-World Project Makefile",
+  "description": "A production-grade C project Makefile dissected: auto-discovery, install paths, test targets, and why to avoid recursive make.",
+  "readingTime": "12 min"
+}

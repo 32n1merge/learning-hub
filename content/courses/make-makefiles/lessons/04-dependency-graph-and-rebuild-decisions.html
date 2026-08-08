@@ -1,0 +1,223 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: The Dependency Graph — How Make Decides What to Rebuild</h2>
+
+<p>Make's superpower is that it <em>remembers</em> what needs doing. Every prerequisite edge in your Makefile builds a <span class="glossary-term">dependency graph</span> — a directed acyclic graph (DAG) of files — and Make's job is to walk that graph and do the minimum work required to bring a target up to date.</p>
+
+<h3>The One Rule That Drives Everything</h3>
+
+<div class="callout">
+  <strong>Key idea:</strong> Make rebuilds a target if and only if the target is missing, <em>or</em> any of its prerequisites is newer than the target (has a more recent modification time). Otherwise it says "up to date" and does nothing.
+</div>
+
+<p>That's it. No content hashing, no change detection — just <span class="glossary-term">timestamps</span> compared recursively. Simple, fast, and exactly right for most build pipelines. (It's also why Make can be fooled by clock skew or by touching files — more on that below.)</p>
+
+<h3>Walking the Graph: A Worked Example</h3>
+
+<p>Consider this Makefile:</p>
+
+<pre><code>app: main.o util.o
+	cc -o app main.o util.o
+
+main.o: main.c main.h
+	cc -c main.c -o main.o
+
+util.o: util.c util.h
+	cc -c util.c -o util.o</code></pre>
+
+<p>You edit <code>util.c</code> and run <code>make</code>. Here's the decision process, step by step:</p>
+
+<ol>
+  <li>Default goal is <code>app</code>. Is <code>app</code> missing or older than a prerequisite? <em>Check its prerequisites first.</em></li>
+  <li><code>main.o</code> — is it older than <code>main.c</code> or <code>main.h</code>? <strong>No</strong>. Up to date, skip.</li>
+  <li><code>util.o</code> — is it older than <code>util.c</code>? <strong>Yes</strong> (you just edited it). Rebuild <code>util.o</code>.</li>
+  <li>Now back to <code>app</code>: <code>util.o</code> is now newer than <code>app</code>. Relink <code>app</code>.</li>
+</ol>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
+      </marker>
+    </defs>
+
+    <rect x="210" y="20" width="140" height="44" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="280" y="47" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="bold">app (relink)</text>
+
+    <rect x="60" y="120" width="140" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="130" y="147" text-anchor="middle" fill="var(--color-text)" font-size="12">main.o ✓ up to date</text>
+
+    <rect x="360" y="120" width="150" height="44" rx="8" fill="var(--color-accent)"/>
+    <text x="435" y="147" text-anchor="middle" fill="#000" font-size="12" font-weight="bold">util.o — rebuild</text>
+
+    <rect x="30" y="200" width="100" height="30" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="80" y="220" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">main.c</text>
+    <rect x="140" y="200" width="100" height="30" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="190" y="220" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">main.h</text>
+    <rect x="385" y="200" width="100" height="30" rx="6" fill="var(--color-warning)"/>
+    <text x="435" y="220" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">util.c ✏️ edited</text>
+    <rect x="495" y="200" width="60" height="30" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="525" y="220" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">util.h</text>
+
+    <line x1="280" y1="64" x2="155" y2="120" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr4)"/>
+    <line x1="280" y1="64" x2="420" y2="120" stroke="var(--color-accent)" stroke-width="1.5" marker-end="url(#arr4)"/>
+    <line x1="120" y1="164" x2="85" y2="200" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr4)"/>
+    <line x1="140" y1="164" x2="175" y2="200" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr4)"/>
+    <line x1="420" y1="164" x2="425" y2="200" stroke="var(--color-accent)" stroke-width="1.5" marker-end="url(#arr4)"/>
+    <line x1="450" y1="164" x2="510" y2="200" stroke="var(--color-text-secondary)" stroke-width="1.2" marker-end="url(#arr4)"/>
+  </svg>
+</div>
+
+<p>Only <code>util.o</code> is recompiled; <code>main.o</code> is untouched; <code>app</code> is relinked once. On a huge project this is the difference between a 2-second build and a 30-minute one.</p>
+
+<h3>Depth-First, Prerequisites First</h3>
+
+<p>Make always builds <em>prerequisites before targets</em>, recursively. This means:</p>
+
+<ul>
+  <li>You never need to order rules in a Makefile for execution — Make figures out the order from the graph.</li>
+  <li>Each prerequisite is built at most once per invocation, even if several targets share it.</li>
+  <li>If a prerequisite can't be built (rule missing, command fails), Make stops and reports the error.</li>
+</ul>
+
+<h3>Why Header Dependencies Matter</h3>
+
+<p>Notice in the example that <code>main.o</code> depends on <code>main.h</code> <em>and</em> <code>main.c</code>. If you change a header that many files include, you must list it as a prerequisite of each object file, or Make won't know to recompile them. Hand-maintaining these lists is miserable — Lesson 5 shows how compilers generate dependency lists automatically.</p>
+
+<div class="callout-warn">
+  <strong>Common failure:</strong> the "missing dependency" bug. File <code>foo.c</code> includes <code>foo.h</code>, but the Makefile only lists <code>foo.c</code>. Edit <code>foo.h</code>, run make — nothing rebuilds, and you link stale objects. Symptom: weird runtime behavior after a header edit. Cure: automatic dependency generation (Lesson 5).
+</div>
+
+<h3>Phony Targets Revisited — and .DEFAULT_GOAL</h3>
+
+<p><code>.PHONY</code> targets never correspond to files, so Make always runs them. Two more graph tools you'll use:</p>
+
+<pre><code>.DEFAULT_GOAL := all   # choose which target plain `make` builds
+
+.PHONY: all clean test
+all: app
+clean:
+	rm -f app *.o
+test: app
+	./app --test</code></pre>
+
+<p>Note that <code>test</code> lists <code>app</code> as a prerequisite — so <code>make test</code> builds the binary first, then runs it. That's the idiom for "action that requires the build."</p>
+
+<h3>Debugging the Graph</h3>
+
+<p>Make gives you great tools for inspecting its decisions:</p>
+
+<table>
+  <tr><th>Command</th><th>What it shows</th></tr>
+  <tr><td><code>make -n</code></td><td>Print the commands it <em>would</em> run, without running them.</td></tr>
+  <tr><td><code>make -d</code></td><td>Massive debug output — every file considered, every timestamp compared.</td></tr>
+  <tr><td><code>make --debug=b</code></td><td>Basic debugging: which targets are considered out of date and why.</td></tr>
+  <tr><td><code>make -W file</code></td><td>Pretend <code>file</code> was just modified — useful to see what a change would trigger.</td></tr>
+  <tr><td><code>touch file; make</code></td><td>Actually bump a file's timestamp to force a rebuild chain.</td></tr>
+</table>
+
+<h3>Limitations of the Timestamp Model</h3>
+
+<p>Timestamps are fast but dumb. Three situations to know about:</p>
+
+<ul>
+  <li><strong>Clock skew:</strong> if a source file's timestamp is in the future (bad NTP, timezone mishap, <code>git checkout</code> quirks), Make may never rebuild it. Fix: <code>make clean</code> or <code>touch</code> the sources.</li>
+  <li><strong>Same-second edits:</strong> if you edit a source within the same second as its object was built, Make may see equal timestamps and skip the rebuild. Rare, but <code>make -B</code> forces the issue.</li>
+  <li><strong>Content changes with old timestamps:</strong> <code>git checkout old-branch</code> can leave files with identical mtimes. A <code>make clean</code> is the reliable reset.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Pro tip:</strong> when in doubt, <code>make clean</code> and rebuild. It's the universal reset button — costs a full build, but eliminates the entire class of timestamp confusion.
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Make rebuilds a target when...</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Its contents changed (Make hashes every file)</button>
+    <button class="quiz-btn" data-opt="b">The target is missing, or any prerequisite is newer than the target</button>
+    <button class="quiz-btn" data-opt="c">Any file in the project directory changed</button>
+    <button class="quiz-btn" data-opt="d">The Makefile was modified</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. If <code>app: main.o util.o</code>, you edit <code>main.c</code> only, and both objects already exist — what does <code>make</code> do?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Rebuilds everything from scratch</button>
+    <button class="quiz-btn" data-opt="b">Nothing — it's all up to date</button>
+    <button class="quiz-btn" data-opt="c">Recompiles main.o, then relinks app; util.o is untouched</button>
+    <button class="quiz-btn" data-opt="d">Rebuilds util.o first, then main.o</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You change <code>util.h</code>, which <code>util.c</code> includes — but <code>util.o</code>'s rule only lists <code>util.c</code> as a prerequisite. What happens?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Make rebuilds nothing — the missing header dependency hides the change</button>
+    <button class="quiz-btn" data-opt="b">Make recompiles util.o because it always checks includes</button>
+    <button class="quiz-btn" data-opt="c">Make crashes with a "missing dependency" error</button>
+    <button class="quiz-btn" data-opt="d">Make rebuilds the whole project to be safe</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Goals" target="_blank" rel="noopener">GNU Make Manual — Goals and Default Goals</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Phony-Targets" target="_blank" rel="noopener">GNU Make Manual — Phony Targets</a></li>
+  <li><a href="https://www.gnu.org/software/make/manual/make.html#Instead-of-Execution" target="_blank" rel="noopener">GNU Make Manual — Instead of Execution (dry-run, -W)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
