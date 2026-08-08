@@ -1,0 +1,5 @@
+{
+  "title": "Immutability — State as a Value",
+  "description": "Shared mutable state as the root of bugs, structural sharing, and the reducer pattern for managing state without mutation.",
+  "readingTime": "10 min"
+}

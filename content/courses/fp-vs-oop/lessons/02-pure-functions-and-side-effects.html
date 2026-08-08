@@ -1,0 +1,173 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Heart of FP — Pure Functions</h2>
+
+<p>Everything in functional programming flows from one idea: the <span class="glossary-term">pure function</span>. A pure function has exactly two properties:</p>
+<ol>
+  <li><strong>Deterministic</strong> — the same inputs always produce the same output.</li>
+  <li><strong>Side-effect free</strong> — it never touches anything outside its inputs and return value.</li>
+</ol>
+
+<pre><code>// IMPURE — mutates external state and prints
+let total = 0;
+function addToTotal(x) {
+  total += x;                // mutates a variable outside itself
+  console.log("added " + x); // I/O side effect
+  return total;
+}
+
+// PURE — nothing but input → output
+function add(a, b) {
+  return a + b;              // that's it
+}</code></pre>
+
+<h3>Side Effects: The Hit List</h3>
+<p>Anything a function does besides returning a value from its inputs counts as a side effect:</p>
+<ul>
+  <li>Mutating a variable, array, or object outside the function</li>
+  <li>Writing to disk, the network, or a database</li>
+  <li>Printing to the console</li>
+  <li>Reading the current time or a random number</li>
+  <li>Changing the DOM or global configuration</li>
+</ul>
+
+<p>Each of these makes behavior depend on <em>when</em> and <em>where</em> the function runs — which is exactly what makes bugs hard to reproduce.</p>
+
+<h3>Referential Transparency</h3>
+<p>An expression is <span class="glossary-term">referentially transparent</span> when you can replace it with its value without changing the program's behavior. Pure functions give you this property, which means you can reason about code like algebra: if <code>double(21)</code> always equals <code>42</code>, you can substitute freely. This is what makes refactoring safe and debugging surgical.</p>
+
+<div class="callout">
+  <strong>Not a ban:</strong> Functional programs <em>do</em> print, talk to databases, and call the network. The trick is <strong>isolating</strong> side effects at the edges of the program while keeping the core pure — a pattern called "functional core, imperative shell" that we'll visit in Lesson 8. Purity is about containment, not abstinence.
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="pureArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9CA3AF"/></marker>
+    </defs>
+    <text x="20" y="28" fill="var(--color-success)" font-size="13" font-weight="600">PURE</text>
+    <rect x="40" y="42" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="95" y="69" text-anchor="middle" fill="var(--color-text)" font-size="11">input</text>
+    <line x1="150" y1="64" x2="205" y2="64" stroke="#9CA3AF" stroke-width="2" marker-end="url(#pureArrow)"/>
+    <rect x="210" y="42" width="130" height="44" rx="8" fill="var(--color-surface)" stroke="#22C55E" stroke-width="1.5"/>
+    <text x="275" y="69" text-anchor="middle" fill="var(--color-text)" font-size="11">pure function</text>
+    <line x1="340" y1="64" x2="395" y2="64" stroke="#9CA3AF" stroke-width="2" marker-end="url(#pureArrow)"/>
+    <rect x="400" y="42" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="455" y="69" text-anchor="middle" fill="var(--color-text)" font-size="11">output</text>
+    <text x="275" y="112" text-anchor="middle" fill="var(--color-success)" font-size="10.5">same input → same output · nothing else touched</text>
+
+    <text x="20" y="152" fill="var(--color-danger)" font-size="13" font-weight="600">IMPURE</text>
+    <rect x="40" y="166" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="95" y="193" text-anchor="middle" fill="var(--color-text)" font-size="11">input</text>
+    <line x1="150" y1="188" x2="205" y2="188" stroke="#9CA3AF" stroke-width="2" marker-end="url(#pureArrow)"/>
+    <rect x="210" y="166" width="130" height="44" rx="8" fill="var(--color-surface)" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="275" y="193" text-anchor="middle" fill="var(--color-text)" font-size="11">impure function</text>
+    <line x1="340" y1="188" x2="395" y2="188" stroke="#9CA3AF" stroke-width="2" marker-end="url(#pureArrow)"/>
+    <rect x="400" y="166" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="455" y="193" text-anchor="middle" fill="var(--color-text)" font-size="11">output?</text>
+    <line x1="260" y1="210" x2="180" y2="230" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="150" y="240" text-anchor="middle" fill="#EF4444" font-size="10">mutates globals</text>
+    <line x1="290" y1="210" x2="340" y2="230" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="380" y="240" text-anchor="middle" fill="#EF4444" font-size="10">prints · I/O</text>
+  </svg>
+</div>
+
+<h3>Why Purity Wins</h3>
+<table>
+  <tr><th>Concern</th><th>What purity gives you</th></tr>
+  <tr><td><strong>Testing</strong></td><td>No mocks, no setup, no cleanup. Call it, assert on the return value, done.</td></tr>
+  <tr><td><strong>Predictability</strong></td><td>A function can't secretly change the state of your app or library.</td></tr>
+  <tr><td><strong>Caching</strong></td><td>Same input ⇒ same output, so results can be memoized safely.</td></tr>
+  <tr><td><strong>Parallelism</strong></td><td>Pure functions share nothing, so they can run on multiple cores without locks.</td></tr>
+  <tr><td><strong>Composability</strong></td><td>Functions that don't meddle combine reliably — the topic of Lesson 4.</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which of the following is a pure function?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A function that reads the current time and returns it</button>
+    <button class="quiz-btn" data-opt="b">A function that appends to a global log array and returns its length</button>
+    <button class="quiz-btn" data-opt="c">A function that multiplies two numbers and returns the result</button>
+    <button class="quiz-btn" data-opt="d">A function that prints a receipt to the console</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. "Referential transparency" means:</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The code has no comments in it</button>
+    <button class="quiz-btn" data-opt="b">An expression can be replaced with its value without changing program behavior</button>
+    <button class="quiz-btn" data-opt="c">Every variable is declared with const</button>
+    <button class="quiz-btn" data-opt="d">The function can access any variable it wants</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Functional programs still do I/O and talk to databases. How is that reconciled with purity?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Side effects are isolated at the edges of the program, keeping the core pure</button>
+    <button class="quiz-btn" data-opt="b">They cheat by using classes for the I/O parts</button>
+    <button class="quiz-btn" data-opt="c">Purity only applies to functions under 10 lines long</button>
+    <button class="quiz-btn" data-opt="d">It isn't reconciled — real programs can't be functional</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Pure_function" target="_blank" rel="noopener">Pure function — Wikipedia</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Referential_transparency" target="_blank" rel="noopener">Referential transparency — Wikipedia</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,164 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: Head-to-Head</h2>
+
+<p>Time for the fight. Both paradigms can build anything — the real question is where each one makes life <em>easier</em>, and where it makes life <em>harder</em>.</p>
+
+<h3>The Comparison Table</h3>
+<table>
+  <tr><th>Concern</th><th>Functional Programming</th><th>Object-Oriented Programming</th></tr>
+  <tr><td><strong>Mental model</strong></td><td>A pipeline of transformations over data</td><td>A society of objects exchanging messages</td></tr>
+  <tr><td><strong>State</strong></td><td>Explicit values, immutable; flows through functions</td><td>Hidden inside objects, mutated via methods</td></tr>
+  <tr><td><strong>Testing</strong></td><td>Pure calls — no mocks or setup</td><td>Often needs mocks and state setup</td></tr>
+  <tr><td><strong>Concurrency</strong></td><td>Immutable data = no shared-state races</td><td>Shared mutable objects require locks and discipline</td></tr>
+  <tr><td><strong>Code reuse</strong></td><td>Function composition and higher-order functions</td><td>Inheritance and interface polymorphism</td></tr>
+  <tr><td><strong>Refactoring</strong></td><td>Swap pipeline stages; local, predictable changes</td><td>Changing a base class can ripple through hierarchies</td></tr>
+  <tr><td><strong>Learning curve</strong></td><td>Requires unlearning loops/mutation habits</td><td>Intuitive for modeling real-world things</td></tr>
+  <tr><td><strong>Ecosystem gravity</strong></td><td>Data, finance, distributed systems, tooling libraries</td><td>Enterprise stacks (Java/Spring, C#/.NET), UI frameworks</td></tr>
+</table>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 250" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="20" width="225" height="170" rx="12" fill="var(--color-surface)" stroke="#22C55E" stroke-width="1.5"/>
+    <text x="132" y="45" text-anchor="middle" fill="#22C55E" font-size="13" font-weight="600">FUNCTIONAL</text>
+    <line x1="35" y1="55" x2="230" y2="55" stroke="var(--color-border)"/>
+    <g font-size="10.5">
+      <text x="45" y="75" fill="var(--color-text)">· pure functions, explicit flow</text>
+      <text x="45" y="95" fill="var(--color-text)">· immutable data, no hidden state</text>
+      <text x="45" y="115" fill="var(--color-text)">· testable with zero mocks</text>
+      <text x="45" y="135" fill="var(--color-text)">· parallel-safe by construction</text>
+      <text x="45" y="155" fill="var(--color-text)">· composition = reuse</text>
+      <text x="45" y="175" fill="var(--color-text-secondary)" font-size="9.5">strong in: data, concurrency, rules</text>
+    </g>
+    <rect x="275" y="20" width="225" height="170" rx="12" fill="var(--color-surface)" stroke="#2EA8FF" stroke-width="1.5"/>
+    <text x="387" y="45" text-anchor="middle" fill="#2EA8FF" font-size="13" font-weight="600">OBJECT-ORIENTED</text>
+    <line x1="290" y1="55" x2="485" y2="55" stroke="var(--color-border)"/>
+    <g font-size="10.5">
+      <text x="300" y="75" fill="var(--color-text)">· state + behavior bundled</text>
+      <text x="300" y="95" fill="var(--color-text)">· encapsulation hides complexity</text>
+      <text x="300" y="115" fill="var(--color-text)">· polymorphism = pluggable</text>
+      <text x="300" y="135" fill="var(--color-text)">· natural for entities with identity</text>
+      <text x="300" y="155" fill="var(--color-text)">· huge enterprise ecosystem</text>
+      <text x="300" y="175" fill="var(--color-text-secondary)" font-size="9.5">strong in: UIs, domains, frameworks</text>
+    </g>
+    <text x="260" y="125" text-anchor="middle" fill="var(--color-text-secondary)" font-size="16" font-weight="700">VS</text>
+    <text x="260" y="225" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">neither is stronger — each hides a different kind of complexity</text>
+  </svg>
+</div>
+
+<h3>Where FP Hurts</h3>
+<ul>
+  <li><strong>Readability ceiling:</strong> over-abstracted, point-free code can turn into a wall of symbols. Discipline matters.</li>
+  <li><strong>Naturally stateful problems:</strong> games, editors, and interactive simulations are all about mutable state; you end up fighting the paradigm (or using clever tricks like state machines).</li>
+  <li><strong>I/O awkwardness:</strong> input, output, and user interaction sit uncomfortably at the edges and need explicit handling (monads, effects, or a shell).</li>
+  <li><strong>Performance care:</strong> naive immutability costs; structural sharing and lazy evaluation mitigate it, but you must know your tools.</li>
+</ul>
+
+<h3>Where OOP Hurts</h3>
+<ul>
+  <li><strong>Hidden shared state:</strong> the #1 source of "works on my machine" bugs. Any object can be mutated by any caller at any time.</li>
+  <li><strong>Deep inheritance:</strong> the fragile base class problem — hierarchies grow rigid and break in surprising ways.</li>
+  <li><strong>Mock-heavy tests:</strong> behavior welded to state means tests verify implementation details, not outcomes.</li>
+  <li><strong>Concurrency:</strong> shared mutable objects need locks, atomics, and careful design — easy to get wrong under load.</li>
+</ul>
+
+<h3>The Honest Truth</h3>
+<p>Both paradigms can handle all problems. The difference is <strong>where complexity hides</strong>:</p>
+<ul>
+  <li>FP makes data flow explicit and hides nothing — logic bugs are easy to find, but stateful interactions need discipline.</li>
+  <li>OOP hides complexity inside objects — large systems stay navigable, but the hidden coupling breeds bugs that are hard to find.</li>
+</ul>
+
+<div class="callout">
+  <strong>Reality check:</strong> virtually every production codebase is a blend. JavaScript/TypeScript, Kotlin, Rust, Python, and C# all support both styles, and the best code uses each where it fits. Purity is a spectrum, not a badge of honor.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which is a genuine advantage of FP for concurrent systems?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It uses fewer CPU cores</button>
+    <button class="quiz-btn" data-opt="b">Immutable data means no shared-state races to begin with</button>
+    <button class="quiz-btn" data-opt="c">It automatically distributes work across the network</button>
+    <button class="quiz-btn" data-opt="d">It disables garbage collection in production</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the most common source of OOP bugs in large systems?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Too many pure functions</button>
+    <button class="quiz-btn" data-opt="b">Lack of inheritance</button>
+    <button class="quiz-btn" data-opt="c">Hidden shared mutable state coupled across distant objects</button>
+    <button class="quiz-btn" data-opt="d">Using interfaces instead of abstract classes</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does FP testing usually need fewer mocks than OOP testing?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Pure functions take explicit inputs and return explicit outputs, so tests just assert on results</button>
+    <button class="quiz-btn" data-opt="b">Functional code is never tested</button>
+    <button class="quiz-btn" data-opt="c">Functional languages ship with built-in test databases</button>
+    <button class="quiz-btn" data-opt="d">There are no bugs in functional programs</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms" target="_blank" rel="noopener">Comparison of programming paradigms — Wikipedia</a></li>
+  <li><a href="https://www.thoughtworks.com/insights/blog/microservices/functional-style-microservices" target="_blank" rel="noopener">Functional style microservices — ThoughtWorks</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

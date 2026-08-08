@@ -1,0 +1,158 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: Two Ways of Thinking</h2>
+
+<p>Before you write the first line of any non-trivial program, you've already made a decision — whether you know it or not. You've picked a <span class="glossary-term">programming paradigm</span>: a mental model for how programs should be structured. Every paradigm answers two questions:</p>
+<ul>
+  <li><strong>Where does behavior live?</strong></li>
+  <li><strong>How does data move through the program?</strong></li>
+</ul>
+
+<p>Object-oriented programming (OOP) and functional programming (FP) give <em>opposite</em> answers — and both answers are right, in the right context.</p>
+
+<div class="callout">
+  <strong>OOP's answer:</strong> Behavior lives in <em>objects</em> — bundles of state and methods. Data moves by objects sending messages to each other. Your program is a <em>society of interacting entities</em>.
+</div>
+
+<div class="callout">
+  <strong>FP's answer:</strong> Behavior lives in <em>pure functions</em> — input goes in, output comes out, nothing else happens. Data flows through functions as explicit values. Your program is a <em>pipeline of transformations</em>.
+</div>
+
+<h3>The Spectrum: Imperative → Declarative</h3>
+<p>These two answers sit on a deeper spectrum. <span class="glossary-term">Imperative</span> code tells the computer <em>how</em> to do something, step by step. <span class="glossary-term">Declarative</span> code describes <em>what</em> you want and lets the machinery figure out the steps. SQL, HTML, and regular expressions are declarative: you state the result, not the loop. FP leans hard toward the declarative end.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 190" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="specGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#EF4444"/>
+        <stop offset="100%" stop-color="#22C55E"/>
+      </linearGradient>
+      <marker id="arrowSpec" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9CA3AF"/></marker>
+    </defs>
+    <line x1="30" y1="60" x2="490" y2="60" stroke="url(#specGrad)" stroke-width="6" stroke-linecap="round"/>
+    <text x="60" y="40" text-anchor="middle" fill="#EF4444" font-size="13" font-weight="600">Imperative — HOW</text>
+    <text x="460" y="40" text-anchor="middle" fill="#22C55E" font-size="13" font-weight="600">Declarative — WHAT</text>
+    <line x1="40" y1="95" x2="480" y2="95" stroke="var(--color-border)" stroke-width="1" marker-end="url(#arrowSpec)"/>
+    <g font-size="10.5" text-anchor="middle">
+      <text x="95" y="120" fill="var(--color-text)">C · Java</text>
+      <text x="95" y="134" fill="var(--color-text-secondary)">step-by-step</text>
+      <text x="225" y="120" fill="var(--color-text)">JS · Python</text>
+      <text x="225" y="134" fill="var(--color-text-secondary)">both styles</text>
+      <text x="360" y="120" fill="var(--color-text)">SQL · HTML</text>
+      <text x="360" y="134" fill="var(--color-text-secondary)">state the result</text>
+      <text x="460" y="120" fill="var(--color-text)">Haskell</text>
+      <text x="460" y="134" fill="var(--color-text-secondary)">pure FP</text>
+      <line x1="95" y1="100" x2="95" y2="110" stroke="var(--color-border)" stroke-width="1"/>
+      <line x1="225" y1="100" x2="225" y2="110" stroke="var(--color-border)" stroke-width="1"/>
+      <line x1="360" y1="100" x2="360" y2="110" stroke="var(--color-border)" stroke-width="1"/>
+      <line x1="460" y1="100" x2="460" y2="110" stroke="var(--color-border)" stroke-width="1"/>
+    </g>
+    <text x="260" y="175" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Paradigms aren't binary — every language sits somewhere on this line</text>
+  </svg>
+</div>
+
+<h3>A (Very) Brief History</h3>
+<ul>
+  <li><strong>1940s–70s · Procedural:</strong> Fortran, C. Step-by-step instructions, functions that mutate global state.</li>
+  <li><strong>1950s–70s · Seeds of both:</strong> Lisp introduces first-class functions (FP). Smalltalk invents objects and messages (OOP).</li>
+  <li><strong>1980s–90s · OOP goes mainstream:</strong> C++, Java — "everything is an object" becomes the enterprise default.</li>
+  <li><strong>2000s–now · The FP renaissance:</strong> Haskell, Scala, F#, Elixir go production-grade, and FP features (map, reduce, immutability, pattern matching) invade JavaScript, TypeScript, Python, Kotlin, Rust, and even Java's streams.</li>
+</ul>
+
+<p>Why the comeback? Three forces: <strong>multi-core CPUs</strong> (shared mutable state is the enemy of parallelism), <strong>distributed systems</strong> (the web is one giant pipeline of transformations), and <strong>a testing culture</strong> that rewards pure, deterministic logic.</p>
+
+<div class="callout-warn">
+  <strong>Don't join a cult:</strong> Neither paradigm is "correct." They are different tools for different jobs, and the best engineers know both and choose per problem. This course teaches you both — FP first (Lessons 2–5), then OOP (Lesson 6), then the head-to-head (Lesson 7) and a practical decision framework (Lesson 8).
+</div>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. In the OOP mental model, a program is best described as:</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A single giant function that transforms input into output</button>
+    <button class="quiz-btn" data-opt="b">A society of objects that send messages to each other</button>
+    <button class="quiz-btn" data-opt="c">A set of SQL queries over a database</button>
+    <button class="quiz-btn" data-opt="d">A list of assembly instructions for the CPU</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which statement is true of declarative code?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It tells the computer exactly which steps to take</button>
+    <button class="quiz-btn" data-opt="b">It must be written in a functional language</button>
+    <button class="quiz-btn" data-opt="c">It describes what you want and lets the machinery figure out the steps</button>
+    <button class="quiz-btn" data-opt="d">It always runs faster than imperative code</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why has functional programming seen a renaissance in the last two decades?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Because OOP was proven to be a failure</button>
+    <button class="quiz-btn" data-opt="b">Because functional languages are always faster</button>
+    <button class="quiz-btn" data-opt="c">Because universities stopped teaching OOP</button>
+    <button class="quiz-btn" data-opt="d">Multi-core CPUs, distributed systems, and a testing culture reward pure deterministic logic</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Programming_paradigm" target="_blank" rel="noopener">Programming paradigm — Wikipedia</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Functional_programming" target="_blank" rel="noopener">Functional programming — Wikipedia</a></li>
+  <li><a href="https://maryrosecook.com/blog/post/a-practical-introduction-to-functional-programming" target="_blank" rel="noopener">A practical introduction to functional programming — Mary Rose Cook</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

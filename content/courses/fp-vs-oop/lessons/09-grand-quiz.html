@@ -1,0 +1,297 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 1rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout strong { color: var(--color-accent); }
+  .quiz-block { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.5rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  #score-display { background: var(--color-accent); color: #000; padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); font-size: 1.2rem; font-weight: 700; display: none; text-align: center; margin: 1.5rem 0; }
+  .score-legend { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-sm); display: none; }
+  .score-legend.grade-a { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+  .score-legend.grade-b { display: block; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+  .score-legend.grade-c { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+  .badge { display: inline-block; font-size: 1.4rem; margin-left: 0.5rem; }
+</style>
+
+<h2>🎓 The Grand Quiz</h2>
+
+<p>You've made it through all eight lessons. Time to prove you can think in both paradigms.</p>
+<p>This quiz covers every lesson. <strong>18 questions. No time limit. No partial credit.</strong> Score at the end.</p>
+
+<div class="quiz-block" id="final-quiz">
+  <h3>Section 1: Paradigms &amp; Pure Functions (Lessons 1–2)</h3>
+
+  <p class="quiz-q">1. Which pair of answers best describes OOP vs FP?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">OOP: pipelines of functions · FP: networks of objects</button>
+    <button class="quiz-btn" data-opt="b">OOP: objects bundling state and behavior · FP: pure functions transforming explicit data</button>
+    <button class="quiz-btn" data-opt="c">OOP: no state at all · FP: hidden mutable state everywhere</button>
+    <button class="quiz-btn" data-opt="d">OOP: declarative · FP: imperative</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. A pure function that reads the current time:</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Is pure, because it returns a value</button>
+    <button class="quiz-btn" data-opt="b">Is pure, because it doesn't modify anything</button>
+    <button class="quiz-btn" data-opt="c">Is impure, because the same call at different moments returns different outputs</button>
+    <button class="quiz-btn" data-opt="d">Is impure only if it also prints the time</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <h3>Section 2: Functions as Values (Lesson 3)</h3>
+
+  <p class="quiz-q">3. <code>[1, 2, 3, 4].filter(n =&gt; n % 2 === 1)</code> produces:</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">[1, 3]</button>
+    <button class="quiz-btn" data-opt="b">[2, 4]</button>
+    <button class="quiz-btn" data-opt="c">[1, 2, 3, 4]</button>
+    <button class="quiz-btn" data-opt="d">[3]</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. What does <code>reduce</code> do in one sentence?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a">It removes duplicate elements</button>
+    <button class="quiz-btn" data-opt="b">It sorts the array in place</button>
+    <button class="quiz-btn" data-opt="c">It turns every element into a new array</button>
+    <button class="quiz-btn" data-opt="d">It folds a list into a single accumulated value</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3>Section 3: Composition (Lesson 4)</h3>
+
+  <p class="quiz-q">5. In a pipeline, each stage should be:</p>
+  <div class="quiz-opts" data-q="4" data-answer="c">
+    <button class="quiz-btn" data-opt="a">As large as possible to reduce the number of functions</button>
+    <button class="quiz-btn" data-opt="b">Dependent on the internal state of the previous stage</button>
+    <button class="quiz-btn" data-opt="c">A small, pure, independently testable transformation</button>
+    <button class="quiz-btn" data-opt="d">Written in a different paradigm from the others</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. Which property makes pipeline stages safely reusable?</p>
+  <div class="quiz-opts" data-q="5" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They are all defined in the same file</button>
+    <button class="quiz-btn" data-opt="b">They only depend on their explicit inputs and outputs</button>
+    <button class="quiz-btn" data-opt="c">They share a global configuration object</button>
+    <button class="quiz-btn" data-opt="d">They mutate a shared accumulator</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <h3>Section 4: Immutability (Lesson 5)</h3>
+
+  <p class="quiz-q">7. Why is shared mutable state dangerous?</p>
+  <div class="quiz-opts" data-q="6" data-answer="a">
+    <button class="quiz-btn" data-opt="a">One piece of code can change data that other code relies on, causing bugs far from the change</button>
+    <button class="quiz-btn" data-opt="b">It uses more disk space than immutable state</button>
+    <button class="quiz-btn" data-opt="c">It makes the code run slower on single-core CPUs</button>
+    <button class="quiz-btn" data-opt="d">It is only dangerous in interpreted languages</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. The reducer pattern treats state as:</p>
+  <div class="quiz-opts" data-q="7" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A hidden field on a singleton object</button>
+    <button class="quiz-btn" data-opt="b">A global variable updated by many functions</button>
+    <button class="quiz-btn" data-opt="c">A value that flows through a pure function, producing a new value each step</button>
+    <button class="quiz-btn" data-opt="d">A database table with triggers</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3>Section 5: OOP Core (Lesson 6)</h3>
+
+  <p class="quiz-q">9. Which OOP pillar is demonstrated by a private field with public getter/setter methods?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Inheritance</button>
+    <button class="quiz-btn" data-opt="b">Encapsulation</button>
+    <button class="quiz-btn" data-opt="c">Polymorphism</button>
+    <button class="quiz-btn" data-opt="d">Abstraction of loops</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. "Same message, different behavior per object" is the definition of:</p>
+  <div class="quiz-opts" data-q="9" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Method overloading</button>
+    <button class="quiz-btn" data-opt="b">Encapsulation</button>
+    <button class="quiz-btn" data-opt="c">Referential transparency</button>
+    <button class="quiz-btn" data-opt="d">Polymorphism</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <h3>Section 6: Head-to-Head (Lesson 7)</h3>
+
+  <p class="quiz-q">11. Which statement is true about testing in each paradigm?</p>
+  <div class="quiz-opts" data-q="10" data-answer="a">
+    <button class="quiz-btn" data-opt="a">FP functions are usually tested by calling them and asserting on results; OOP often needs mocks because behavior is tied to state</button>
+    <button class="quiz-btn" data-opt="b">FP cannot be tested at all</button>
+    <button class="quiz-btn" data-opt="c">OOP code never needs mocks</button>
+    <button class="quiz-btn" data-opt="d">Testing is only possible in dynamically typed languages</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. FP's main advantage for concurrency is:</p>
+  <div class="quiz-opts" data-q="11" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It uses threads more aggressively</button>
+    <button class="quiz-btn" data-opt="b">It disables the operating system scheduler</button>
+    <button class="quiz-btn" data-opt="c">Immutable data means concurrent code never races over shared state</button>
+    <button class="quiz-btn" data-opt="d">It only runs on a single thread by design</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <h3>Section 7: When to Use Which (Lesson 8)</h3>
+
+  <p class="quiz-q">13. Which is the best FP candidate?</p>
+  <div class="quiz-opts" data-q="12" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A plugin SDK for third-party developers</button>
+    <button class="quiz-btn" data-opt="b">An event-processing pipeline with strict correctness requirements</button>
+    <button class="quiz-btn" data-opt="c">A desktop widget framework</button>
+    <button class="quiz-btn" data-opt="d">A game with many interacting entities</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. Which is the best OOP candidate?</p>
+  <div class="quiz-opts" data-q="13" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Computing aggregate statistics over log files</button>
+    <button class="quiz-btn" data-opt="b">Validating and transforming JSON payloads</button>
+    <button class="quiz-btn" data-opt="c">A pure math library</button>
+    <button class="quiz-btn" data-opt="d">A UI component system with widgets, state, and events</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <p class="quiz-q">15. In "functional core, imperative shell," where does the database access live?</p>
+  <div class="quiz-opts" data-q="14" data-answer="a">
+    <button class="quiz-btn" data-opt="a">In the shell, along with all other I/O</button>
+    <button class="quiz-btn" data-opt="b">In the core, as pure functions</button>
+    <button class="quiz-btn" data-opt="c">In both, duplicated for safety</button>
+    <button class="quiz-btn" data-opt="d">Nowhere — databases are avoided</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <h3>Section 8: Putting It Together</h3>
+
+  <p class="quiz-q">16. Which language is a good example of an OOP-first language that has adopted FP features?</p>
+  <div class="quiz-opts" data-q="15" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Haskell</button>
+    <button class="quiz-btn" data-opt="b">Elixir</button>
+    <button class="quiz-btn" data-opt="c">Java — records and streams bring FP flavor</button>
+    <button class="quiz-btn" data-opt="d">SQL</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <p class="quiz-q">17. The single most important takeaway of this course is:</p>
+  <div class="quiz-opts" data-q="16" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Always write purely functional code, everywhere, forever</button>
+    <button class="quiz-btn" data-opt="b">Paradigms are tools — match the approach to the problem and stay consistent within a codebase</button>
+    <button class="quiz-btn" data-opt="c">Never use functions outside of classes</button>
+    <button class="quiz-btn" data-opt="d">OOP is obsolete and should be avoided</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. You're asked to build a checkout system. The best starting architecture is:</p>
+  <div class="quiz-opts" data-q="17" data-answer="d">
+    <button class="quiz-btn" data-opt="a">One giant class with every rule as a method</button>
+    <button class="quiz-btn" data-opt="b">One giant function with all steps inline</button>
+    <button class="quiz-btn" data-opt="c">No structure — write it and see</button>
+    <button class="quiz-btn" data-opt="d">Pure functions for pricing, validation, and tax rules, wrapped in a thin I/O shell for persistence and presentation</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+</div>
+
+<div id="score-display"></div>
+<div id="score-legend" class="score-legend"></div>
+
+<script>
+(function() {
+  var total = 18;
+  var correct = 0;
+  var answered = {};
+  var qb = document.getElementById('final-quiz');
+  var scoreDiv = document.getElementById('score-display');
+  var legendDiv = document.getElementById('score-legend');
+
+  function updateScore() {
+    var allAnswered = Object.keys(answered).length === total;
+    if (!allAnswered) return;
+
+    var pct = Math.round((correct / total) * 100);
+    scoreDiv.style.display = 'block';
+
+    var grade, emoji, color, className;
+    if (pct >= 83) {
+      grade = 'A — You think in both paradigms. Excellent work.';
+      emoji = '🏆';
+      color = 'var(--color-success)';
+      className = 'grade-a';
+    } else if (pct >= 58) {
+      grade = 'B — Solid fundamentals. Review the sections you missed.';
+      emoji = '📚';
+      color = 'var(--color-warning)';
+      className = 'grade-b';
+    } else {
+      grade = 'C or below — Worth a second pass through the lessons.';
+      emoji = '💡';
+      color = 'var(--color-danger)';
+      className = 'grade-c';
+    }
+
+    scoreDiv.innerHTML = 'Score: ' + correct + '/' + total + ' (' + pct + '%) <span class="badge">' + emoji + '</span>';
+    legendDiv.className = 'score-legend ' + className;
+    legendDiv.innerHTML = '<strong>' + grade + '</strong><br><small>' +
+      (correct >= 15 ? 'You are ready to apply these ideas: try the functional core pattern on your next feature, and keep both toolkits sharp.' :
+       correct >= 11 ? 'You have the core ideas. Re-read Lessons 4 (composition) and 5 (immutability) — those are where the FP mindset really clicks.' :
+       'Go back through the lessons — especially Lesson 2 (pure functions) and Lesson 7 (head-to-head) — then take the quiz again. Paradigms take a couple of passes to internalize.') + '</small>';
+  }
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = parseInt(opts.getAttribute('data-q'));
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+
+    if (answered[qn]) return;
+
+    var allBtns = opts.querySelectorAll('.quiz-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      correct++;
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      answered[qn] = true;
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+
+    updateScore();
+  });
+})();
+</script>
+
+<h3 style="margin-top:2.5rem">Where to Go Next</h3>
+<p>The concepts in this course are language-agnostic — here's how to practice them in the wild:</p>
+<ul>
+  <li><strong>TypeScript/JavaScript:</strong> write your next module with zero <code>let</code> and only <code>map</code>/<code>filter</code>/<code>reduce</code>. Try Immer or Immutable.js for immutable state.</li>
+  <li><strong>Python:</strong> use <code>functools.reduce</code>, comprehensions, and <code>dataclasses</code> for immutable records.</li>
+  <li><strong>Kotlin or C#:</strong> lean on data classes and LINQ/collection extensions.</li>
+  <li><strong>Go deep:</strong> work through <em>Structure and Interpretation of Computer Programs</em> (SICP), <em>Functional-Light JS</em>, or the <em>Mostly Adequate Guide</em>.</li>
+  <li><strong>Practice:</strong> pick a small problem (pricing engine, log analyzer, shopping cart) and implement it twice — once in each style. The contrast will teach you more than any tutorial.</li>
+</ul>
+
+<div class="callout">
+  <strong>Final Word:</strong> Functional and object-oriented programming are not rivals — they are two lenses on the same craft. Data flows through pure functions; entities encapsulate their state; and great engineers switch between the two without ceremony. Learn both, use both, and let the problem — not the dogma — decide.
+</div>

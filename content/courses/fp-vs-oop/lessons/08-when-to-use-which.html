@@ -1,0 +1,200 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: When to Use Which</h2>
+
+<p>Rule of thumb up front: <strong>if the problem is mostly about transforming data, think functionally. If it's mostly about entities with identity and behavior, think OOP. If it's both — and it usually is — use a functional core with an imperative shell.</strong></p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="flowArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9CA3AF"/></marker>
+    </defs>
+    <!-- start -->
+    <rect x="185" y="10" width="150" height="40" rx="20" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="260" y="34" text-anchor="middle" fill="var(--color-text)" font-size="11">Your problem</text>
+    <line x1="260" y1="50" x2="260" y2="70" stroke="#9CA3AF" stroke-width="1.5" marker-end="url(#flowArrow)"/>
+    <!-- diamond 1 -->
+    <polygon points="260,70 400,105 260,140 120,105" fill="var(--color-surface)" stroke="#2EA8FF" stroke-width="1.5"/>
+    <text x="260" y="101" text-anchor="middle" fill="var(--color-text)" font-size="10">Mostly transforming data</text>
+    <text x="260" y="115" text-anchor="middle" fill="var(--color-text)" font-size="10">or pure computation?</text>
+    <!-- yes 1 -->
+    <line x1="400" y1="105" x2="455" y2="105" stroke="#22C55E" stroke-width="1.5" marker-end="url(#flowArrow)"/>
+    <text x="440" y="95" text-anchor="middle" fill="#22C55E" font-size="10" font-weight="600">YES</text>
+    <rect x="410" y="120" width="90" height="55" rx="10" fill="var(--color-surface)" stroke="#22C55E" stroke-width="1.5"/>
+    <text x="455" y="142" text-anchor="middle" fill="var(--color-text)" font-size="10">GO FUNCTIONAL</text>
+    <text x="455" y="158" text-anchor="middle" fill="var(--color-text-secondary)" font-size="8.5">pipelines · reducers</text>
+    <!-- no 1 -->
+    <line x1="120" y1="105" x2="65" y2="105" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="92" y="95" text-anchor="middle" fill="#F59E0B" font-size="10" font-weight="600">NO</text>
+    <line x1="65" y1="105" x2="65" y2="200" stroke="#F59E0B" stroke-width="1.5"/>
+    <line x1="65" y1="200" x2="120" y2="200" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#flowArrow)"/>
+    <!-- diamond 2 -->
+    <polygon points="260,200 400,235 260,270 120,235" fill="var(--color-surface)" stroke="#2EA8FF" stroke-width="1.5"/>
+    <text x="260" y="231" text-anchor="middle" fill="var(--color-text)" font-size="10">Entities with identity,</text>
+    <text x="260" y="245" text-anchor="middle" fill="var(--color-text)" font-size="10">lifecycle, or invariants?</text>
+    <!-- yes 2 -->
+    <line x1="400" y1="235" x2="455" y2="235" stroke="#22C55E" stroke-width="1.5" marker-end="url(#flowArrow)"/>
+    <text x="440" y="225" text-anchor="middle" fill="#22C55E" font-size="10" font-weight="600">YES</text>
+    <rect x="410" y="250" width="90" height="55" rx="10" fill="var(--color-surface)" stroke="#2EA8FF" stroke-width="1.5"/>
+    <text x="455" y="272" text-anchor="middle" fill="var(--color-text)" font-size="10">GO OBJECT-</text>
+    <text x="455" y="286" text-anchor="middle" fill="var(--color-text)" font-size="10">ORIENTED</text>
+    <!-- no 2 -->
+    <line x1="120" y1="235" x2="65" y2="235" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="92" y="225" text-anchor="middle" fill="#F59E0B" font-size="10" font-weight="600">NO</text>
+    <line x1="65" y1="235" x2="65" y2="290" stroke="#F59E0B" stroke-width="1.5"/>
+    <line x1="65" y1="290" x2="185" y2="290" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#flowArrow)"/>
+    <!-- hybrid box -->
+    <rect x="185" y="268" width="180" height="48" rx="10" fill="var(--color-surface)" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="275" y="288" text-anchor="middle" fill="var(--color-text)" font-size="10">FUNCTIONAL CORE +</text>
+    <text x="275" y="303" text-anchor="middle" fill="var(--color-text)" font-size="10">IMPERATIVE SHELL</text>
+  </svg>
+</div>
+
+<h3>Reach for FP when…</h3>
+<ul>
+  <li><strong>Data pipelines:</strong> ETL, parsing, streaming and processing events, API response shaping.</li>
+  <li><strong>Business logic that must be bulletproof-testable:</strong> finance, healthcare, rules engines, pricing. Pure functions make correctness provable and audits easy.</li>
+  <li><strong>Concurrent or parallel systems:</strong> servers, batch jobs, message processors. Immutability eliminates entire classes of race conditions.</li>
+  <li><strong>State machines and reducers:</strong> UI state, workflow engines, undo/redo systems.</li>
+  <li><strong>Pure logic libraries:</strong> anything other code will call and you want to be impossible to misuse.</li>
+</ul>
+
+<h3>Reach for OOP when…</h3>
+<ul>
+  <li><strong>Domain entities with identity and lifecycle:</strong> Customer, Order, GameCharacter — things that persist and change over time.</li>
+  <li><strong>UI frameworks and widget systems:</strong> components are stateful objects that react to events.</li>
+  <li><strong>Plugin/extension architectures:</strong> frameworks that call <em>your</em> code through interfaces (inversion of control).</li>
+  <li><strong>The ecosystem dictates it:</strong> Java/Spring, C#/.NET, C++ game engines — fighting the house style costs more than it saves.</li>
+</ul>
+
+<h3>The Functional Core, Imperative Shell</h3>
+<p>The most practical pattern in modern software — and the answer to "both, but how?" Keep the heart of your app pure: all decisions, calculations, and transformations as pure functions of explicit state. Wrap it in a thin shell that does the dirty I/O: read input, call the pure core, write output.</p>
+
+<pre><code>// IMPURE shell — talks to the world
+function handleCheckout(request) {
+  const cart = loadCart(request.userId);        // I/O in
+  const result = checkout(cart, request.promo); // pure core
+  saveReceipt(result);                          // I/O out
+  return result;
+}
+
+// PURE core — no I/O, trivially testable
+function checkout(cart, promo) {
+  const withDiscount = applyPromo(cart, promo);
+  const total = computeTotal(withDiscount);
+  return { items: withDiscount, total };
+}</code></pre>
+
+<p>Your database, network, and UI all live in the shell. Your rules, math, and decisions live in the core — and the core is where bugs actually happen, so that's where you want pure testability.</p>
+
+<h3>Ecosystem Quick Reference</h3>
+<table>
+  <tr><th>Language</th><th>Default style</th><th>Notes</th></tr>
+  <tr><td>JavaScript / TypeScript</td><td>Hybrid</td><td>Both are idiomatic — choose per module</td></tr>
+  <tr><td>Python</td><td>Hybrid (OOP-leaning)</td><td>Classes everywhere, but map/filter/reduce and dataclasses support FP</td></tr>
+  <tr><td>Java</td><td>OOP-first</td><td>Records and streams add FP flavor</td></tr>
+  <tr><td>Kotlin</td><td>Hybrid</td><td>Data classes + functional collection extensions</td></tr>
+  <tr><td>C#</td><td>Hybrid</td><td>LINQ is functional programming</td></tr>
+  <tr><td>Rust</td><td>Hybrid</td><td>Traits + iterators; ownership enforces discipline</td></tr>
+  <tr><td>Haskell / Elixir / Clojure</td><td>Functional</td><td>No real OOP — purity or immutability by default</td></tr>
+  <tr><td>C++</td><td>Multi-paradigm</td><td>Everything available, everything dangerous</td></tr>
+</table>
+
+<h3>Final Advice</h3>
+<ol>
+  <li><strong>Learn both.</strong> The second paradigm makes you dramatically better at the first — you start seeing OOP's hidden state and FP's unreadable abstractions with fresh eyes.</li>
+  <li><strong>Let the problem decide.</strong> Don't fight your ecosystem, and don't force a paradigm onto a problem that fits the other.</li>
+  <li><strong>Consistency beats purity.</strong> A codebase that's uniformly one style is easier to maintain than one that's "pure" but incoherent.</li>
+  <li><strong>Default to the functional core pattern</strong> for new logic-heavy features — it's the lowest-risk way to get most of FP's benefits in any codebase.</li>
+</ol>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which of these problems is the best fit for a functional approach?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Modeling a video game's player characters with stats, inventory, and abilities</button>
+    <button class="quiz-btn" data-opt="b">A data pipeline that reads logs, transforms them, and aggregates statistics</button>
+    <button class="quiz-btn" data-opt="c">Building a UI framework with widgets and event handling</button>
+    <button class="quiz-btn" data-opt="d">A plugin system where third parties extend your application</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. The "functional core, imperative shell" pattern means:</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Write everything twice, once functionally and once imperatively</button>
+    <button class="quiz-btn" data-opt="b">A shell script that calls functional APIs</button>
+    <button class="quiz-btn" data-opt="c">Pure functions for all decisions and logic, with I/O quarantined in a thin outer layer</button>
+    <button class="quiz-btn" data-opt="d">An operating system kernel written in Haskell</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does "consistency beats purity" matter in real codebases?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A uniformly styled codebase is easier for a team to read and maintain than a mix of styles</button>
+    <button class="quiz-btn" data-opt="b">Functional code is always faster</button>
+    <button class="quiz-btn" data-opt="c">Object-oriented code is always safer</button>
+    <button class="quiz-btn" data-opt="d">Linters require a single paradigm per repository</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/getify/Functional-Light-JS" target="_blank" rel="noopener">Functional-Light JavaScript — Kyle Simpson</a></li>
+  <li><a href="https://blog.ploeh.dk/2015/08/03/functional-architecture-is-ports-and-adapters/" target="_blank" rel="noopener">Functional architecture is ports and adapters — Mark Seemann</a></li>
+  <li><a href="https://www.manning.com/books/grokking-functional-programming" target="_blank" rel="noopener">Grokking Functional Programming (book)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

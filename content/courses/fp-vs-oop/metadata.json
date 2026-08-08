@@ -1,0 +1,9 @@
+{
+  "title": "Functional Programming vs Object-Oriented Programming",
+  "description": "Master the two dominant programming paradigms: pure functions, composition, and immutability versus objects, encapsulation, and inheritance — with a practical framework for when to use each.",
+  "difficulty": "intermediate",
+  "estimatedDuration": "75 min",
+  "tags": ["functional programming", "object-oriented programming", "paradigms", "javascript", "architecture"],
+  "lastUpdated": "2026-08-07",
+  "icon": "λ"
+}

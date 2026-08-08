@@ -1,0 +1,5 @@
+{
+  "title": "The Heart of FP — Pure Functions",
+  "description": "Determinism, side effects, and referential transparency — and why purity makes code testable, cacheable, and parallel-safe.",
+  "readingTime": "10 min"
+}

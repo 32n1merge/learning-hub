@@ -1,0 +1,175 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Immutability — State as a Value</h2>
+
+<p>Most bugs in software trace back to one root cause: <strong>shared mutable state</strong>. Two pieces of code point at the same data, one changes it, the other breaks — and you get to spend the afternoon finding out which one. FP's answer is radical: <span class="glossary-term">don't mutate anything. Ever.</span></p>
+
+<h3>The Aliasing Problem</h3>
+
+<pre><code>const cart = [1, 2, 3];
+const checkoutCopy = cart;   // same array, two names
+
+checkoutCopy.push(4);        // "copy" mutates the original
+
+console.log(cart);           // [1, 2, 3, 4] — surprise!
+console.log(checkoutCopy);   // [1, 2, 3, 4]</code></pre>
+
+<p>The variable named <code>cart</code> didn't change — but the array it points to did, so <code>cart</code> "changed" anyway. In a big codebase, the function that did the damage can be hundreds of calls away from the code that suffered it. That's the <span class="glossary-term">aliasing</span> trap.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 210" xmlns="http://www.w3.org/2000/svg">
+    <text x="30" y="24" fill="var(--color-danger)" font-size="13" font-weight="600">MUTABLE — two names, one array</text>
+    <rect x="40" y="40" width="120" height="34" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="100" y="61" text-anchor="middle" fill="var(--color-text)" font-size="11">cart</text>
+    <rect x="240" y="40" width="120" height="34" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="300" y="61" text-anchor="middle" fill="var(--color-text)" font-size="11">checkoutCopy</text>
+    <line x1="160" y1="57" x2="238" y2="57" stroke="#EF4444" stroke-width="1.5"/>
+    <rect x="330" y="90" width="150" height="40" rx="8" fill="var(--color-surface)" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="405" y="114" text-anchor="middle" fill="var(--color-text)" font-size="10">[1, 2, 3, 4]</text>
+    <line x1="160" y1="74" x2="360" y2="95" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <line x1="300" y1="74" x2="395" y2="95" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="405" y="145" text-anchor="middle" fill="#EF4444" font-size="10">push(4) hit both names</text>
+
+    <line x1="30" y1="165" x2="490" y2="165" stroke="var(--color-border)" stroke-width="1"/>
+
+    <text x="30" y="190" fill="var(--color-success)" font-size="13" font-weight="600">IMMUTABLE — each update makes a fresh value</text>
+  </svg>
+</div>
+
+<p>In FP you never mutate — you produce a new value:</p>
+
+<pre><code>const cart = [1, 2, 3];
+const checkoutCopy = [...cart, 4];   // brand new array
+
+console.log(cart);          // [1, 2, 3] — untouched
+console.log(checkoutCopy);  // [1, 2, 3, 4]</code></pre>
+
+<p>The same idea applies to objects: <code>{ ...user, name: "New" }</code> creates a new object instead of editing the old one. The old value stays valid for anyone still holding it.</p>
+
+<h3>Structural Sharing</h3>
+<p>"Copying everything" sounds expensive — and naive copying is. That's why FP languages and libraries use <span class="glossary-term">persistent data structures</span> with <strong>structural sharing</strong>: the new version shares the unchanged parts with the old one, so an update costs O(log n) instead of O(n). Examples: Clojure's and Elixir's built-in collections, Haskell's containers, JavaScript's Immutable.js and Immer.</p>
+
+<h3>State as a Value: The Reducer Pattern</h3>
+<p>Instead of mutating state, FP treats state as a <em>value</em> that flows through the program. The canonical pattern is the reducer (familiar from React/Redux):</p>
+
+<pre><code>function reducer(state, action) {
+  switch (action.type) {
+    case "ADD_ITEM":
+      return { ...state, items: [...state.items, action.item] };
+    case "REMOVE_ITEM":
+      return { ...state, items: state.items.filter(i =&gt; i.id !== action.id) };
+    case "CLEAR":
+      return { ...state, items: [] };
+    default:
+      return state;
+  }
+}
+
+// usage: each step gets a NEW state, never touches the old one
+let state = { items: [] };
+state = reducer(state, { type: "ADD_ITEM", item: { id: 1 } });
+state = reducer(state, { type: "ADD_ITEM", item: { id: 2 } });
+state = reducer(state, { type: "REMOVE_ITEM", id: 1 });</code></pre>
+
+<p>One pure function: given the current state and an action, it returns the next state. Nothing is mutated — which buys you <strong>undo/redo, time-travel debugging, and replayable behavior</strong> for free, because every past state still exists as a value.</p>
+
+<h3>Immutability in the Real World</h3>
+<ul>
+  <li><strong>The ledger analogy:</strong> banks never erase a transaction — they append. Immutable data is a ledger: the history is always intact and auditable.</li>
+  <li><strong>Thread safety:</strong> no locks needed if nothing shares mutable state. This is why FP scales to multicore and distributed systems.</li>
+  <li><strong>Testing:</strong> a reducer is a pure function of (state, action) — call it, assert on the returned state, done.</li>
+</ul>
+
+<div class="callout">
+  <strong>Not zero mutation — contained mutation:</strong> Real programs mutate at the edges (databases, caches, DOM). The FP discipline is: keep the places that mutate few, obvious, and quarantined from your logic. When mutation is unavoidable, make it loud.
+</div>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the "aliasing" problem?</p>
+  <div class="quiz-opts" data-q="0" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Using the same variable name in two files</button>
+    <button class="quiz-btn" data-opt="b">Two functions with the same signature</button>
+    <button class="quiz-btn" data-opt="c">A database table with duplicate rows</button>
+    <button class="quiz-btn" data-opt="d">Two references to the same data, so mutating through one affects the other</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How does <code>const next = [...items, newItem]</code> differ from <code>items.push(newItem)</code>?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They are identical in every way</button>
+    <button class="quiz-btn" data-opt="b">The spread creates a new array; push mutates the existing one in place</button>
+    <button class="quiz-btn" data-opt="c">Spread is slower and should never be used</button>
+    <button class="quiz-btn" data-opt="d">push returns a new array</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Persistent data structures with structural sharing make updates:</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Impossible — immutability means no updates at all</button>
+    <button class="quiz-btn" data-opt="b">O(n²) because every element is copied</button>
+    <button class="quiz-btn" data-opt="c">Cheap (roughly O(log n)) by reusing unchanged parts between versions</button>
+    <button class="quiz-btn" data-opt="d">Only available in Haskell</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Persistent_data_structure" target="_blank" rel="noopener">Persistent data structure — Wikipedia</a></li>
+  <li><a href="https://redux.js.org/tutorials/fundamentals/part-3-state-actions-reducers" target="_blank" rel="noopener">Redux fundamentals: state, actions, reducers</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

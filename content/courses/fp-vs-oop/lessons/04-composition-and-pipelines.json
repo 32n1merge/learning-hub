@@ -1,0 +1,5 @@
+{
+  "title": "Composition &amp; Pipelines",
+  "description": "Building programs as data flow: function composition, pipelines, and why small pure stages beat nested imperative logic.",
+  "readingTime": "10 min"
+}

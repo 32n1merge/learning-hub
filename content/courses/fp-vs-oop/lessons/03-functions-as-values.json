@@ -1,0 +1,5 @@
+{
+  "title": "Functions as Values",
+  "description": "First-class functions, higher-order functions, map/filter/reduce, and closures — passing behavior around like data.",
+  "readingTime": "9 min"
+}
