@@ -1,0 +1,165 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Model — A Pyramid of Dysfunction</h2>
+
+<p>Here is Lencioni's central claim, in his own words:</p>
+
+<div class="callout">
+  <strong>"Not finance. Not strategy. Not technology. It is teamwork that remains the ultimate competitive advantage, both because it is so powerful and so rare."</strong>
+</div>
+
+<p>Teams fail not because their strategy is wrong or their talent is thin, but because of five predictable behavioral traps. The traps are conceptually simple — and brutally hard to fix, because fixing them requires people to change how they behave, not what they know.</p>
+
+<h3>What is a "team," anyway?</h3>
+
+<p>Lencioni borrows the classic definition: a team is <span class="glossary-term">a small number of people with complementary skills who are committed to a common purpose, performance goals, and approach for which they hold themselves mutually accountable</span>. If any of those pieces is missing — mutual accountability being the one most often missing — you have a group of people who report to the same boss, not a team.</p>
+
+<h3>The pyramid</h3>
+
+<p>The five dysfunctions stack. Absence of trust is the foundation; inattention to results is the apex. Each layer makes the layer above it possible:</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 470" xmlns="http://www.w3.org/2000/svg">
+    <!-- Apex: Inattention to Results -->
+    <polygon points="230,30 290,30 272,100 248,100" fill="var(--color-accent)" fill-opacity="0.85"/>
+    <text x="260" y="66" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">5. INATTENTION</text>
+    <text x="260" y="80" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">TO RESULTS</text>
+    <!-- 4: Avoidance of Accountability -->
+    <polygon points="205,100 315,100 297,170 223,170" fill="var(--color-accent)" fill-opacity="0.68"/>
+    <text x="260" y="133" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">4. AVOIDANCE OF</text>
+    <text x="260" y="147" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">ACCOUNTABILITY</text>
+    <!-- 3: Lack of Commitment -->
+    <polygon points="180,170 340,170 322,240 198,240" fill="var(--color-accent)" fill-opacity="0.52"/>
+    <text x="260" y="203" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">3. LACK OF</text>
+    <text x="260" y="217" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">COMMITMENT</text>
+    <!-- 2: Fear of Conflict -->
+    <polygon points="155,240 365,240 347,310 173,310" fill="var(--color-accent)" fill-opacity="0.38"/>
+    <text x="260" y="273" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">2. FEAR OF</text>
+    <text x="260" y="287" text-anchor="middle" fill="#06121f" font-size="11" font-weight="700">CONFLICT</text>
+    <!-- 1: Absence of Trust (base) -->
+    <polygon points="130,310 390,310 372,380 148,380" fill="var(--color-accent)" fill-opacity="0.24"/>
+    <text x="260" y="343" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="700">1. ABSENCE OF</text>
+    <text x="260" y="357" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="700">TRUST</text>
+    <!-- base line -->
+    <line x1="140" y1="380" x2="380" y2="380" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="260" y="410" text-anchor="middle" fill="var(--color-text-secondary)" font-size="12">Trust is the foundation — every dysfunction above it grows out of the one below.</text>
+  </svg>
+</div>
+
+<p>Read the pyramid from the bottom up: the more severe and foundational the dysfunction, the more it breeds the ones above it. Fix the bottom, and the top becomes fixable. Ignore the bottom, and no amount of cheerleading about "results" will stick.</p>
+
+<h3>The five dysfunctions at a glance</h3>
+
+<table>
+  <tr><th>Dysfunction</th><th>What it looks like</th><th>Root driver</th></tr>
+  <tr><td><strong>1. Absence of trust</strong></td><td>People hide weaknesses and mistakes, won't ask for help, play politics</td><td>Unwillingness to be vulnerable</td></tr>
+  <tr><td><strong>2. Fear of conflict</strong></td><td>Artificial harmony, boring meetings, back-channel gossip, decisions never truly tested</td><td>Desire to preserve harmony</td></tr>
+  <tr><td><strong>3. Lack of commitment</strong></td><td>Ambiguity about priorities, re-litigating decisions, missed deadlines</td><td>Lack of clarity and buy-in</td></tr>
+  <tr><td><strong>4. Avoidance of accountability</strong></td><td>Low standards, the leader as sole disciplinarian, resentment of underperformers</td><td>Ducking interpersonal discomfort</td></tr>
+  <tr><td><strong>5. Inattention to results</strong></td><td>Ego, status, and individual goals trump the team's goals; silos</td><td>Focus on personal success</td></tr>
+</table>
+
+<h3>How the dysfunctions cascade</h3>
+
+<p>The model is a chain of causation. Each link:</p>
+
+<ul>
+  <li><strong>No trust → no conflict.</strong> If you can't be vulnerable, you can't risk a passionate argument. Conflict feels personal and dangerous, so the team opts for fake harmony.</li>
+  <li><strong>No conflict → no commitment.</strong> If ideas were never truly debated, nobody feels heard — and people only commit to decisions they helped shape. Without aired disagreement, "agreement" is feigned.</li>
+  <li><strong>No commitment → no accountability.</strong> If goals and standards are fuzzy and nobody really bought in, nobody has the right — or the basis — to call anyone out.</li>
+  <li><strong>No accountability → no results.</strong> If poor behavior and missed commitments go unremarked, individuals optimize for themselves. Ego fills the vacuum where collective standards should be.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>The virtuous cycle is the same chain, run forward:</strong> trust enables healthy conflict → healthy conflict produces real buy-in → real buy-in gives everyone the standing to hold each other accountable → mutual accountability forces attention on collective results.
+</div>
+
+<p>One more consequence of the model: because the dysfunctions compound, most struggling teams exhibit <em>several</em> of them at once. The most useful diagnostic question isn't "which dysfunction do we have?" — it's "where is the <em>lowest</em> one we have?" Because that's where the work has to start.</p>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.tablegroup.com/books/the-five-dysfunctions-of-a-team/" target="_blank" rel="noopener">The Table Group: The Five Dysfunctions of a Team</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Patrick_Lencioni" target="_blank" rel="noopener">Wikipedia: Patrick Lencioni</a></li>
+  <li><a href="https://www.goodreads.com/book/show/48946.The_Five_Dysfunctions_of_a_Team" target="_blank" rel="noopener">Goodreads: The Five Dysfunctions of a Team</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which dysfunction sits at the BASE of the pyramid?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Absence of trust</button>
+    <button class="quiz-btn" data-opt="b">Fear of conflict</button>
+    <button class="quiz-btn" data-opt="c">Inattention to results</button>
+    <button class="quiz-btn" data-opt="d">Avoidance of accountability</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why does lack of commitment grow out of fear of conflict?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Conflict-avoidant teams are too busy to decide anything</button>
+    <button class="quiz-btn" data-opt="b">Conflict makes people stubborn and unwilling to agree</button>
+    <button class="quiz-btn" data-opt="c">Without real debate, people don't feel heard, so they never truly buy in</button>
+    <button class="quiz-btn" data-opt="d">Conflict consumes the time needed for planning</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What is the correct order for fixing the five dysfunctions?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Start at the top (results) and work down</button>
+    <button class="quiz-btn" data-opt="b">Fix whichever one is easiest first</button>
+    <button class="quiz-btn" data-opt="c">Fix them all simultaneously with a big kickoff</button>
+    <button class="quiz-btn" data-opt="d">Start at the bottom (trust) and work up</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

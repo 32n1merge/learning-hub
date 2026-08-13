@@ -1,0 +1,185 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Leading the Cure — Putting It All Together</h2>
+
+<p>The five dysfunctions are a chain of failure. The cure is the same chain, run in the opposite direction — and it compounds just as relentlessly. Here is the virtuous cycle, the way a functional team actually works:</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="120" height="70" rx="8" fill="var(--color-accent)" fill-opacity="0.24" stroke="var(--color-border)"/>
+    <text x="70" y="44" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">TRUST</text>
+    <text x="70" y="62" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">vulnerability</text>
+    <rect x="145" y="10" width="120" height="70" rx="8" fill="var(--color-accent)" fill-opacity="0.38" stroke="var(--color-border)"/>
+    <text x="205" y="44" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">CONFLICT</text>
+    <text x="205" y="62" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">ideological debate</text>
+    <rect x="280" y="10" width="120" height="70" rx="8" fill="var(--color-accent)" fill-opacity="0.52" stroke="var(--color-border)"/>
+    <text x="340" y="44" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">COMMITMENT</text>
+    <text x="340" y="62" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">clarity + buy-in</text>
+    <rect x="415" y="10" width="120" height="70" rx="8" fill="var(--color-accent)" fill-opacity="0.68" stroke="var(--color-border)"/>
+    <text x="475" y="44" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">ACCOUNTABILITY</text>
+    <text x="475" y="62" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">peer-to-peer</text>
+    <rect x="550" y="10" width="80" height="70" rx="8" fill="var(--color-accent)" fill-opacity="0.85" stroke="var(--color-border)"/>
+    <text x="590" y="44" text-anchor="middle" fill="#06121f" font-size="12" font-weight="700">RESULTS</text>
+    <text x="590" y="62" text-anchor="middle" fill="#06121f" font-size="10">collective</text>
+    <!-- arrows -->
+    <polygon points="131,45 141,45 141,39 148,45 141,51 141,45" fill="var(--color-text-secondary)"/>
+    <polygon points="271,45 281,45 281,39 288,45 281,51 281,45" fill="var(--color-text-secondary)"/>
+    <polygon points="406,45 416,45 416,39 423,45 416,51 416,45" fill="var(--color-text-secondary)"/>
+    <polygon points="541,45 551,45 551,39 558,45 551,51 551,45" fill="var(--color-text-secondary)"/>
+    <!-- feedback loop -->
+    <path d="M 590 80 L 590 200 L 70 200 L 70 84" fill="none" stroke="var(--color-text-secondary)" stroke-width="2" stroke-dasharray="6 4"/>
+    <polygon points="70,90 66,80 74,80" fill="var(--color-text-secondary)"/>
+    <text x="330" y="220" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Winning reinforces trust — results feed back down the chain</text>
+  </svg>
+</div>
+
+<p>Read the loop top to bottom: trust lets the team argue about ideas; argument produces real buy-in; buy-in gives everyone the standing to hold each other accountable; accountability keeps attention on collective results; and winning makes trust stronger. Each success makes the next easier — which is exactly why dysfunctional teams, where each failure makes the next harder, spiral the other way.</p>
+
+<h3>The leader's job</h3>
+
+<p>Kathryn Petersen never wrote a strategy document. She changed <em>behavior</em> — and that is the leader's actual job in this model:</p>
+
+<ul>
+  <li><strong>Go first.</strong> Be the most vulnerable person in the room. Admit mistakes, ask for help, share failures. Repeatedly — once is a stunt, consistency is culture.</li>
+  <li><strong>Be willing to be uncomfortable.</strong> The leader must tolerate — and generate — the tension of real debate, the awkwardness of calling out a peer, the discomfort of letting the team decide imperfectly.</li>
+  <li><strong>Mine for conflict.</strong> When the room goes quiet and polite, the leader digs until real positions surface.</li>
+  <li><strong>Model accountability.</strong> Hold people to the agreed standards — including yourself. The team reads what the leader tolerates as permission.</li>
+  <li><strong>Subjugate ego.</strong> Give away credit, absorb blame, and make it unmistakable that team results outrank personal brand.</li>
+</ul>
+
+<div class="callout">
+  <strong>The first responsibility of a leader, per Lencioni, is to create a team that behaves like a team.</strong> Not to be the smartest person in the room, not to make every decision — to build the conditions where the group's combined intelligence can actually engage. Everything else is downstream of that.
+</div>
+
+<h3>The order of operations</h3>
+
+<p>Diagnose from the top, fix from the bottom. The practical sequence Lencioni prescribes:</p>
+
+<ol>
+  <li><strong>Assess.</strong> Have the team rate itself (the book's Team Assessment — see below) to find the lowest dysfunction in the chain.</li>
+  <li><strong>Build trust first.</strong> Structured vulnerability exercises, leader-led, over months — not one retreat.</li>
+  <li><strong>Then teach conflict.</strong> Mining, real-time permission, and norms turn trust into productive debate.</li>
+  <li><strong>Then force commitment.</strong> Cascading messaging, deadlines, disagree-and-commit convert debate into decisions the whole team supports.</li>
+  <li><strong>Then institutionalize accountability.</strong> Public goals, regular progress reviews, team rewards turn commitment into standards people enforce on each other.</li>
+  <li><strong>Results follow.</strong> With the machine running, attention lands on collective outcomes naturally — and gets locked in with a visible scoreboard.</li>
+</ol>
+
+<h3>The Team Assessment</h3>
+
+<p>The book includes a 15-item diagnostic: three statements per dysfunction, each rated 1 ("never true") to 3 ("always true"). A simplified version:</p>
+
+<table>
+  <tr><th>Dysfunction</th><th>Sample statements ("I..." / "We...")</th></tr>
+  <tr><td>Absence of trust</td><td>I admit mistakes openly. I ask for help without hesitation. I talk about my weaknesses honestly.</td></tr>
+  <tr><td>Fear of conflict</td><td>We debate ideas passionately. I voice disagreement in meetings. We surface — not bury — disagreements.</td></tr>
+  <tr><td>Lack of commitment</td><td>We leave meetings with clear decisions. Everyone supports final decisions. We never re-litigate settled choices.</td></tr>
+  <tr><td>Avoidance of accountability</td><td>I call out peers on missed standards. We hold each other accountable. Underperformance is addressed promptly.</td></tr>
+  <tr><td>Inattention to results</td><td>We prioritize team goals over individual ones. We celebrate team wins. We review our scoreboard regularly.</td></tr>
+</table>
+
+<p>Score each group of three. High scores (around 8-9 out of 9) mean the dysfunction is under control; low scores mark where to work. The lowest-scoring dysfunction in the chain is where the work begins.</p>
+
+<h3>Honest caveats: what the model isn't</h3>
+
+<div class="callout-warn">
+  <strong>Criticism worth knowing:</strong> organizational psychologists Gordon Curphy and Robert Hogan (authors of <em>The Rocket Model</em>) credit the book's insights but note it is a work of fiction, not research — its recommendations lack empirical support. Their specific challenge: personal-disclosure exercises are unlikely to build trust in seriously dysfunctional teams; Katzenbach and Smith's <em>The Wisdom of Teams</em> argues trust is built most reliably through <em>real work</em> done together, not through sharing sessions. Treat the model as a powerful diagnostic lens, not a scientific law — and combine structured exercises with actual shared work.
+</div>
+
+<p>None of which changes the book's most durable insight: the failures that sink teams are almost never strategic or technical — they are behavioral, they are predictable, and they are fixable in a known order.</p>
+
+<h3>Getting started this week</h3>
+
+<ol>
+  <li>Take the assessment with your team — anonymously, honestly.</li>
+  <li>Name the lowest dysfunction out loud in a meeting. Naming it is the first act of trust.</li>
+  <li>Pick one tool from that dysfunction's list and use it this month.</li>
+  <li>End every meeting with: decisions made, who communicates them, and one honest check — "did we disagree enough today?"</li>
+</ol>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.tablegroup.com/books/overcoming-the-five-dysfunctions-of-a-team/" target="_blank" rel="noopener">Overcoming the Five Dysfunctions of a Team: A Field Guide</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/The_Wisdom_of_Teams" target="_blank" rel="noopener">Wikipedia: The Wisdom of Teams (Katzenbach &amp; Smith)</a></li>
+  <li><a href="https://www.tablegroup.com/books/death-by-meeting/" target="_blank" rel="noopener">Death by Meeting — Lencioni on meeting structure</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. In what order should a leader fix the dysfunctions?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">From the apex down, since results matter most</button>
+    <button class="quiz-btn" data-opt="b">Whichever the board pressures you to fix</button>
+    <button class="quiz-btn" data-opt="c">Assess first, then build trust before anything else</button>
+    <button class="quiz-btn" data-opt="d">Fix accountability first so standards exist</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the leader's FIRST responsibility according to Lencioni?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Making the best strategic decisions</button>
+    <button class="quiz-btn" data-opt="b">Creating a team that behaves like a team</button>
+    <button class="quiz-btn" data-opt="c">Hiring the smartest available talent</button>
+    <button class="quiz-btn" data-opt="d">Communicating the vision to investors</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which statement best reflects the book's main criticism?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The five dysfunctions don't actually exist</button>
+    <button class="quiz-btn" data-opt="b">The fable format is too long</button>
+    <button class="quiz-btn" data-opt="c">Trust is overrated in business</button>
+    <button class="quiz-btn" data-opt="d">The model isn't research-based, and trust may build better through real work than exercises</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,239 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 9: Grand Quiz — The Whole Gambit</h2>
+
+<p>Sixteen questions, two from each lesson. Answer all of them to see your grade. No time limit — think like Kathryn Petersen: deliberately.</p>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 The Five Dysfunctions Grand Quiz</h3>
+
+  <h3 style="color:var(--color-accent)">The Fable</h3>
+
+  <p class="quiz-q">1. Why was Kathryn Petersen brought in as CEO of DecisionTech?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The board recognized the executives couldn't function as a team despite every advantage</button>
+    <button class="quiz-btn" data-opt="b">The product had failed in the market and needed a turnaround expert</button>
+    <button class="quiz-btn" data-opt="c">The company had run out of money and needed to raise capital</button>
+    <button class="quiz-btn" data-opt="d">The founder retired and she was the only candidate available</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What was DecisionTech's public, measurable top goal for the year?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Launch the new product before the competitor</button>
+    <button class="quiz-btn" data-opt="b">Acquire 18 new customer deals</button>
+    <button class="quiz-btn" data-opt="c">Cut operating costs by 30 percent</button>
+    <button class="quiz-btn" data-opt="d">Hire 40 new engineers</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <h3 style="color:var(--color-accent)">The Model</h3>
+
+  <p class="quiz-q">3. Which dysfunction sits at the BASE of Lencioni's pyramid?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Inattention to results</button>
+    <button class="quiz-btn" data-opt="b">Fear of conflict</button>
+    <button class="quiz-btn" data-opt="c">Absence of trust</button>
+    <button class="quiz-btn" data-opt="d">Lack of commitment</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. How do the five dysfunctions relate to one another?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a">They are independent problems that happen to co-occur</button>
+    <button class="quiz-btn" data-opt="b">Each one causes the one BELOW it in the pyramid</button>
+    <button class="quiz-btn" data-opt="c">They are five names for the same underlying problem</button>
+    <button class="quiz-btn" data-opt="d">Each one makes the dysfunction above it more likely</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3 style="color:var(--color-accent)">Dysfunction 1: Absence of Trust</h3>
+
+  <p class="quiz-q">5. What kind of trust does Lencioni's model require?</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Predictability trust — knowing teammates will do what they say</button>
+    <button class="quiz-btn" data-opt="b">Vulnerability-based trust — safety to admit mistakes and ask for help</button>
+    <button class="quiz-btn" data-opt="c">Loyalty trust — never disagreeing in public</button>
+    <button class="quiz-btn" data-opt="d">Competence trust — respecting teammates' expertise</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. Which exercise does Lencioni recommend as a low-risk first step to build trust?</p>
+  <div class="quiz-opts" data-q="5" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A 360-degree performance review</button>
+    <button class="quiz-btn" data-opt="b">A high-ropes course in the woods</button>
+    <button class="quiz-btn" data-opt="c">A strategic planning workshop</button>
+    <button class="quiz-btn" data-opt="d">Sharing personal histories — where you grew up and what shaped you</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <h3 style="color:var(--color-accent)">Dysfunction 2: Fear of Conflict</h3>
+
+  <p class="quiz-q">7. What is the root cause of fear of conflict?</p>
+  <div class="quiz-opts" data-q="6" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The desire to preserve artificial harmony</button>
+    <button class="quiz-btn" data-opt="b">A lack of negotiation skills</button>
+    <button class="quiz-btn" data-opt="c">Personality clashes between strong egos</button>
+    <button class="quiz-btn" data-opt="d">Time pressure during meetings</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. What does "real-time permission" mean as a conflict tool?</p>
+  <div class="quiz-opts" data-q="7" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Giving people permission to leave a heated meeting</button>
+    <button class="quiz-btn" data-opt="b">Allowing conflict only in scheduled "debate sessions"</button>
+    <button class="quiz-btn" data-opt="c">The leader explicitly blessing disagreement in the moment it appears</button>
+    <button class="quiz-btn" data-opt="d">Approving every argument before it's raised</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3 style="color:var(--color-accent)">Dysfunction 3: Lack of Commitment</h3>
+
+  <p class="quiz-q">9. Commitment is the product of which two ingredients?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Authority and compliance</button>
+    <button class="quiz-btn" data-opt="b">Clarity and buy-in</button>
+    <button class="quiz-btn" data-opt="c">Consensus and certainty</button>
+    <button class="quiz-btn" data-opt="d">Confidence and courage</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. Which practice instantly exposes feigned buy-in after a meeting?</p>
+  <div class="quiz-opts" data-q="9" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Sending the minutes to everyone</button>
+    <button class="quiz-btn" data-opt="b">Asking everyone to rate their satisfaction</button>
+    <button class="quiz-btn" data-opt="c">Waiting a week to see who follows through</button>
+    <button class="quiz-btn" data-opt="d">Cascading messaging — agreeing on exactly what each layer below will be told</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <h3 style="color:var(--color-accent)">Dysfunction 4: Avoidance of Accountability</h3>
+
+  <p class="quiz-q">11. In Lencioni's model, accountability should come primarily from...</p>
+  <div class="quiz-opts" data-q="10" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Peers calling each other out</button>
+    <button class="quiz-btn" data-opt="b">The leader's annual reviews</button>
+    <button class="quiz-btn" data-opt="c">HR policies and disciplinary procedures</button>
+    <button class="quiz-btn" data-opt="d">Customer complaints</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. What happens when a team consistently avoids accountability?</p>
+  <div class="quiz-opts" data-q="11" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Relationships improve because nobody is criticized</button>
+    <button class="quiz-btn" data-opt="b">The leader gains respect as the sole disciplinarian</button>
+    <button class="quiz-btn" data-opt="c">Standards slip and achievement-oriented people leave</button>
+    <button class="quiz-btn" data-opt="d">Conflict decreases and harmony increases</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <h3 style="color:var(--color-accent)">Dysfunction 5: Inattention to Results</h3>
+
+  <p class="quiz-q">13. What does "inattention to results" mean in practice?</p>
+  <div class="quiz-opts" data-q="12" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Teams that don't track any metrics</button>
+    <button class="quiz-btn" data-opt="b">Individuals prioritizing their own success, status, and ego over team outcomes</button>
+    <button class="quiz-btn" data-opt="c">Leaders who forget to review performance</button>
+    <button class="quiz-btn" data-opt="d">Teams that set goals but miss them</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. What is the "first team" concept?</p>
+  <div class="quiz-opts" data-q="13" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The team with the highest revenue gets priority</button>
+    <button class="quiz-btn" data-opt="b">The founding team always stays together</button>
+    <button class="quiz-btn" data-opt="c">New teams get the most support</button>
+    <button class="quiz-btn" data-opt="d">For executives, the leadership team outranks the departments they manage</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <h3 style="color:var(--color-accent)">Leading the Cure</h3>
+
+  <p class="quiz-q">15. In what order do you fix the five dysfunctions?</p>
+  <div class="quiz-opts" data-q="14" data-answer="a">
+    <button class="quiz-btn" data-opt="a">From the bottom of the pyramid up, starting with trust</button>
+    <button class="quiz-btn" data-opt="b">From the apex down, starting with results</button>
+    <button class="quiz-btn" data-opt="c">All five at once in a team offsite</button>
+    <button class="quiz-btn" data-opt="d">Start with accountability so standards exist first</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. What must the leader do FIRST to build trust?</p>
+  <div class="quiz-opts" data-q="15" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Hire a team-building consultant</button>
+    <button class="quiz-btn" data-opt="b">Share the company's financials with the team</button>
+    <button class="quiz-btn" data-opt="c">Demonstrate vulnerability — admit mistakes and ask for help, consistently</button>
+    <button class="quiz-btn" data-opt="d">Reward people for admitting errors</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <div class="score-panel" id="quiz-9-score" style="display:none">
+    <div class="progress" id="quiz-9-progress">Answered 0 of 16</div>
+    <div id="quiz-9-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  var TOTAL = 16;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-9-score');
+  var progressEl = document.getElementById('quiz-9-progress');
+  var resultEl = document.getElementById('quiz-9-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 14) { grade = 'A'; msg = 'Outstanding. You have the whole model — you could diagnose DecisionTech yourself. Now go build the trust. 🏆'; }
+      else if (correct >= 11) { grade = 'B'; msg = 'Strong grasp. Review the lessons where you missed a question — the cascade logic is the part worth locking in. 💪'; }
+      else if (correct >= 8) { grade = 'C'; msg = 'Solid foundation. Re-read the dysfunction lessons — especially the "how to combat it" lists — then retake. 📖'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons. Start at the bottom of the pyramid: trust comes first. 🔁'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>
