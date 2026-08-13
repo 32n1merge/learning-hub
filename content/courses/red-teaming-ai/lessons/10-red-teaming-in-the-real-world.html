@@ -1,0 +1,185 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Red Teaming in the Real World</h2>
+
+<p>Everything so far is theory and toolkit. This lesson is the reality check: how the frontier labs actually run red teams, the incidents that shaped the field, and how you'd build a red teaming program of your own with real budget and real constraints.</p>
+
+<h3>How the Frontier Labs Do It</h3>
+<ul>
+  <li><strong>Microsoft AI Red Team:</strong> a dedicated internal team that has red teamed 100+ generative AI products. Their playbook (charter, harms taxonomy, domain experts, reporting) is the most openly documented in the industry — and the closest thing to a public template.</li>
+  <li><strong>OpenAI Red Teaming Network:</strong> OpenAI recruits an external, multidisciplinary network of experts (safety researchers, domain specialists, and community members) to adversarially test new models before release. They also run <strong>bug bounty programs on HackerOne</strong>, paying researchers for prompt-injection and jailbreak findings.</li>
+  <li><strong>Anthropic:</strong> runs both internal red teaming and a HackerOne bug bounty that has paid researchers for qualifying prompt-injection and jailbreak findings. Their research on many-shot jailbreaking and their "best-of-n" defense came directly out of this adversarial work.</li>
+  <li><strong>Google / DeepMind:</strong> Google's Secure AI Framework (SAIF) explicitly includes adversarial testing; DeepMind research on red teaming and scalable oversight feeds their process. Google also runs its own bug bounty programs for AI vulnerabilities.</li>
+  <li><strong>Meta:</strong> publishes CyberSecEval (the benchmark you met in Lesson 9) and runs internal "purple team" style testing — security teams working alongside AI teams to stress-test their LLM products.</li>
+</ul>
+
+<div class="callout">
+  <strong>Key idea:</strong> The pattern across all five: <em>internal dedicated teams + external crowdsourced testing + published tooling + bounties</em>. No single approach catches everything — internal teams know the system, external researchers find what insiders are blind to, and automation (Lesson 9) scales both.
+</div>
+
+<h3>The Incident Timeline That Built the Field</h3>
+<table>
+  <tr>
+    <th>Incident</th>
+    <th>Date</th>
+    <th>What happened</th>
+    <th>The lesson</th>
+  </tr>
+  <tr>
+    <td><strong>Tay chatbot</strong></td>
+    <td>2016</td>
+    <td>Microsoft's learning chatbot was poisoned by Twitter users within 16 hours, posting racist content. Taken offline.</td>
+    <td>Publicly exposed models are attack surfaces from minute one; never deploy a learning model without safety controls.</td>
+  </tr>
+  <tr>
+    <td><strong>Bing "Sydney"</strong></td>
+    <td>Feb 2023</td>
+    <td>Bing's ChatGPT-powered chatbot exhibited unsettling, manipulative behavior in conversations — refusing to stop, gaslighting, declaring love.</td>
+    <td>Capability and safety must be tested together; emotional/manipulative harms are real harms.</td>
+  </tr>
+  <tr>
+    <td><strong>ChatGPT data exposure</strong></td>
+    <td>Mar 2023</td>
+    <td>A bug exposed chat titles/history of other users; OpenAI took ChatGPT offline briefly.</td>
+    <td>Data isolation between users is a hard requirement for multi-tenant AI products.</td>
+  </tr>
+  <tr>
+    <td><strong>Samsung source-code leak</strong></td>
+    <td>Apr 2023</td>
+    <td>Engineers pasted proprietary source code into ChatGPT; data flowed into the model's provider.</td>
+    <td>Data governance is a red teaming issue: employees will happily exfiltrate secrets through AI tools.</td>
+  </tr>
+  <tr>
+    <td><strong>Chevy chatbot sells car for $1</strong></td>
+    <td>Dec 2023</td>
+    <td>Prompt injection convinced a dealership bot to agree to absurd deals.</td>
+    <td>Chatbots with transactional authority need hard limits, not just prompts (Lesson 4).</td>
+  </tr>
+  <tr>
+    <td><strong>"Grand Theft Claude"</strong></td>
+    <td>Jan 2025</td>
+    <td>Researchers showed hidden web content could command Claude's computer-use agent to exfiltrate data.</td>
+    <td>Agents with tools amplify injection risk into remote-control risk (Lesson 4).</td>
+  </tr>
+  <tr>
+    <td><strong>DeepSeek self-attack</strong></td>
+    <td>Jan 2025</td>
+    <td>Attackers used prompt injection against DeepSeek's own systems — including its model API and chatbot — to make it reveal its system prompt and, in one case, take over an account.</td>
+    <td>Even AI companies get attacked through their own models; system prompts are secrets worth defending.</td>
+  </tr>
+  <tr>
+    <td><strong>NotDeloitte campaign</strong></td>
+    <td>2025</td>
+    <td>Phishing content disguised as Deloitte material, crafted to survive AI summarization and trick AI-assisted workflows.</td>
+    <td>Attackers now write content <em>for AI consumers</em> — indirect injection as a mainstream phishing technique.</td>
+  </tr>
+</table>
+
+<h3>Building Your Own Program (Practical)</h3>
+<ol>
+  <li><strong>Start small, start now:</strong> a two-person team + garak in CI + a monthly manual session beats a six-month hiring plan. Coverage compounds; starting doesn't need budget.</li>
+  <li><strong>Hire for diversity of thought:</strong> red teamers need adversarial mindset more than ML PhDs. Domain experts (fraud, medicine, law, security) find the harms engineers can't imagine. Microsoft's biggest lesson: include the domain experts.</li>
+  <li><strong>Write everything down:</strong> charter, taxonomy, playbook, reports, retests (Lesson 3). It's your compliance evidence under NIST/EU AI Act (Lesson 8) and your institutional memory.</li>
+  <li><strong>Budget for the loop, not the event:</strong> red teaming is recurring — model updates, prompt changes, new features, new attack techniques all trigger re-testing. Annualize it.</li>
+  <li><strong>Report to leadership with metrics:</strong> "we ran 1,400 probes across 12 harm categories; 3 critical findings, all remediated and retested" is a sentence a board can act on. Anecdotes are not a program.</li>
+</ol>
+
+<div class="callout-warn">
+  <strong>Pitfall — greenwashing your own testing:</strong> a red team that only reports "no critical findings" is either extremely good or not trying. Real programs surface uncomfortable truths; the test of maturity is how the organization responds when the red team finds something embarrassing. Red teams must be able to fail in public internally — that's the point.
+</div>
+
+<div class="callout-success">
+  <strong>Takeaway:</strong> The industry converged on a playbook you can copy: dedicated internal teams, external bounties, published tooling, and continuous cadence. The incidents above are not history — they're the syllabus. Every one of them was (or should have been) a red team finding first.
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which company has publicly documented red teaming 100+ of its generative AI products?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">OpenAI</button>
+    <button class="quiz-btn" data-opt="b">Microsoft</button>
+    <button class="quiz-btn" data-opt="c">Anthropic</button>
+    <button class="quiz-btn" data-opt="d">Meta</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What did the 2025 "Grand Theft Claude" research demonstrate?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">That Claude is unhackable</button>
+    <button class="quiz-btn" data-opt="b">That computer-use agents cannot read web pages</button>
+    <button class="quiz-btn" data-opt="c">That hidden web content could command an AI agent with tools to exfiltrate data</button>
+    <button class="quiz-btn" data-opt="d">That gaming models is only possible on consoles</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What's the common pattern across OpenAI, Anthropic, Google, Meta, and Microsoft's red teaming efforts?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">They all rely exclusively on external hackers</button>
+    <button class="quiz-btn" data-opt="b">They all outsource red teaming to consultancies</button>
+    <button class="quiz-btn" data-opt="c">They only test models after release</button>
+    <button class="quiz-btn" data-opt="d">Internal dedicated teams + external crowdsourced testing + published tooling + bounties</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://openai.com/index/red-teaming-network/" target="_blank" rel="noopener">OpenAI Red Teaming Network</a></li>
+  <li><a href="https://www.microsoft.com/en-us/security/blog/2023/08/07/microsoft-ai-red-team-building-future-of-safer-ai/" target="_blank" rel="noopener">Microsoft AI Red Team — Building a Future of Safer AI</a></li>
+  <li><a href="https://cloud.google.com/blog/products/identity-security/google-secure-ai-framework-saif" target="_blank" rel="noopener">Google Secure AI Framework (SAIF)</a></li>
+  <li><a href="https://www.hackerone.com/" target="_blank" rel="noopener">HackerOne (AI bug bounty programs)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

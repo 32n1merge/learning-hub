@@ -1,0 +1,201 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: The Attack Taxonomy — OWASP &amp; MITRE ATLAS</h2>
+
+<p>Red teaming needs a shared language. Two reference frameworks have become the industry standard for talking about AI attacks: the <span class="glossary-term">OWASP Top 10 for LLM Applications</span> (application-focused, threat-oriented) and <span class="glossary-term">MITRE ATLAS</span> (a full adversarial ML knowledge base modeled on ATT&amp;CK). Learn both and you'll never again describe an attack with vague hand-waving — you'll name the technique, the tactic, and the mitigation.</p>
+
+<h3>OWASP Top 10 for LLM Applications</h3>
+<p>OWASP (the Open Worldwide Application Security Project) maintains a ranked list of the most critical LLM application vulnerabilities — think "OWASP Top 10 for web apps," but for AI. The current version (2025 update) is the definitive cheat-sheet for what can go wrong in an LLM application:</p>
+
+<table>
+  <tr>
+    <th>Rank</th>
+    <th>Category</th>
+    <th>One-line description</th>
+  </tr>
+  <tr>
+    <td>LLM01</td>
+    <td><strong>Prompt Injection</strong></td>
+    <td>Attacker text overrides the model's instructions (Lesson 4).</td>
+  </tr>
+  <tr>
+    <td>LLM02</td>
+    <td><strong>Sensitive Information Disclosure</strong></td>
+    <td>The model leaks confidential data — other users' info, secrets in training data, system internals.</td>
+  </tr>
+  <tr>
+    <td>LLM03</td>
+    <td><strong>Supply Chain</strong></td>
+    <td>Compromised model weights, datasets, plugins, or dependencies flow into your system.</td>
+  </tr>
+  <tr>
+    <td>LLM04</td>
+    <td><strong>Data and Model Poisoning</strong></td>
+    <td>Malicious data corrupts training, fine-tuning, or retrieval corpora (Lesson 6).</td>
+  </tr>
+  <tr>
+    <td>LLM05</td>
+    <td><strong>Improper Output Handling</strong></td>
+    <td>Model output is trusted as code, SQL, or commands — enabling injection downstream.</td>
+  </tr>
+  <tr>
+    <td>LLM06</td>
+    <td><strong>Excessive Agency</strong></td>
+    <td>The model has too many tools and permissions, and can be steered into abusing them.</td>
+  </tr>
+  <tr>
+    <td>LLM07</td>
+    <td><strong>System Prompt Leakage</strong></td>
+    <td>Attacker extracts the system prompt or hidden instructions (a favorite recon step).</td>
+  </tr>
+  <tr>
+    <td>LLM08</td>
+    <td><strong>Vector and Embedding Weaknesses</strong></td>
+    <td>RAG/vector databases manipulated via poisoned or adversarial embeddings.</td>
+  </tr>
+  <tr>
+    <td>LLM09</td>
+    <td><strong>Misinformation</strong></td>
+    <td>The model produces false or misleading content that gets acted upon (overreliance).</td>
+  </tr>
+  <tr>
+    <td>LLM10</td>
+    <td><strong>Unbounded Consumption</strong></td>
+    <td>Unlimited context/token usage — cost denial-of-service, resource exhaustion.</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>How to use it:</strong> walk your system against the ten categories before every major release. Each category maps to concrete mitigations in the OWASP guidance — and each maps to red team probes you should run. If you can't name which of the ten your latest feature touches, you haven't threat-modeled it yet.
+</div>
+
+<h3>MITRE ATLAS: The ATT&amp;CK for AI</h3>
+<p>Where OWASP gives you a ranked top-10, <span class="glossary-term">MITRE ATLAS</span> (Adversarial Threat Landscape for Artificial-Intelligence Systems) gives you the complete map — 14 tactics and dozens of techniques, structured exactly like MITRE's famous ATT&amp;CK framework for cyber adversaries. Tactics include <em>Reconnaissance, Resource Development, Initial Access, ML Attack Staging, Exfiltration, Impact</em>, and more; techniques carry IDs (e.g., <code>AML.T0018</code> — prompt injection) and cite real-world case studies of each attack actually being used.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+    <text x="260" y="22" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">The kill chain of an AI attack (simplified ATLAS flow)</text>
+    <g font-size="10" text-anchor="middle">
+      <rect x="20" y="45" width="90" height="52" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="65" y="66" fill="var(--color-text)">Recon</text>
+      <text x="65" y="81" fill="var(--color-text-secondary)" font-size="8.5">find the AI surface</text>
+      <rect x="120" y="45" width="90" height="52" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="165" y="66" fill="var(--color-text)">Initial Access</text>
+      <text x="165" y="81" fill="var(--color-text-secondary)" font-size="8.5">reach the model/API</text>
+      <rect x="220" y="45" width="90" height="52" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="265" y="66" fill="var(--color-text)">Attack Staging</text>
+      <text x="265" y="81" fill="var(--color-text-secondary)" font-size="8.5">craft payloads</text>
+      <rect x="320" y="45" width="90" height="52" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="365" y="66" fill="var(--color-text)">Execution</text>
+      <text x="365" y="81" fill="var(--color-text-secondary)" font-size="8.5">inject / jailbreak</text>
+      <rect x="420" y="45" width="90" height="52" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="465" y="66" fill="var(--color-text)">Exfiltration</text>
+      <text x="465" y="81" fill="var(--color-text-secondary)" font-size="8.5">steal data / impact</text>
+      <line x1="110" y1="71" x2="120" y2="71" stroke="var(--color-border)" stroke-width="1.5"/>
+      <line x1="210" y1="71" x2="220" y2="71" stroke="var(--color-border)" stroke-width="1.5"/>
+      <line x1="310" y1="71" x2="320" y2="71" stroke="var(--color-border)" stroke-width="1.5"/>
+      <line x1="410" y1="71" x2="420" y2="71" stroke="var(--color-border)" stroke-width="1.5"/>
+    </g>
+    <rect x="40" y="130" width="440" height="66" rx="10" fill="var(--color-elevated)" stroke="var(--color-accent)" stroke-width="1.2"/>
+    <text x="260" y="153" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="600">Why ATLAS matters for red teams</text>
+    <text x="260" y="171" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">shared IDs (AML.T0018…) across vendors, tools, and reports</text>
+    <text x="260" y="185" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">maps to ATT&amp;CK for hybrid AI+IT threat models · real case studies per technique</text>
+  </svg>
+</div>
+
+<p><strong>Why ATLAS beats ad-hoc note-taking:</strong> (1) <strong>IDs, not descriptions</strong> — "we saw AML.T0018" is precise and searchable; (2) <strong>kill-chain thinking</strong> — it forces you to map the full adversary journey, not just the final exploit; (3) <strong>bridge to classic security</strong> — techniques map to ATT&amp;CK, so an AI incident can be tracked in the same language as your SOC's other alerts; (4) <strong>real-world grounding</strong> — each technique links to documented cases (Tay, poisoning incidents, extraction attacks), which is gold for writing red team reports that management takes seriously.</p>
+
+<div class="callout-success">
+  <strong>Takeaway:</strong> OWASP tells you <em>what's most likely to break</em>; ATLAS tells you <em>how an adversary would systematically attack</em>. Use OWASP to prioritize your probes and ATLAS to structure your findings and map the kill chain. Together they're the red team's dictionary and grammar.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A chat assistant can be tricked into revealing its hidden system prompt. Which OWASP category is this?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">LLM09 Misinformation</button>
+    <button class="quiz-btn" data-opt="b">LLM07 System Prompt Leakage</button>
+    <button class="quiz-btn" data-opt="c">LLM10 Unbounded Consumption</button>
+    <button class="quiz-btn" data-opt="d">LLM03 Supply Chain</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What makes MITRE ATLAS different from a simple vulnerability list?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It only covers LLM prompt attacks</button>
+    <button class="quiz-btn" data-opt="b">It's a certification program</button>
+    <button class="quiz-btn" data-opt="c">It's a full kill-chain framework with tactic/technique IDs and real case studies, mapped to ATT&amp;CK</button>
+    <button class="quiz-btn" data-opt="d">It replaces OWASP entirely</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. An attacker sends an email that, when summarized by an AI assistant, causes the assistant to exfiltrate the user's data. Which categories are involved?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LLM01 Prompt Injection (indirect) + LLM06 Excessive Agency + LLM02 Sensitive Information Disclosure</button>
+    <button class="quiz-btn" data-opt="b">LLM10 Unbounded Consumption + LLM03 Supply Chain</button>
+    <button class="quiz-btn" data-opt="c">LLM08 Vector Weaknesses only</button>
+    <button class="quiz-btn" data-opt="d">LLM09 Misinformation only</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications</a></li>
+  <li><a href="https://atlas.mitre.org/" target="_blank" rel="noopener">MITRE ATLAS — Adversarial Threat Landscape for AI Systems</a></li>
+  <li><a href="https://attack.mitre.org/" target="_blank" rel="noopener">MITRE ATT&amp;CK (the cyber framework ATLAS builds on)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

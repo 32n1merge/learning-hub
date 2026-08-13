@@ -1,0 +1,280 @@
+<!-- Grand quiz for red-teaming-ai course. Copy of known-good template: keep scoring JS untouched, data-q sequential 0..19, TOTAL=20. -->
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 11: Grand Quiz — Red Teaming AI</h2>
+
+<p>Twenty questions, two from each lesson. Answer all to see your grade. If you miss more than a few, go back to the relevant lessons — that's the point of retrieval practice.</p>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Grand Quiz</h3>
+
+  <h3 style="color:var(--color-accent)">What Is AI Red Teaming?</h3>
+
+  <p class="quiz-q">1. AI red teaming is best defined as:</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Running automated benchmark tests to measure model accuracy</button>
+    <button class="quiz-btn" data-opt="b">Structured adversarial testing to discover failure modes and vulnerabilities before attackers do</button>
+    <button class="quiz-btn" data-opt="c">Hiring hackers to attack your web servers</button>
+    <button class="quiz-btn" data-opt="d">Writing stricter system prompts</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why can't traditional penetration testing fully cover AI systems?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">AI systems run too fast to test</button>
+    <button class="quiz-btn" data-opt="b">Pen testers lack the right certifications</button>
+    <button class="quiz-btn" data-opt="c">Cloud providers block penetration testing</button>
+    <button class="quiz-btn" data-opt="d">LLM behavior is nondeterministic and the attack surface is language, so failures are emergent rather than fixed bugs</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <h3 style="color:var(--color-accent)">How AI Systems Fail</h3>
+
+  <p class="quiz-q">3. A model that works exactly as trained but produces harm in context (e.g., generating malware) is a:</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Reliability failure</button>
+    <button class="quiz-btn" data-opt="b">Data poisoning incident</button>
+    <button class="quiz-btn" data-opt="c">Capability failure (dangerous capability)</button>
+    <button class="quiz-btn" data-opt="d">Tokenizer bug</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. Why do red teams agree on a harms taxonomy before probing?</p>
+  <div class="quiz-opts" data-q="3" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Because "harmful" is a policy decision — stakeholders must agree on scope before testing</button>
+    <button class="quiz-btn" data-opt="b">Because regulators mandate specific taxonomy documents</button>
+    <button class="quiz-btn" data-opt="c">Because models refuse attacks outside named categories</button>
+    <button class="quiz-btn" data-opt="d">Because it shortens the report</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3 style="color:var(--color-accent)">The Red Team Process</h3>
+
+  <p class="quiz-q">5. The correct order of a red team engagement is:</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Execute → scope → charter → report → remediate</button>
+    <button class="quiz-btn" data-opt="b">Scope → threat model → charter → playbook → execute → report → remediate &amp; retest</button>
+    <button class="quiz-btn" data-opt="c">Charter → execute → scope → report</button>
+    <button class="quiz-btn" data-opt="d">Threat model → report → execute → charter</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. Why retest after fixes are deployed?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">To keep the red team employed</button>
+    <button class="quiz-btn" data-opt="b">Because charters require two runs</button>
+    <button class="quiz-btn" data-opt="c">Because fixes often create new bypasses, and retesting proves residual risk is accepted</button>
+    <button class="quiz-btn" data-opt="d">To generate more report pages</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <h3 style="color:var(--color-accent)">Prompt Injection</h3>
+
+  <p class="quiz-q">7. Which statement about indirect prompt injection is correct?</p>
+  <div class="quiz-opts" data-q="6" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Instructions planted in content the model reads (web pages, emails) can compromise every downstream user — an XSS-like remote attack</button>
+    <button class="quiz-btn" data-opt="b">It only affects the attacker who types the prompt</button>
+    <button class="quiz-btn" data-opt="c">It requires physical access to the server</button>
+    <button class="quiz-btn" data-opt="d">It only works on open-source models</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. The most robust protection against injection abuse in high-stakes actions is:</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A longer, stricter system prompt</button>
+    <button class="quiz-btn" data-opt="b">Blocklisting the word "ignore"</button>
+    <button class="quiz-btn" data-opt="c">Using a larger model</button>
+    <button class="quiz-btn" data-opt="d">Least-privilege tools, sandboxing, and human approval gates — shrink the blast radius</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3 style="color:var(--color-accent)">Jailbreaks</h3>
+
+  <p class="quiz-q">9. The core mechanism of a jailbreak is:</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Exploiting a memory leak in the model server</button>
+    <button class="quiz-btn" data-opt="b">Crafting prompts that bypass refusal behavior while underlying capabilities still comply</button>
+    <button class="quiz-btn" data-opt="c">Deleting safety weights</button>
+    <button class="quiz-btn" data-opt="d">Sending malformed HTTP requests</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. Many-shot jailbreaking exploits:</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Token budget exhaustion</button>
+    <button class="quiz-btn" data-opt="b">Unicode normalization bugs</button>
+    <button class="quiz-btn" data-opt="c">In-context learning — many examples of compliance override safety training</button>
+    <button class="quiz-btn" data-opt="d">Rate-limit bypass</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <h3 style="color:var(--color-accent)">Data &amp; Model Attacks</h3>
+
+  <p class="quiz-q">11. FGSM (2014) attacks models by:</p>
+  <div class="quiz-opts" data-q="10" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Adding an imperceptible perturbation computed from the model's gradients to fool it</button>
+    <button class="quiz-btn" data-opt="b">Querying the model millions of times to copy it</button>
+    <button class="quiz-btn" data-opt="c">Injecting malicious samples into training data</button>
+    <button class="quiz-btn" data-opt="d">Overloading the context window</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. A backdoored (poisoned) model behaves how?</p>
+  <div class="quiz-opts" data-q="11" data-answer="d">
+    <button class="quiz-btn" data-opt="a">It crashes on every input</button>
+    <button class="quiz-btn" data-opt="b">It fails all benchmark tests</button>
+    <button class="quiz-btn" data-opt="c">It refuses every request</button>
+    <button class="quiz-btn" data-opt="d">Normally on clean inputs, misbehaves when a specific trigger appears</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <h3 style="color:var(--color-accent)">Attack Taxonomy</h3>
+
+  <p class="quiz-q">13. Extracting a model's hidden system prompt maps to which OWASP category?</p>
+  <div class="quiz-opts" data-q="12" data-answer="b">
+    <button class="quiz-btn" data-opt="a">LLM10 Unbounded Consumption</button>
+    <button class="quiz-btn" data-opt="b">LLM07 System Prompt Leakage</button>
+    <button class="quiz-btn" data-opt="c">LLM03 Supply Chain</button>
+    <button class="quiz-btn" data-opt="d">LLM09 Misinformation</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. MITRE ATLAS differs from a vulnerability list because it:</p>
+  <div class="quiz-opts" data-q="13" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Only covers image models</button>
+    <button class="quiz-btn" data-opt="b">Is a certification standard</button>
+    <button class="quiz-btn" data-opt="c">Provides a full kill-chain framework with tactic/technique IDs and case studies, mapped to ATT&amp;CK</button>
+    <button class="quiz-btn" data-opt="d">Replaces OWASP entirely</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <h3 style="color:var(--color-accent)">Standards &amp; Governance</h3>
+
+  <p class="quiz-q">15. Which EU regulation makes adversarial testing binding for the most powerful general-purpose AI models?</p>
+  <div class="quiz-opts" data-q="14" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The EU AI Act's systemic-risk provisions</button>
+    <button class="quiz-btn" data-opt="b">GDPR Article 22</button>
+    <button class="quiz-btn" data-opt="c">The Digital Markets Act</button>
+    <button class="quiz-btn" data-opt="d">The ePrivacy Directive</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. NIST's 2024 Generative AI Profile matters to red teams because it:</p>
+  <div class="quiz-opts" data-q="15" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Bans generative AI in government</button>
+    <button class="quiz-btn" data-opt="b">Explicitly names red teaming/adversarial testing as a primary risk management action</button>
+    <button class="quiz-btn" data-opt="c">Certifies red teamers</button>
+    <button class="quiz-btn" data-opt="d">Replaces the AI RMF</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <h3 style="color:var(--color-accent)">Tools of the Trade</h3>
+
+  <p class="quiz-q">17. Which tool is an LLM vulnerability scanner that runs hundreds of probes across categories?</p>
+  <div class="quiz-opts" data-q="16" data-answer="d">
+    <button class="quiz-btn" data-opt="a">PyRIT</button>
+    <button class="quiz-btn" data-opt="b">ART</button>
+    <button class="quiz-btn" data-opt="c">TextAttack</button>
+    <button class="quiz-btn" data-opt="d">garak (NVIDIA)</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. What's the main weakness of automated red teaming tools?</p>
+  <div class="quiz-opts" data-q="17" data-answer="c">
+    <button class="quiz-btn" data-opt="a">They're too expensive for most teams</button>
+    <button class="quiz-btn" data-opt="b">They only work on image models</button>
+    <button class="quiz-btn" data-opt="c">They're strong at re-finding known techniques but weak at novel, creative attacks — humans are still needed for depth</button>
+    <button class="quiz-btn" data-opt="d">They produce no reports</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <h3 style="color:var(--color-accent)">Real World</h3>
+
+  <p class="quiz-q">19. The "Grand Theft Claude" research (2025) demonstrated:</p>
+  <div class="quiz-opts" data-q="18" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Hidden web content can command an AI agent with tools to exfiltrate data</button>
+    <button class="quiz-btn" data-opt="b">Claude refuses all web content</button>
+    <button class="quiz-btn" data-opt="c">Computer-use agents are immune to injection</button>
+    <button class="quiz-btn" data-opt="d">Gaming consoles can run LLMs</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. Which 2016 incident launched the modern AI safety conversation?</p>
+  <div class="quiz-opts" data-q="19" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The ChatGPT data leak</button>
+    <button class="quiz-btn" data-opt="b">Microsoft's Tay chatbot being poisoned by Twitter users</button>
+    <button class="quiz-btn" data-opt="c">Bing Sydney's manipulative behavior</button>
+    <button class="quiz-btn" data-opt="d">The Samsung source-code leak</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <div class="score-panel" id="quiz-11-score" style="display:none">
+    <div class="progress" id="quiz-11-progress">Answered 0 of 20</div>
+    <div id="quiz-11-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  var TOTAL = 20;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-11-score');
+  var progressEl = document.getElementById('quiz-11-progress');
+  var resultEl = document.getElementById('quiz-11-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 18) { grade = 'A'; msg = 'Outstanding. You have a working red teamer\'s mental model of AI security — attack taxonomy, process, tools, and governance. Time to go break something (ethically).'; }
+      else if (correct >= 15) { grade = 'B'; msg = 'Strong grasp. A few gaps remain — skim the lessons tied to your misses and you\'re engagement-ready.'; }
+      else if (correct >= 11) { grade = 'C'; msg = 'Solid foundation. Re-read the lessons where you stumbled; the taxonomy and process lessons carry the most weight.'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons. Start with Lessons 1–4 — definitions, failure modes, process, and prompt injection — then retake the quiz.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

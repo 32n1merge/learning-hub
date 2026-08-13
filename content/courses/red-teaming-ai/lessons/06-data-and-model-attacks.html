@@ -1,0 +1,153 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Beyond Prompts — Data &amp; Model Attacks</h2>
+
+<p>Prompt attacks target the model at inference time. But an AI system is also a <em>machine learning artifact</em> with training data, weights, and a supply chain — and each of those can be attacked. This lesson covers the non-prompt attack surface: adversarial examples, data poisoning, backdoors, model extraction, membership inference, and model inversion. These techniques predate the LLM boom by years and remain central to red teaming any ML system.</p>
+
+<h3>Adversarial Examples: Fooling the Model</h3>
+<p>In 2014, Ian Goodfellow and colleagues showed something shocking: you can add an <em>imperceptible perturbation</em> to an image — noise invisible to the human eye — and a well-trained classifier will confidently misclassify it. A panda becomes a gibbon; a stop sign becomes a speed limit sign. The technique, <span class="glossary-term">FGSM (Fast Gradient Sign Method)</span>, computes a perturbation using the model's own gradients: move the input slightly in the direction that maximizes loss. Adversarial examples are the reason we now take image-classifier robustness seriously — and they extend to LLMs (adversarial suffixes, which you met in Lesson 5) and to physical objects (adversarial stickers on road signs fooling autonomous driving perception systems).</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> Neural networks are smooth, continuous functions, and small input changes can push outputs over decision boundaries. Adversarial examples exploit this geometry — the model isn't "wrong," it's <em>manipulable</em> in ways humans can't perceive.
+</div>
+
+<h3>Data Poisoning &amp; Backdoors</h3>
+<p>If you can influence what a model is <em>trained</em> on, you can influence what it does. <span class="glossary-term">Data poisoning</span> is the injection of malicious samples into the training data; a <span class="glossary-term">backdoor</span> is a poisoned model that behaves normally until a trigger appears — then does the attacker's bidding.</p>
+<ul>
+  <li><strong>BadNets (Gu et al., 2017):</strong> the canonical backdoor paper — poisoned a face-recognition model with samples stamped with a particular pattern, so any face with that pattern was misidentified as the attacker's chosen target. Clean accuracy stayed high; the trigger was invisible to normal testing.</li>
+  <li><strong>LLM supply-chain risk:</strong> foundation models are trained on billions of tokens scraped from the open web — a surface attackers can seed. Researchers have shown both "poisoning the web" (planting text that steers later-trained models) and poisoned fine-tuning datasets.</li>
+  <li><strong>RAG poisoning:</strong> with retrieval-augmented generation, the "training data" is a live corpus — and if attackers can inject documents into it (a wiki, a knowledge base, an email store), they get many of the same effects with much less effort.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Red team implication:</strong> backdoors are the hardest attack to detect because the model passes every normal test. Finding them requires trigger hunting (feeding unusual patterns and looking for anomalous outputs), provenance auditing of training data, and treating any third-party model or dataset as untrusted until proven otherwise.
+</div>
+
+<h3>Extraction, Inference, and Inversion: Stealing the Model's Secrets</h3>
+<table>
+  <tr>
+    <th>Attack</th>
+    <th>What the attacker gets</th>
+    <th>Classic reference</th>
+  </tr>
+  <tr>
+    <td><strong>Model extraction</strong></td>
+    <td>A functional copy of a proprietary model by querying it with carefully chosen inputs and training a replica on the outputs.</td>
+    <td>Tramèr et al., 2016</td>
+  </tr>
+  <tr>
+    <td><strong>Membership inference</strong></td>
+    <td>Whether a specific record was in the training data — a privacy leak (e.g., "was this patient in the training set?").</td>
+    <td>Shokri et al., 2017</td>
+  </tr>
+  <tr>
+    <td><strong>Model inversion</strong></td>
+    <td>Reconstructing training data (faces, text) from the model's outputs — the most dramatic privacy breach.</td>
+    <td>Fredrikson et al., 2015</td>
+  </tr>
+</table>
+<p>All three are <em>query-based</em>: the attacker only needs API access. For LLMs, extraction is a real economic threat (stealing a fine-tuned model's behavior), and membership inference raises hard questions about models trained on sensitive data. Defenses: rate limiting and query monitoring (extraction), differential privacy (membership), and output perturbation plus access control (inversion).</p>
+
+<h3>Non-LLM AI Attacks Worth Knowing</h3>
+<p>Red teams in the real world attack more than chatbots:</p>
+<ul>
+  <li><strong>Evasion of image/video classifiers:</strong> adversarial patches and perturbations defeat content filters, face recognition, and fraud detectors.</li>
+  <li><strong>Physical-world attacks:</strong> adversarial stickers on stop signs caused a real (test-track) Tesla to misread "STOP" as a speed-limit sign (Eykholt et al., 2017).</li>
+  <li><strong>Deepfake fraud:</strong> voice and video clones used for CEO-fraud ("voice phishing" / vishing), which has cost companies millions. Red teaming here means testing whether your org's people and verification systems can be fooled — and probing detection systems with synthetic media.</li>
+  <li><strong>Recommender and fraud-model gaming:</strong> adversaries learn to game the models that decide ad delivery, credit, or spam — the "model is the product" attack surface.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Takeaway:</strong> An AI system is attackable at every stage of its lifecycle — data collection, training, deployment, and inference. A complete red team engagement covers all of it: poisoning and backdoor audits for the data and model, adversarial examples and extraction tests at the API, and prompt attacks at the application layer. Most teams start with prompts; mature teams cover the whole pipeline.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. FGSM (2014) demonstrated that you can fool a classifier by:</p>
+  <div class="quiz-opts" data-q="0" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Sending millions of requests to overload it</button>
+    <button class="quiz-btn" data-opt="b">Training it on random labels</button>
+    <button class="quiz-btn" data-opt="c">Deleting its training data</button>
+    <button class="quiz-btn" data-opt="d">Adding an imperceptible perturbation computed from the model's gradients</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What distinguishes a backdoored model from a simply broken one?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It fails on every input</button>
+    <button class="quiz-btn" data-opt="b">It behaves normally on clean inputs but misbehaves when a specific trigger appears</button>
+    <button class="quiz-btn" data-opt="c">It only works offline</button>
+    <button class="quiz-btn" data-opt="d">It refuses all harmful requests</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which attack lets an attacker determine whether a specific record was in a model's training data?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Model extraction</button>
+    <button class="quiz-btn" data-opt="b">Model inversion</button>
+    <button class="quiz-btn" data-opt="c">Membership inference</button>
+    <button class="quiz-btn" data-opt="d">BadNets poisoning</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://arxiv.org/abs/1412.6572" target="_blank" rel="noopener">Explaining and Harnessing Adversarial Examples (Goodfellow et al., 2014)</a></li>
+  <li><a href="https://arxiv.org/abs/1708.06733" target="_blank" rel="noopener">BadNets: Identifying Vulnerabilities in the Machine Learning Model Supply Chain (Gu et al., 2017)</a></li>
+  <li><a href="https://arxiv.org/abs/1611.02770" target="_blank" rel="noopener">Stealing Machine Learning Models via Prediction APIs (Tramèr et al., 2016)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

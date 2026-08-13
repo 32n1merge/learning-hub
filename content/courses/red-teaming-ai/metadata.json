@@ -1,0 +1,20 @@
+{
+  "title": "Red Teaming AI: Finding the Fault Lines Before Attackers Do",
+  "description": "A complete course on adversarial testing of AI systems: why models fail, the full attack taxonomy (prompt injection, jailbreaks, poisoning, extraction), the red team process used by Microsoft and the frontier labs, the open-source tooling (PyRIT, garak, ART), real-world incidents from Tay to Grand Theft Claude, and the NIST/EU/ISO governance landscape.",
+  "difficulty": "intermediate",
+  "estimatedDuration": "90 min",
+  "tags": [
+    "ai",
+    "red teaming",
+    "security",
+    "llm",
+    "prompt injection",
+    "jailbreak",
+    "nist",
+    "governance",
+    "mitre atlas",
+    "owasp"
+  ],
+  "lastUpdated": "2026-08-13",
+  "icon": "🎯"
+}

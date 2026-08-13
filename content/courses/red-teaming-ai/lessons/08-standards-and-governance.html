@@ -1,0 +1,161 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Standards &amp; Governance — NIST, EU AI Act &amp; ISO</h2>
+
+<p>Red teaming stopped being optional. Around the world, regulators and standards bodies have turned adversarial testing of AI from a "nice to have" engineering practice into an <em>explicitly expected</em> obligation. If you're building or deploying AI systems, this lesson is the part of the course where red teaming becomes a compliance requirement — and knowing the landscape early is a genuine competitive advantage.</p>
+
+<h3>NIST AI Risk Management Framework (AI RMF 1.0)</h3>
+<p>The US National Institute of Standards and Technology published its AI RMF in January 2023 — the closest thing the field has to a consensus baseline for AI risk governance. It's voluntary (not a regulation), but it is <em>the</em> reference framework that regulators, courts, and customers will expect you to have considered. The RMF is built around four core functions:</p>
+
+<table>
+  <tr>
+    <th>Function</th>
+    <th>What it means</th>
+    <th>Red team link</th>
+  </tr>
+  <tr>
+    <td><strong>Govern</strong></td>
+    <td>Set risk culture, roles, and policies.</td>
+    <td>Charter, scope, and approval for red teaming.</td>
+  </tr>
+  <tr>
+    <td><strong>Map</strong></td>
+    <td>Understand the system, context, and stakeholders.</td>
+    <td>Threat modeling, harms taxonomy, attack surface.</td>
+  </tr>
+  <tr>
+    <td><strong>Measure</strong></td>
+    <td>Assess and test risks with metrics.</td>
+    <td>The red team engagement itself — probing, evals, scoring.</td>
+  </tr>
+  <tr>
+    <td><strong>Manage</strong></td>
+    <td>Prioritize, respond to, and communicate risks.</td>
+    <td>Findings triage, remediation, residual risk sign-off.</td>
+  </tr>
+</table>
+
+<p>In 2024, NIST published the <strong>Generative AI Profile</strong> (AI 600-1), which tailors the RMF to generative AI and — importantly for this course — explicitly names <strong>red teaming and adversarial testing</strong> as a primary risk management action, along with content provenance, watermarking, and information disclosure controls. If a US regulator asks "what did you do to manage AI risk?", "we ran NIST-aligned red teaming" is the answer they expect to hear.</p>
+
+<h3>US Executive Order 14110 (Oct 2023)</h3>
+<p>President Biden's October 2023 Executive Order on Safe, Secure, and Trustworthy AI made red teaming a <em>federal requirement</em>: developers of the most powerful foundation models (models that could pose serious risks to national security, public safety, or public health) must perform red team testing and report results to the government before release. It directed NIST to develop the GenAI Profile and mandated standards for AI safety, watermarking, and testing. The policy direction continued into 2024–2025 with implementation guidance. The exact legal details matter less than the trend: <strong>frontier model red teaming is now a precondition for release in the US federal orbit.</strong></p>
+
+<div class="callout">
+  <strong>Key idea:</strong> The US approach is largely <em>voluntary-but-expected</em> — standards-backed and procurement-driven. The EU approach, by contrast, is <em>binding law</em>. Both converge on the same practical demand: document your adversarial testing.
+</div>
+
+<h3>The EU AI Act</h3>
+<p>The EU AI Act — the world's first comprehensive AI law, adopted in 2024 — creates a risk-tiered regulatory regime. For this course, the key obligations:</p>
+<ul>
+  <li><strong>General-purpose AI (GPAI) models with systemic risk:</strong> the most powerful foundation models must undergo <strong>adversarial testing</strong> ("red teaming") under the Act's systemic-risk provisions — evaluations, incident reporting, and mitigation obligations. This is a hard legal requirement with fines attached.</li>
+  <li><strong>High-risk AI systems:</strong> subject to conformity assessments, risk management, and documentation — which effectively requires evidence of testing that covers adversarial scenarios.</li>
+  <li><strong>Practical implication:</strong> if your product is built on a systemic-risk model or classifies as high-risk, your red team reports are legal evidence. Run them like you'd run a penetration test for PCI-DSS — documented, repeatable, and defensible.</li>
+</ul>
+
+<h3>ISO/IEC 42001: The Management-System Angle</h3>
+<p>ISO/IEC 42001 is the first international standard for AI <em>management systems</em> (published 2023). Think of it as "ISO 27001 for AI": it gives organizations a certifiable framework for governing AI throughout its lifecycle — risk assessment, policies, controls, continual improvement. Red teaming slots in as a control under its risk-management and testing expectations. Certification is voluntary, but enterprises and governments increasingly ask for it from AI suppliers — and an auditable red teaming program is one of the strongest pieces of evidence you can produce.</p>
+
+<h3>What This Means for Your Red Team</h3>
+<ol>
+  <li><strong>Document everything.</strong> Scope, charter, playbook, findings, remediation, retest results — in a form an auditor can pick up and understand. "We attacked it and it seemed fine" does not satisfy any of these frameworks.</li>
+  <li><strong>Align your taxonomy.</strong> Map your harms categories and findings to NIST RMF functions and OWASP/ATLAS IDs so external reviewers can navigate your work instantly.</li>
+  <li><strong>Test at the right cadence.</strong> Pre-release for releases, post-change for every significant model or feature update, and on an ongoing schedule for live systems — the frameworks expect continual monitoring, not a single engagement.</li>
+  <li><strong>Know your tier.</strong> The obligations scale with risk: a customer-support chatbot and a frontier foundation model live in different regulatory universes. Scope your program to your actual exposure.</li>
+</ol>
+
+<div class="callout-success">
+  <strong>Takeaway:</strong> Governance frameworks don't replace red teaming — they <em>demand it</em> and give it a structure to live in. NIST gives you the risk lifecycle, ATLAS/OWASP give you the attack language, and the EU AI Act and EO 14110 give you the legal reason to care. A well-run red team program is simultaneously great engineering, great risk management, and great compliance evidence.
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which NIST AI RMF function covers "assess and test risks with metrics" — where red team engagements live?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Govern</button>
+    <button class="quiz-btn" data-opt="b">Map</button>
+    <button class="quiz-btn" data-opt="c">Measure</button>
+    <button class="quiz-btn" data-opt="d">Manage</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which regulation makes adversarial testing (red teaming) a binding legal obligation for the most powerful general-purpose AI models?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The US Computer Fraud and Abuse Act</button>
+    <button class="quiz-btn" data-opt="b">The EU AI Act's systemic-risk provisions for GPAI models</button>
+    <button class="quiz-btn" data-opt="c">GDPR</button>
+    <button class="quiz-btn" data-opt="d">DMCA Section 1201</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why should red team reports be written to be auditor-friendly?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Because NIST, the EU AI Act, and ISO/IEC 42001 all expect documented, repeatable evidence of AI risk testing</button>
+    <button class="quiz-btn" data-opt="b">Because auditors only accept reports over 20 pages</button>
+    <button class="quiz-btn" data-opt="c">Because red teamers are legally required to publish findings</button>
+    <button class="quiz-btn" data-opt="d">Because reports are the only deliverable of red teaming</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">NIST AI Risk Management Framework 1.0</a></li>
+  <li><a href="https://www.nist.gov/itl/ai-risk-management-framework/ai-rmf-development" target="_blank" rel="noopener">NIST Generative AI Profile (AI 600-1)</a></li>
+  <li><a href="https://www.federalregister.gov/documents/2023/11/01/2023-24283/safe-secure-and-trustworthy-development-and-use-of-artificial-intelligence" target="_blank" rel="noopener">Executive Order 14110 on Safe, Secure, and Trustworthy AI (Federal Register)</a></li>
+  <li><a href="https://artificialintelligenceact.eu/" target="_blank" rel="noopener">The EU AI Act (annotated text)</a></li>
+  <li><a href="https://www.iso.org/standard/81230.html" target="_blank" rel="noopener">ISO/IEC 42001 — AI Management Systems</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

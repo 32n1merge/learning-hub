@@ -1,0 +1,165 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Tools of the Trade</h2>
+
+<p>No serious red team attacks a modern LLM system by hand alone. An open-source tooling ecosystem has grown up around AI security, and a good red teamer knows which tool does what — and, just as importantly, what tools <em>can't</em> do (no scanner replaces human adversarial creativity). This lesson is your tool map.</p>
+
+<h3>The Big Three Frameworks</h3>
+
+<table>
+  <tr>
+    <th>Tool</th>
+    <th>Maker</th>
+    <th>What it does</th>
+    <th>Best for</th>
+  </tr>
+  <tr>
+    <td><strong>PyRIT</strong> (Python Risk Identification Tool)</td>
+    <td>Microsoft</td>
+    <td>Automates red teaming pipelines: generates attack prompts (jailbreaks, injection, leakage probes), fires them at targets, and scores the results with configurable <em>scoring engines</em> (self-ask, LLM-based graders, Azure content safety).</td>
+    <td>Continuous, scripted red teaming of chat models and agents; integrating into CI.</td>
+  </tr>
+  <tr>
+    <td><strong>garak</strong></td>
+    <td>NVIDIA</td>
+    <td>An LLM vulnerability <em>scanner</em>: plug in a model endpoint, and garak runs hundreds of probes across categories — prompt injection, jailbreaks, data leakage, hallucination, encoding attacks.</td>
+    <td>Quick, broad vulnerability sweeps and regression testing after model updates.</td>
+  </tr>
+  <tr>
+    <td><strong>ART</strong> (Adversarial Robustness Toolbox)</td>
+    <td>IBM</td>
+    <td>The oldest and broadest ML-security library: adversarial examples (FGSM, projected gradient descent), poisoning, evasion, extraction for classifiers and models of all kinds, not just LLMs.</td>
+    <td>Traditional ML models, image classifiers, and the non-prompt attack surface (Lesson 6).</td>
+  </tr>
+</table>
+
+<h3>Specialists &amp; Adjacent Tools</h3>
+<ul>
+  <li><strong>TextAttack</strong> — academic framework for adversarial attacks on NLP models (word swaps, paraphrases); great for research-grade robustness testing of classifiers.</li>
+  <li><strong>LLM-Attacks (GCG)</strong> — the reference implementation of gradient-based adversarial suffix attacks (the "universal jailbreak" you met in Lesson 5).</li>
+  <li><strong>promptfoo</strong> — an LLM evaluation and testing framework with a red-team mode: run prompt variations, compare outputs, and detect injection/jailbreak failures in CI. Hugely popular for app teams.</li>
+  <li><strong>Giskard</strong> — ML/LLM testing platform covering security, robustness, and performance; useful for keeping red team findings in the same place as other model quality gates.</li>
+  <li><strong>CyberSecEval</strong> (Meta) — a benchmark suite that measures LLM security: how readily models produce unsafe code, comply with cyberattacks, or leak secrets. More of an evaluation than an attack tool, but the de facto standard for comparing models' security posture.</li>
+</ul>
+
+<div class="callout">
+  <strong>Key idea:</strong> Framework vs. scanner vs. benchmark: PyRIT is a <em>harness</em> (you drive it, it scores), garak is a <em>scanner</em> (point it and get a report), CyberSecEval is a <em>benchmark</em> (measures models against fixed tests). Most mature programs use all three types: benchmarks for model selection, scanners for regression sweeps, and PyRIT-style harnesses for deep targeted campaigns.
+</div>
+
+<h3>Automated &amp; LLM-vs-LLM Red Teaming</h3>
+<p>Can AI red team AI? Yes — and it scales. The landmark paper <em>Red Teaming Language Models with Language Models</em> (Perez et al., 2022) showed that one LLM can automatically generate thousands of attack prompts against another, discovering harmful behaviors at a scale human teams can't match — with the discovery rate <em>scaling</em> with the red team model's size (bigger attacker = more findings). This insight powers modern automated pipelines:</p>
+<ul>
+  <li><strong>LLM-as-attacker:</strong> generate jailbreak variants, roleplay frames, and injection payloads programmatically; run them through PyRIT/garak; score with LLM graders.</li>
+  <li><strong>Adversarial collaboration (BIG-Bench, Anthropic):</strong> human+AI teams deliberately try to break other models' tasks or safety — the "attacker" mindset institutionalized.</li>
+  <li><strong>RL from red-team data (Ganguli et al., 2022):</strong> findings from red teaming become <em>training data</em> — the model is fine-tuned to refuse the discovered attacks, then re-tested (the loop from Lesson 3, automated).</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Where automation fails:</strong> scanners miss <em>novel</em> attacks. Automated tools are great at re-finding known techniques at scale; they are weak at the creative leaps — cross-domain attacks, subtle multi-turn manipulations, domain-specific abuse — that human experts (especially domain experts, per Microsoft) catch. The right ratio is roughly: automation for breadth and regression, humans for depth and novelty.
+</div>
+
+<h3>A Practical Toolchain (Startup-to-Enterprise)</h3>
+<ol>
+  <li><strong>Model selection:</strong> run CyberSecEval (and safety benchmarks) to shortlist models.</li>
+  <li><strong>Continuous sweep:</strong> wire garak into CI; run it on every model or prompt change. Fail the build on new high-severity probe hits.</li>
+  <li><strong>Targeted campaigns:</strong> PyRIT for injection/jailbreak/leakage campaigns against your specific system and harms taxonomy, with your own scoring.</li>
+  <li><strong>Non-LLM surface:</strong> ART/TextAttack for any classifiers, embeddings, or vision components in your stack.</li>
+  <li><strong>Humans on top:</strong> quarterly expert red team engagements focused on domain abuse and novel techniques; feed findings back into the automated tooling.</li>
+</ol>
+
+<div class="callout-success">
+  <strong>Takeaway:</strong> The tooling is mature enough that "we don't know how to start" is no longer an excuse — garak gives you a baseline report in an afternoon. But tools are force multipliers, not substitutes: the framework is your harness, the taxonomy is your map, and humans are still the ones who find what nobody thought to probe.
+</div>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which Microsoft tool automates red teaming pipelines with attack generators and configurable scoring engines?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">PyRIT</button>
+    <button class="quiz-btn" data-opt="b">garak</button>
+    <button class="quiz-btn" data-opt="c">ART</button>
+    <button class="quiz-btn" data-opt="d">TextAttack</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. NVIDIA's garak is best described as:</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A training framework</button>
+    <button class="quiz-btn" data-opt="b">A benchmarking suite for code generation</button>
+    <button class="quiz-btn" data-opt="c">An LLM vulnerability scanner that runs hundreds of probes across categories</button>
+    <button class="quiz-btn" data-opt="d">A chatbot</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What did Perez et al. (2022) demonstrate about LLM-vs-LLM red teaming?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">That LLMs refuse to attack other LLMs</button>
+    <button class="quiz-btn" data-opt="b">That human red teams are obsolete</button>
+    <button class="quiz-btn" data-opt="c">That automated attacks only work on open-source models</button>
+    <button class="quiz-btn" data-opt="d">That one LLM can automatically generate thousands of attack prompts against another, with discovery scaling with attacker model size</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/microsoft/PyRIT" target="_blank" rel="noopener">Microsoft PyRIT (GitHub)</a></li>
+  <li><a href="https://github.com/NVIDIA/garak" target="_blank" rel="noopener">NVIDIA garak (GitHub)</a></li>
+  <li><a href="https://github.com/Trusted-AI/adversarial-robustness-toolbox" target="_blank" rel="noopener">IBM Adversarial Robustness Toolbox (GitHub)</a></li>
+  <li><a href="https://arxiv.org/abs/2202.03286" target="_blank" rel="noopener">Red Teaming Language Models with Language Models (Perez et al., 2022)</a></li>
+  <li><a href="https://github.com/meta-llama/PurpleLlama" target="_blank" rel="noopener">Meta Purple Llama / CyberSecEval (GitHub)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

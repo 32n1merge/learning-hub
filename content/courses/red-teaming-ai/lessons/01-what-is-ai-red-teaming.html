@@ -1,0 +1,181 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: What Is AI Red Teaming?</h2>
+
+<p>On March 23, 2016, Microsoft launched <span class="glossary-term">Tay</span> — a chatbot designed to learn from conversations with Twitter users. Within 16 hours, Tay was posting racist, genocidal, and misogynistic content, and Microsoft had to take it offline. The post-mortem was brutal: Tay had been poisoned by its own users in less than a day. It is the founding parable of AI red teaming — the realization that AI systems fail in ways <em>nobody anticipated</em>, and that the only way to find those failures is to attack them on purpose, before real attackers and real users do.</p>
+
+<div class="callout">
+  <strong>Definition:</strong> AI red teaming is the structured, adversarial testing of an AI system to discover its failure modes, vulnerabilities, and harmful behaviors — by deliberately trying to make it fail, the way an adversary would, and documenting what happens.
+</div>
+
+<h3>Where the Term Comes From</h3>
+<p>"Red teaming" has a long military pedigree: wargames where a "red team" plays the enemy to expose weaknesses in a "blue team's" plans. Cybersecurity borrowed it for adversarial testing of networks and applications. In 2018, Microsoft published a landmark post — "Red Teaming AI" — that formally imported the practice into machine learning, framing it as a core discipline for finding failures in AI systems before they reach production. Today it is a standard practice at every major AI lab and increasingly a <em>regulatory requirement</em> (more on that in Lesson 8).</p>
+
+<h3>Red Teaming vs. Everything Else</h3>
+<p>AI red teaming is constantly confused with three neighboring disciplines. They overlap, but they are not the same:</p>
+
+<table>
+  <tr>
+    <th>Practice</th>
+    <th>What it asks</th>
+    <th>How it's done</th>
+  </tr>
+  <tr>
+    <td><strong>Benchmark evaluation</strong></td>
+    <td>"How capable is this model?"</td>
+    <td>Run fixed test sets (MMLU, GSM8K, HELM) and score accuracy. Deterministic, reproducible, automated.</td>
+  </tr>
+  <tr>
+    <td><strong>Safety testing / QA</strong></td>
+    <td>"Does it work as specified?"</td>
+    <td>Check outputs against requirements with curated test cases. Finds bugs, not necessarily attacks.</td>
+  </tr>
+  <tr>
+    <td><strong>Traditional pen testing</strong></td>
+    <td>"Can you break into the system?"</td>
+    <td>Exploit network, web, and infrastructure vulnerabilities. Assumes the system behaves <em>deterministically</em>.</td>
+  </tr>
+  <tr>
+    <td><strong>AI red teaming</strong></td>
+    <td>"What harmful or dangerous things can this AI do, and how do we stop them?"</td>
+    <td>Adversarial probing with human creativity: jailbreaks, injection, abuse simulation, domain-expert stress tests.</td>
+  </tr>
+</table>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9CA3AF"/></marker>
+    </defs>
+    <rect x="30" y="30" width="140" height="70" rx="10" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="100" y="58" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="600">Benchmarks</text>
+    <text x="100" y="74" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">capability scores</text>
+    <rect x="190" y="30" width="140" height="70" rx="10" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="260" y="58" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="600">QA / Safety tests</text>
+    <text x="260" y="74" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">works as specified?</text>
+    <rect x="350" y="30" width="140" height="70" rx="10" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="420" y="58" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="600">Pen testing</text>
+    <text x="420" y="74" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">classic exploits</text>
+    <rect x="130" y="150" width="260" height="64" rx="10" fill="var(--color-elevated)" stroke="var(--color-accent)" stroke-width="1.5"/>
+    <text x="260" y="176" text-anchor="middle" fill="var(--color-accent)" font-size="12" font-weight="600">AI Red Teaming</text>
+    <text x="260" y="193" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">adversarial + creative + domain-expert probing</text>
+    <line x1="100" y1="100" x2="230" y2="150" stroke="var(--color-border)" stroke-width="1" marker-end="url(#arr1)"/>
+    <line x1="260" y1="100" x2="260" y2="150" stroke="var(--color-border)" stroke-width="1" marker-end="url(#arr1)"/>
+    <line x1="420" y1="100" x2="290" y2="150" stroke="var(--color-border)" stroke-width="1" marker-end="url(#arr1)"/>
+  </svg>
+</div>
+
+<h3>Why Traditional Security Testing Isn't Enough</h3>
+<p>A website either has a SQL injection hole or it doesn't — the test is binary, and patches are deterministic. LLM-based systems are different in ways that break the old model:</p>
+<ul>
+  <li><strong>Nondeterministic behavior:</strong> the same prompt can produce wildly different outputs. There is no fixed "spec" to test against.</li>
+  <li><strong>The attack surface is language itself:</strong> attackers don't exploit code, they <em>talk to the model</em> — and language has infinite room for obfuscation, trickery, and social engineering.</li>
+  <li><strong>The system is trained, not built:</strong> you can't patch a neural network like a buffer overflow; you retrain, add guardrails, or filter — all partial fixes.</li>
+  <li><strong>Failure modes are emergent:</strong> harms (bias, dangerous capabilities, jailbreaks) appear at scale that no one wrote into the design.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>The honest framing:</strong> you can never fully "fix" an LLM. Red teaming's real job is to <em>find the worst failures before deployment</em>, quantify residual risk, and build defenses and monitoring around what remains. It is risk management, not a final stamp of approval.
+</div>
+
+<h3>The Two Flavors of Red Teaming</h3>
+<p>Modern AI red teaming splits into two complementary missions — keep both in mind, because the tools overlap but the goals differ:</p>
+<ul>
+  <li><strong>Safety red teaming:</strong> find harmful content, bias, dangerous capabilities, and policy violations (e.g., "how do I build a bomb?" bypasses). Goal: align the model with the operator's policies.</li>
+  <li><strong>Security red teaming:</strong> find exploitable vulnerabilities — prompt injection, data exfiltration, poisoning, extraction, unauthorized access. Goal: defend the system like any other attack surface.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Bottom line:</strong> Red teaming is the discipline of <em>adversarial imagination</em> applied to AI — the systematic practice of asking "how could this go horribly wrong?" and getting evidence instead of vibes. The rest of this course teaches you how to answer that question: the failure modes (Lessons 2, 4–7), the process (Lesson 3), the governance (Lesson 8), the tools (Lesson 9), and how the industry actually runs it (Lesson 10).
+</div>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What event is widely considered the founding parable of AI red teaming?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The 2017 Equifax data breach</button>
+    <button class="quiz-btn" data-opt="b">Google's AlphaGo beating Lee Sedol</button>
+    <button class="quiz-btn" data-opt="c">Microsoft's Tay chatbot being poisoned by Twitter users in 2016</button>
+    <button class="quiz-btn" data-opt="d">The SolarWinds supply chain attack</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which organization formally imported "red teaming" into AI/ML practice with a landmark 2018 post?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">MITRE</button>
+    <button class="quiz-btn" data-opt="b">Microsoft</button>
+    <button class="quiz-btn" data-opt="c">NIST</button>
+    <button class="quiz-btn" data-opt="d">Google DeepMind</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which statement best captures why traditional penetration testing is insufficient for LLM-based systems?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LLM outputs are nondeterministic and the attack surface is language itself, so failures are emergent rather than fixed bugs</button>
+    <button class="quiz-btn" data-opt="b">LLM systems are too fast for pen testers to test</button>
+    <button class="quiz-btn" data-opt="c">Pen testers are not allowed to test cloud systems</button>
+    <button class="quiz-btn" data-opt="d">LLMs are immune to injection attacks by design</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.microsoft.com/en-us/research/blog/red-teaming-ai/" target="_blank" rel="noopener">Microsoft Research — Red Teaming AI (2018)</a></li>
+  <li><a href="https://blogs.microsoft.com/blog/2016/03/25/learning-tays-introduction/" target="_blank" rel="noopener">Microsoft — Learning from Tay's introduction (2016)</a></li>
+  <li><a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf" target="_blank" rel="noopener">NIST AI Risk Management Framework 1.0</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
