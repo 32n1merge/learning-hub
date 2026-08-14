@@ -60,6 +60,8 @@
     </section>
 
     <div class="container">
+      {{TOPICS_SECTION}}
+
       <section class="courses-grid" id="courses-grid" aria-label="Course list">
         {{COURSE_CARDS}}
       </section>
@@ -101,36 +103,59 @@
       }
     });
 
-    // Search
+    // Search + topic filter
     (function() {
       var input = document.getElementById('search-input');
       var grid = document.getElementById('courses-grid');
+      var chipsWrap = document.querySelector('.topic-chips');
       var cards = grid ? Array.from(grid.querySelectorAll('.course-card')) : [];
+      var activeTopic = '';
 
-      input.addEventListener('input', function(e) {
-        var query = e.target.value.toLowerCase().trim();
+      function applyFilters() {
+        var query = input.value.toLowerCase().trim();
         var visible = 0;
 
         cards.forEach(function(card) {
           var text = card.getAttribute('data-search-text') || '';
-          var match = !query || text.indexOf(query) !== -1;
+          var topics = (card.getAttribute('data-topics') || '').split(',').filter(Boolean);
+          var matchQuery = !query || text.indexOf(query) !== -1;
+          var matchTopic = !activeTopic || topics.indexOf(activeTopic) !== -1;
+          var match = matchQuery && matchTopic;
           card.style.display = match ? '' : 'none';
           if (match) visible++;
         });
 
         var noResults = grid.querySelector('.no-results');
-        if (visible === 0 && query) {
+        if (visible === 0 && (query || activeTopic)) {
           if (!noResults) {
             noResults = document.createElement('div');
             noResults.className = 'no-results';
             noResults.setAttribute('role', 'status');
-            noResults.textContent = 'No courses match your search.';
             grid.appendChild(noResults);
           }
+          noResults.textContent = activeTopic
+            ? 'No courses match this topic.'
+            : 'No courses match your search.';
         } else if (noResults) {
           noResults.remove();
         }
-      });
+      }
+
+      input.addEventListener('input', applyFilters);
+
+      if (chipsWrap) {
+        chipsWrap.addEventListener('click', function(e) {
+          var chip = e.target.closest('.topic-chip');
+          if (!chip) return;
+          activeTopic = chip.getAttribute('data-topic') || '';
+          chipsWrap.querySelectorAll('.topic-chip').forEach(function(c) {
+            var on = c === chip;
+            c.classList.toggle('active', on);
+            c.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          applyFilters();
+        });
+      }
 
       // Keyboard shortcut: ⌘K / Ctrl+K
       document.addEventListener('keydown', function(e) {

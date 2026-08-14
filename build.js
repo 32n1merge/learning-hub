@@ -104,6 +104,34 @@ async function fileExists(path) {
   }
 }
 
+function buildTopicsSection(courses) {
+  // Aggregate all course tags into a deduped, sorted topic list.
+  const topicSet = new Set();
+  for (const course of courses) {
+    for (const tag of (course.tags || [])) {
+      const t = String(tag).trim().toLowerCase();
+      if (t) topicSet.add(t);
+    }
+  }
+  const topics = [...topicSet].sort();
+  if (topics.length === 0) return '';
+
+  const chips = [
+    `<button type="button" class="topic-chip topic-chip-all active" data-topic="" aria-pressed="true">All</button>`,
+    ...topics.map(t =>
+      `<button type="button" class="topic-chip" data-topic="${t}" aria-pressed="false">${t}</button>`
+    )
+  ].join('\n');
+
+  return `
+    <section id="topics" class="topics-section" aria-label="Browse courses by topic">
+      <h2 class="section-title">Browse by Topic</h2>
+      <div class="topic-chips" role="group" aria-label="Filter courses by topic">
+${chips}
+      </div>
+    </section>`;
+}
+
 function buildCourseCard(course) {
   const searchableText = [
     course.title,
@@ -111,6 +139,10 @@ function buildCourseCard(course) {
     ...(course.tags || []),
     course.category || ''
   ].join(' ').toLowerCase();
+
+  const topicsAttr = (course.tags || [])
+    .map(t => String(t).trim().toLowerCase())
+    .join(',');
 
   const coverImageHtml = course.coverImage
     ? `<img src="${course.coverImage}" alt="${course.title}" class="course-cover">`
@@ -125,7 +157,7 @@ function buildCourseCard(course) {
     : '';
 
   return `
-    <article class="course-card" data-search-text="${searchableText.replace(/"/g, '&quot;')}">
+    <article class="course-card" data-search-text="${searchableText.replace(/"/g, '&quot;')}" data-topics="${topicsAttr.replace(/"/g, '&quot;')}">
       ${coverImageHtml}
       <div class="course-card-body">
         <div class="course-card-header">
@@ -173,9 +205,11 @@ async function generateHomePage(courses) {
 
   const courseCards = courses.map(buildCourseCard).join('\n');
   const recentlyUpdatedHtml = buildRecentlyUpdated(courses);
+  const topicsSectionHtml = buildTopicsSection(courses);
 
   const html = template
     .replace('{{COURSE_CARDS}}', courseCards)
+    .replace('{{TOPICS_SECTION}}', topicsSectionHtml)
     .replace('{{RECENTLY_UPDATED}}', recentlyUpdatedHtml);
 
   await fs.writeFile(path.join(DIST_DIR, 'index.html'), html);

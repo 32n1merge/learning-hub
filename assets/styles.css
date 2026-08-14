@@ -460,6 +460,58 @@ main {
 }
 
 /* =============================================
+   Topics — Browse by Topic Filter
+   ============================================= */
+#topics,
+#courses-grid {
+  scroll-margin-top: 72px;
+}
+
+.topics-section {
+  padding: var(--spacing-lg) 0 var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.topics-section .section-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.topic-chip {
+  padding: 4px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-elevated);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.topic-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.topic-chip:focus-visible {
+  outline: 2px solid var(--color-accent-ring);
+  outline-offset: 2px;
+}
+
+.topic-chip.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-surface);
+}
+
+/* =============================================
    Recently Updated
    ============================================= */
 .recently-updated {
