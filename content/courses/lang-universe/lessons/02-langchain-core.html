@@ -1,0 +1,154 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: LangChain Core — The Building Blocks</h2>
+
+<p>LangChain is the <span class="glossary-term">foundation layer</span>: a collection of reusable components for talking to LLMs, plus the glue for composing them. If LangGraph is the brain's control flow, LangChain is the toolbox — models, prompts, parsers, retrievers, and tools that you wire together.</p>
+
+<h3>What's actually in the box</h3>
+<p>The core value is <strong>standardized abstractions</strong>. Instead of learning each vendor's SDK quirks, you program against a common interface and swap the backend. The most important abstractions:</p>
+
+<table>
+  <tr><th>Abstraction</th><th>What it does</th><th>Examples</th></tr>
+  <tr><td>Chat models</td><td>Unified interface for chat LLMs</td><td><code>ChatOpenAI</code>, <code>ChatAnthropic</code>, <code>ChatGoogle</code>, local via <code>ChatOllama</code></td></tr>
+  <tr><td>Prompt templates</td><td>Reusable, parameterized prompts</td><td><code>ChatPromptTemplate</code>, <code>PromptTemplate</code></td></tr>
+  <tr><td>Output parsers</td><td>Turn model text into structured data</td><td><code>StrOutputParser</code>, Pydantic parsers, structured output</td></tr>
+  <tr><td>Retrievers &amp; vector stores</td><td>Find relevant context for RAG</td><td><code>FAISS</code>, <code>Chroma</code>, <code>PGVector</code> + <code>Retriever</code> wrapper</td></tr>
+  <tr><td>Document loaders &amp; splitters</td><td>Ingest and chunk source material</td><td><code>PyPDFLoader</code>, <code>RecursiveCharacterTextSplitter</code></td></tr>
+  <tr><td>Embedding models</td><td>Turn text into vectors</td><td><code>OpenAIEmbeddings</code>, <code>HuggingFaceEmbeddings</code></td></tr>
+  <tr><td>Tools</td><td>Expose functions the model can call</td><td><code>@tool</code> decorator, built-in search/calculator tools</td></tr>
+  <tr><td>Message history / memory</td><td>Remember prior turns</td><td><code>InMemoryChatMessageHistory</code>, LangGraph checkpoints</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Key idea:</strong> LangChain's real product is <em>interchangeability</em>. Write once against <code>BaseChatModel</code>; run the same code against OpenAI, Anthropic, or a local model by changing one line. The same pattern repeats across every abstraction.
+</div>
+
+<h3>A minimal example</h3>
+<pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+model = ChatOpenAI(model="gpt-4o-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a terse technical writer."),
+    ("user", "Explain {topic} in three sentences."),
+])
+chain = prompt | model | StrOutputParser()
+
+result = chain.invoke({"topic": "retrieval augmented generation"})
+print(result)</code></pre>
+
+<p>Notice the <code>|</code> operator: that's <span class="glossary-term">LCEL</span> (LangChain Expression Language), the composition syntax we'll dissect in the next lesson. Each piece is a <em>runnable</em> — prompt in, text out — and they chain together.</p>
+
+<h3>Package landscape</h3>
+<p>LangChain is not one package; it's an ecosystem of pip-installable pieces, which keeps your dependency tree lean:</p>
+<ul>
+  <li><code>langchain-core</code> — the abstractions, runnables, and interfaces (no vendor code)</li>
+  <li><code>langchain</code> — the main framework: chains, agents, memory, utilities</li>
+  <li><code>langchain-openai</code>, <code>langchain-anthropic</code>, <code>langchain-google-genai</code>, … — per-vendor integrations</li>
+  <li><code>langchain-community</code> — community-maintained integrations (broad, less guaranteed)</li>
+  <li><code>langchain-text-splitters</code>, <code>langchain-docloaders</code> — ingestion utilities</li>
+  <li><code>langgraph</code> — the orchestration engine (next lesson)</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> "LangChain" in tutorials often conflates the framework with the ecosystem. If a 2023-era tutorial imports <code>langchain.llms.OpenAI</code> or long-deprecated chains, the API has moved — modern code imports from <code>langchain_openai</code> / <code>langchain_core</code> and prefers LCEL composition. Check the docs' version notes rather than cargo-culting old snippets.
+</div>
+
+<h3>Where LangChain stops</h3>
+<p>LangChain gives you components and one-shot pipelines. The moment you need <strong>loops, branching, persistence, or human approval</strong> — the hallmarks of a real agent — a linear chain isn't enough. That's the gap LangGraph fills. LangChain's own guidance has shifted: build the pipeline with LangChain, orchestrate the agent with LangGraph, and don't force everything into a chain.</p>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Linear, stateless pipeline → LangChain + LCEL. Anything with a loop, state, or multiple actors → LangGraph.
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the main value of LangChain's abstractions like <code>BaseChatModel</code>?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They make the LLM run faster</button>
+    <button class="quiz-btn" data-opt="b">They let you swap vendors (OpenAI, Anthropic, local) with minimal code change</button>
+    <button class="quiz-btn" data-opt="c">They eliminate the need for prompts</button>
+    <button class="quiz-btn" data-opt="d">They're required to call any LLM API</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which package holds the core interfaces (<code>BaseChatModel</code>, prompts, runnables)?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">langchain-openai</button>
+    <button class="quiz-btn" data-opt="b">langchain</button>
+    <button class="quiz-btn" data-opt="c">langchain-community</button>
+    <button class="quiz-btn" data-opt="d">langchain-core</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. When is LangChain + LCEL alone NOT enough?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">When you need streaming output</button>
+    <button class="quiz-btn" data-opt="b">When you need structured output parsing</button>
+    <button class="quiz-btn" data-opt="c">When you need loops, branching, or persistence (agentic control flow)</button>
+    <button class="quiz-btn" data-opt="d">When you use a local LLM</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://python.langchain.com/docs/concepts/" target="_blank" rel="noopener">LangChain concepts docs (core abstractions)</a></li>
+  <li><a href="https://python.langchain.com/docs/integrations/chat/" target="_blank" rel="noopener">Chat model integrations list</a></li>
+  <li><a href="https://python.langchain.com/docs/tutorials/llm_chain/" target="_blank" rel="noopener">Build a simple LLM chain tutorial</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

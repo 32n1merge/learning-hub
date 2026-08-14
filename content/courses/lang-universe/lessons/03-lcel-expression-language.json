@@ -1,0 +1,5 @@
+{
+  "title": "LCEL — The Expression Language",
+  "description": "The Runnable interface, the | pipe operator, composition primitives, and built-in resilience: retries, fallbacks, streaming, and batching — and where LCEL hits its limits.",
+  "readingTime": "8 min"
+}

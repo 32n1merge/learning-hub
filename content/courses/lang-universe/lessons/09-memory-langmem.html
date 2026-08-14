@@ -1,0 +1,161 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Memory — LangMem &amp; the Persistence Stack</h2>
+
+<p>An agent without memory is a goldfish with a system prompt. The Lang ecosystem layers memory at three levels: <span class="glossary-term">conversation context</span> (the current run), <span class="glossary-term">short-term memory</span> (past runs in a thread), and <span class="glossary-term">long-term memory</span> (facts learned across all interactions). Knowing which layer you need is the difference between "remembers this conversation" and "knows the user."</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> LangGraph's checkpointer is the short-term memory backbone (thread-scoped), and LangMem extends it to long-term memory: distilled facts, preferences, and learned procedures stored in a vector store, written by the agent itself as it works.
+</div>
+
+<h3>The three memory layers</h3>
+<table>
+  <tr><th>Layer</th><th>Scope</th><th>Mechanism</th><th>Example</th></tr>
+  <tr><td>Context</td><td>One run</td><td>Messages in state</td><td>"Summarize this document"</td></tr>
+  <tr><td>Short-term (thread)</td><td>One conversation</td><td>Checkpointer keyed by <code>thread_id</code></td><td>Multi-turn chat, multi-step task</td></tr>
+  <tr><td>Long-term (user/agent)</td><td>Across all conversations</td><td>LangMem semantic/episodic memory in a Store</td><td>"User prefers terse replies" or "I learned the refund workflow"</td></tr>
+</table>
+
+<h3>Short-term memory with the checkpointer</h3>
+<p>You've seen the mechanism in the LangGraph lesson: compile with a checkpointer, pass <code>thread_id</code>, and every run's state is saved and reloaded. For durable storage across restarts, swap <code>MemorySaver</code> for SQLite or Postgres — the API is identical.</p>
+<pre><code>from langgraph.checkpoint.sqlite import SqliteSaver
+
+with SqliteSaver.from_conn_string("checkpoints.db") as saver:
+    app = graph.compile(checkpointer=saver)
+    # Same invoke call — now state survives process restarts</code></pre>
+
+<h3>Long-term memory with LangMem</h3>
+<p>LangMem (<code>langmem</code> package) gives agents the ability to <em>learn over time</em>. Instead of you hardcoding user preferences, the agent extracts them during conversations and stores them:</p>
+<pre><code>from langmem import create_memory_manager
+
+memory_manager = create_memory_manager(
+    model=model,
+    namespace=("users", "{user_id}"),
+    instructions="Extract durable preferences and facts about this user.",
+)
+
+# Run periodically in your graph to consolidate what the agent learned:
+memory_manager.invoke({"messages": conversation_messages})</code></pre>
+
+<p>Semantic memory (facts/preferences) lives in a vector store for retrieval; episodic memory records what happened (events, outcomes); procedural memory captures <em>how</em> to do something (workflows the agent can replay). The graph queries these stores as needed, so a support agent can say "last time you had this issue, the fix that worked was X."</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 170" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="150" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">MEMORY LAYERS</text>
+    <rect x="30" y="48" width="155" height="100" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="107" y="72" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">Context</text>
+    <text x="107" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">messages in state</text>
+    <text x="107" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">one run</text>
+    <text x="107" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">dies with the run</text>
+    <rect x="195" y="48" width="155" height="100" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="272" y="72" text-anchor="middle" fill="var(--color-warning)" font-size="11" font-weight="700">Short-term</text>
+    <text x="272" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">checkpointer + thread_id</text>
+    <text x="272" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">one conversation</text>
+    <text x="272" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">survives restarts</text>
+    <rect x="360" y="48" width="155" height="100" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)"/>
+    <text x="437" y="72" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="700">Long-term (LangMem)</text>
+    <text x="437" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">semantic / episodic / procedural</text>
+    <text x="437" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">across all conversations</text>
+    <text x="437" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">vector store + Store API</text>
+  </svg>
+</div>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> Long-term memory is a sharp knife. An agent that writes everything it "learns" will accumulate garbage, drift, and privacy violations. Scope namespaces tightly (per user), curate with the memory manager, and give users a way to view/delete what the agent remembers.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Start with the checkpointer (short-term) — it's one argument and covers 80% of "memory" needs. Add LangMem only when the agent must carry knowledge across sessions or between users.
+</div>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does the checkpointer keyed by <code>thread_id</code> give you?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Faster model responses</button>
+    <button class="quiz-btn" data-opt="b">Short-term memory: state persists across runs within a conversation</button>
+    <button class="quiz-btn" data-opt="c">Cross-user shared knowledge</button>
+    <button class="quiz-btn" data-opt="d">Automatic prompt versioning</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What does LangMem add beyond the checkpointer?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A faster SQLite driver</button>
+    <button class="quiz-btn" data-opt="b">Token caching for cheaper calls</button>
+    <button class="quiz-btn" data-opt="c">A replacement for the vector store</button>
+    <button class="quiz-btn" data-opt="d">Long-term memory: agents extract and store facts/preferences across conversations</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which is NOT one of LangMem's memory types?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Cache memory (frequently used tokens)</button>
+    <button class="quiz-btn" data-opt="b">Semantic memory (facts and preferences)</button>
+    <button class="quiz-btn" data-opt="c">Episodic memory (past events and outcomes)</button>
+    <button class="quiz-btn" data-opt="d">Procedural memory (learned workflows)</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://langchain-ai.github.io/langgraph/concepts/memory/" target="_blank" rel="noopener">LangGraph memory concepts</a></li>
+  <li><a href="https://langchain-ai.github.io/langmem/" target="_blank" rel="noopener">LangMem docs</a></li>
+  <li><a href="https://github.com/langchain-ai/langmem" target="_blank" rel="noopener">LangMem GitHub</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

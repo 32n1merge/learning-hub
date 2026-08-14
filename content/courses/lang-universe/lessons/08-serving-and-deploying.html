@@ -1,0 +1,158 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Serving &amp; Deploying — LangServe, LangGraph Platform, Studio</h2>
+
+<p>You've built a chain or a graph. Now: how does it become an <span class="glossary-term">API</span>? The Lang universe has three answers, from simplest to most full-featured: LangServe for plain chains, the LangGraph Platform for production agents, and LangGraph Studio for local development. Understanding which serves what keeps you from over- or under-deploying.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> "Serve" is the layer that turns your Python object into an HTTP endpoint with streaming, batch, and playground support. LangServe is the lightweight option for LCEL chains; the LangGraph Platform is the heavyweight for stateful, checkpointed agents at scale.
+</div>
+
+<h3>LangServe — chains as REST APIs</h3>
+<p>LangServe wraps a Runnable in a FastAPI app in a few lines, exposing <code>/invoke</code>, <code>/batch</code>, <code>/stream</code>, and a web playground:</p>
+<pre><code>from fastapi import FastAPI
+from langserve import add_routes
+
+app = FastAPI(title="My Chain API")
+add_routes(app, chain, path="/chain")
+
+# Now live at http://localhost:8000/chain/playground</code></pre>
+<p>LangServe is ideal for LCEL pipelines: minimal code, immediate HTTP + streaming + playground. Its limitation: it serves a <em>stateless runnable</em>. If your app needs threads, checkpoints, or human-in-the-loop resumption, you're back to needing graph infrastructure — which is exactly what the Platform provides.</p>
+
+<h3>LangGraph Platform — production agents</h3>
+<p>The LangGraph Platform (formerly LangGraph Cloud) is a deployment stack purpose-built for LangGraph apps. It runs your graph as a managed service — either in LangChain's cloud or self-hosted (Docker/K8s) — and adds what a bare API can't:</p>
+<ul>
+  <li><strong>Threads</strong> — persistent conversation sessions with checkpointing across requests</li>
+  <li><strong>Assistants</strong> — versioned, configurable graph deployments (one graph, many configs)</li>
+  <li><strong>Cron jobs</strong> — scheduled graph runs (e.g., a daily report agent)</li>
+  <li><strong>Human-in-the-loop APIs</strong> — interrupt/resume endpoints for approval workflows</li>
+  <li><strong>LangSmith integration</strong> — tracing and evals wired in by default</li>
+</ul>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 160" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="140" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">LANGSERVE vs LANGGRAPH PLATFORM</text>
+    <rect x="30" y="50" width="225" height="86" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="142" y="72" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">LangServe</text>
+    <text x="142" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">LCEL chains only</text>
+    <text x="142" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">stateless · REST + stream</text>
+    <text x="142" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">playground included</text>
+    <rect x="285" y="50" width="225" height="86" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)"/>
+    <text x="397" y="72" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="700">LangGraph Platform</text>
+    <text x="397" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">stateful agents</text>
+    <text x="397" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">threads · cron · HITL</text>
+    <text x="397" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">managed or self-hosted</text>
+  </svg>
+</div>
+
+<h3>LangGraph Studio — the IDE</h3>
+<p>LangGraph Studio is a visual development environment for graphs: you run a graph locally, and Studio renders the state machine, lets you step through nodes, inject interrupts, inspect checkpoints, and even edit state mid-run (time travel for debugging). It's the fastest way to understand <em>why</em> an agent did what it did.</p>
+
+<h3>Choosing a serving layer</h3>
+<table>
+  <tr><th>You have…</th><th>Use…</th></tr>
+  <tr><td>An LCEL chain, stateless</td><td>LangServe (or plain FastAPI if you need custom routes)</td></tr>
+  <tr><td>A LangGraph agent needing threads/persistence</td><td>LangGraph Platform (managed or self-hosted)</td></tr>
+  <tr><td>Complex custom API logic around the model</td><td>Plain FastAPI, calling the graph as a library</td></tr>
+  <tr><td>Local development/debugging of a graph</td><td>LangGraph Studio + <code>langgraph dev</code></td></tr>
+</table>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> Don't reach for the Platform for a single stateless endpoint — you'll pay (in complexity and possibly dollars) for threads and checkpointing you don't need. Conversely, don't try to bolt persistence onto LangServe; you'll end up rebuilding the Platform badly.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Stateless → LangServe. Stateful agent → Platform. Custom app → FastAPI calling the graph directly. The graph object itself is just a Python callable — you can always skip the serving layer entirely and host it however you like.
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does LangServe add on top of a Runnable?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A FastAPI app with /invoke, /batch, /stream endpoints and a playground</button>
+    <button class="quiz-btn" data-opt="b">Automatic vector storage for RAG</button>
+    <button class="quiz-btn" data-opt="c">A managed Kubernetes cluster</button>
+    <button class="quiz-btn" data-opt="d">Prompt versioning</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which feature belongs to the LangGraph Platform but NOT LangServe?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Streaming token output</button>
+    <button class="quiz-btn" data-opt="b">A web playground</button>
+    <button class="quiz-btn" data-opt="c">Persistent threads with checkpointing and cron-scheduled graph runs</button>
+    <button class="quiz-btn" data-opt="d">REST endpoints</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What is LangGraph Studio?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A cloud hosting service for graphs</button>
+    <button class="quiz-btn" data-opt="b">A visual IDE to run, inspect, and step through graphs locally</button>
+    <button class="quiz-btn" data-opt="c">A prompt editor bundled with LangSmith</button>
+    <button class="quiz-btn" data-opt="d">A benchmarking tool for LLMs</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://python.langchain.com/docs/langserve/" target="_blank" rel="noopener">LangServe docs</a></li>
+  <li><a href="https://docs.langchain.com/langgraph-platform" target="_blank" rel="noopener">LangGraph Platform docs</a></li>
+  <li><a href="https://langchain-ai.github.io/langgraph/concepts/langgraph_studio/" target="_blank" rel="noopener">LangGraph Studio docs</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

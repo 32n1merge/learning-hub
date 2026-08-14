@@ -1,0 +1,174 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: LangGraph — Orchestration &amp; State</h2>
+
+<p>LangGraph is the <span class="glossary-term">orchestration engine</span> of the universe: a library for building LLM applications as explicit <strong>graphs</strong> — nodes connected by edges, with a shared state object flowing through them. It's what you reach for when an app is more than a linear chain: agents, multi-step workflows, human-in-the-loop, and anything that must survive interruptions.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> LangGraph turns "agent" from a vague concept into a precise artifact: a directed graph where each node is a step (call a model, call a tool, ask a human) and each edge says what happens next — possibly based on the model's output. The graph is the program, and it's inspectable, replayable, and resumable.
+</div>
+
+<h3>Core concepts</h3>
+<table>
+  <tr><th>Concept</th><th>What it is</th></tr>
+  <tr><td><code>StateGraph</code></td><td>The graph container; you define a state schema and add nodes/edges</td></tr>
+  <tr><td>State</td><td>A typed dict (or object) that every node reads and updates; the app's memory within a run</td></tr>
+  <tr><td>Nodes</td><td>Python functions or async functions that receive state and return updates</td></tr>
+  <tr><td>Edges</td><td>Declare which node runs after which; <code>START</code> and <code>END</code> are special pseudo-nodes</td></tr>
+  <tr><td>Conditional edges</td><td>Edges that pick the next node at runtime (e.g., "if the model says it needs a tool, go to the tool node")</td></tr>
+  <tr><td>Checkpointer</td><td>Persistence layer that saves state after each super-step; enables memory, replay, and time travel</td></tr>
+</table>
+
+<h3>A minimal agent loop</h3>
+<pre><code>from typing import Annotated, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import MemorySaver
+
+class State(TypedDict):
+    messages: Annotated[list, add_messages]   # accumulate, don't overwrite
+
+def chatbot(state: State) -&gt; dict:
+    return {"messages": [model.invoke(state["messages"])]}
+
+graph = StateGraph(State)
+graph.add_node("chatbot", chatbot)
+graph.add_edge(START, "chatbot")
+graph.add_edge("chatbot", END)
+app = graph.compile(checkpointer=MemorySaver())
+
+# thread_id = conversation memory key
+config = {"configurable": {"thread_id": "user-42"}}
+result = app.invoke({"messages": [{"role": "user", "content": "Hi!"}]}, config)</code></pre>
+
+<p>Notice the <code>checkpointer</code>: with <code>MemorySaver</code> (in-memory) or <code>SqliteSaver</code>/Postgres (durable), the graph <em>remembers every run</em> keyed by <code>thread_id</code>. That single mechanism gives you conversation memory, crash recovery, and the ability to branch a past conversation.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 190" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="170" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">AGENT LOOP AS A GRAPH</text>
+    <circle cx="60" cy="95" r="20" fill="var(--color-elevated)" stroke="var(--color-text)"/>
+    <text x="60" y="100" text-anchor="middle" fill="var(--color-text)" font-size="10">START</text>
+    <rect x="140" y="70" width="120" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="200" y="91" text-anchor="middle" fill="var(--color-text)" font-size="11">model node</text>
+    <text x="200" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">calls the LLM</text>
+    <rect x="330" y="70" width="120" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="390" y="91" text-anchor="middle" fill="var(--color-text)" font-size="11">tools node</text>
+    <text x="390" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">executes tool calls</text>
+    <path d="M 80 95 L 140 95" stroke="var(--color-border)" stroke-width="2"/>
+    <path d="M 260 95 L 330 95" stroke="var(--color-border)" stroke-width="2"/>
+    <path d="M 390 120 C 390 150, 200 150, 200 120" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-dasharray="5,4"/>
+    <text x="295" y="165" text-anchor="middle" fill="var(--color-success)" font-size="10">conditional: needs tool?</text>
+    <path d="M 200 120 L 200 145 L 260 145" fill="none" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="350" y="45" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">checkpointer saves state every step</text>
+  </svg>
+</div>
+
+<h3>What else the graph gives you</h3>
+<ul>
+  <li><strong>Human-in-the-loop</strong> — <code>interrupt()</code> pauses the graph for human input; a <code>Command(resume=...)</code> continues it. Perfect for approval gates (e.g., "review this email before sending").</li>
+  <li><strong>Time travel</strong> — <code>get_state()</code> / <code>update_state()</code> let you inspect or fork any past checkpoint, then replay from there.</li>
+  <li><strong>Streaming</strong> — modes for <code>values</code> (full state), <code>updates</code> (per-node diffs), and <code>messages</code> (token-level) so UIs can render live.</li>
+  <li><strong>Subgraphs</strong> — a compiled graph can be a node inside another graph, enabling multi-agent hierarchies.</li>
+  <li><strong>Durable execution</strong> — with a real checkpointer (SQLite/Postgres), a graph survives process restarts and picks up where it left off.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> State updates matter. If your state field is a plain list, each node <em>overwrites</em> it unless you use a reducer like <code>add_messages</code> (the <code>Annotated</code> annotation above). The reducer tells LangGraph how to merge old and new values — forgetting it is the #1 "my agent loses context" bug.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Any app where a decision depends on the model's previous output — tool-calling agents, multi-step research, approval workflows — is a graph, not a chain.
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is a checkpointer in LangGraph?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A node that validates model output</button>
+    <button class="quiz-btn" data-opt="b">A persistence layer that saves graph state after each step, enabling memory and replay</button>
+    <button class="quiz-btn" data-opt="c">A tool that checks API rate limits</button>
+    <button class="quiz-btn" data-opt="d">A conditional edge selector</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How does the graph decide between "call the model again" and "end"?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A fixed edge always loops</button>
+    <button class="quiz-btn" data-opt="b">The checkpointer decides</button>
+    <button class="quiz-btn" data-opt="c">A conditional edge evaluates the state (e.g., whether the model asked for a tool)</button>
+    <button class="quiz-btn" data-opt="d">The model's temperature setting</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What does <code>interrupt()</code> enable?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Cancelling a runaway loop</button>
+    <button class="quiz-btn" data-opt="b">Switching model providers mid-run</button>
+    <button class="quiz-btn" data-opt="c">Streaming tokens to a UI</button>
+    <button class="quiz-btn" data-opt="d">Pausing the graph for human input, then resuming with a Command</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://langchain-ai.github.io/langgraph/" target="_blank" rel="noopener">LangGraph docs</a></li>
+  <li><a href="https://langchain-ai.github.io/langgraph/concepts/high_level/" target="_blank" rel="noopener">LangGraph high-level concepts</a></li>
+  <li><a href="https://langchain-ai.github.io/langgraph/concepts/persistence/" target="_blank" rel="noopener">Persistence &amp; checkpointers</a></li>
+  <li><a href="https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/" target="_blank" rel="noopener">Human-in-the-loop concepts</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

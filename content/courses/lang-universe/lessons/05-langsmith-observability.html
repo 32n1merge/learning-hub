@@ -1,0 +1,155 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: LangSmith — Observability &amp; Evaluation</h2>
+
+<p>Once your app runs, you need to <em>see</em> it. LangSmith is LangChain Inc.'s <span class="glossary-term">LLMOps platform</span>: a hosted (or self-hosted) service for tracing every LLM call, evaluating outputs, managing prompts, and monitoring production. It's the closest thing the Lang ecosystem has to "the official dashboard."</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> LLM apps fail differently than regular software — outputs are probabilistic, costs accumulate per token, and "it works" is a spectrum. LangSmith turns those invisible failure modes into inspectable traces, scored evals, and live dashboards.
+</div>
+
+<h3>What LangSmith gives you</h3>
+<table>
+  <tr><th>Feature</th><th>What it does</th></tr>
+  <tr><td>Tracing</td><td>Records every step of a run — model calls, retriever hits, tool invocations — with tokens, latency, and costs</td></tr>
+  <tr><td>Datasets &amp; evals</td><td>Curate test inputs, run them through your app, score outputs (LLM-as-judge, custom scorers, or human)</td></tr>
+  <tr><td>Prompt Hub</td><td>Versioned, shareable prompt management — pull prompts into code, roll back bad edits</td></tr>
+  <tr><td>Monitoring</td><td>Dashboards, alerts, and feedback collection for production traffic</td></tr>
+  <tr><td>Playground</td><td>Interactive UI to experiment with prompts and models before changing code</td></tr>
+  <tr><td>Automations</td><td>Rule-based actions: run an eval when a new trace arrives, annotate anomalous runs</td></tr>
+</table>
+
+<h3>Hooking it up</h3>
+<p>With LangChain, tracing is nearly free — set an API key and runs appear automatically:</p>
+<pre><code># Works automatically with LangChain/LangGraph — no code changes needed
+export LANGCHAIN_TRACING_V2=true
+export LANGCHAIN_API_KEY=lsv2_...
+export LANGCHAIN_PROJECT=my-app
+
+# Or set it in code:
+from langchain_core.callbacks import config
+from langchain_core.runnables import RunnableConfig
+
+config = RunnableConfig(tags=["production"], metadata={"user_id": "u-42"})
+result = chain.invoke({"topic": "RAG"}, config=config)</code></pre>
+
+<p>Not using LangChain? The <code>langsmith</code> SDK traces any framework via decorators, and OpenTelemetry support lets non-LangChain apps send spans in too. The tracing layer is deliberately framework-agnostic — LangSmith doesn't require you to use LangChain.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 150" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="130" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">TRACE FLOW</text>
+    <rect x="30" y="50" width="130" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="95" y="77" text-anchor="middle" fill="var(--color-text)" font-size="10">your app (any framework)</text>
+    <path d="M 160 72 L 205 72" stroke="var(--color-border)" stroke-width="2"/>
+    <rect x="205" y="50" width="130" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="270" y="77" text-anchor="middle" fill="var(--color-text)" font-size="10">LangSmith SDK / OTel</text>
+    <path d="M 335 72 L 380 72" stroke="var(--color-border)" stroke-width="2"/>
+    <rect x="380" y="50" width="130" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)"/>
+    <text x="445" y="69" text-anchor="middle" fill="var(--color-text)" font-size="10">traces · evals</text>
+    <text x="445" y="85" text-anchor="middle" fill="var(--color-text)" font-size="10">dashboards</text>
+    <text x="270" y="122" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">prompts · datasets · feedback · alerts</text>
+  </svg>
+</div>
+
+<h3>The eval loop</h3>
+<p>The workflow that makes LangSmith (or any LLMOps tool) valuable is the <strong>eval loop</strong>: collect a dataset of real inputs → run them through your app → score outputs automatically → fix the worst failures → re-run. With LLM-as-judge scorers you can grade hundreds of outputs in minutes. This is how "good enough" becomes "measurably better."</p>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> Tracing every single call is the default, but production traffic is noisy and costs storage/quota. Use projects to separate dev/staging/prod, and filter or sample high-volume traces. Also: LangSmith is a <em>paid SaaS</em> (free tier available) — it is not open source, which is exactly why Langfuse exists.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Tracing answers "what happened?"; evals answer "was it good?"; prompt versioning answers "what changed?" — you need all three for any app that will outlive a demo.
+</div>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is LangSmith, in one line?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LangChain Inc.'s proprietary LLMOps platform for tracing, evals, and prompt management</button>
+    <button class="quiz-btn" data-opt="b">An open-source vector database</button>
+    <button class="quiz-btn" data-opt="c">A replacement for LangGraph</button>
+    <button class="quiz-btn" data-opt="d">A prompt-writing assistant</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How do you enable LangChain tracing?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Install a separate tracing package and wrap every call</button>
+    <button class="quiz-btn" data-opt="b">Set LANGCHAIN_TRACING_V2 and an API key — runs appear automatically</button>
+    <button class="quiz-btn" data-opt="c">Use the LangGraph Studio app only</button>
+    <button class="quiz-btn" data-opt="d">Tracing requires switching to the JS SDK</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What is the "eval loop"?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A loop that retries failed API calls</button>
+    <button class="quiz-btn" data-opt="b">A graph node that validates tool inputs</button>
+    <button class="quiz-btn" data-opt="c">Dataset → run app → auto-score outputs → fix → re-run, to measure improvement</button>
+    <button class="quiz-btn" data-opt="d">A linting pass over prompt templates</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.smith.langchain.com/" target="_blank" rel="noopener">LangSmith docs</a></li>
+  <li><a href="https://docs.smith.langchain.com/evaluation/" target="_blank" rel="noopener">LangSmith evaluation guide</a></li>
+  <li><a href="https://docs.smith.langchain.com/self-hosting" target="_blank" rel="noopener">LangSmith self-hosting</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

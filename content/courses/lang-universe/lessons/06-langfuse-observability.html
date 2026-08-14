@@ -1,0 +1,161 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Langfuse — Open-Source Observability</h2>
+
+<p>Langfuse is the <span class="glossary-term">open-source challenger</span> on the observe layer: an independent, self-hostable platform for LLM tracing, evaluation, prompt management, and cost tracking. If LangSmith is the Apple of LLMOps (polished, hosted, integrated), Langfuse is the Linux — MIT-licensed core, run it on your own hardware, no vendor lock-in.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> Langfuse covers almost the same feature set as LangSmith — traces, evals, datasets, prompt versioning, sessions, feedback — but its license and self-hosting story are the deciding factors for teams that can't (or won't) send prompts and outputs to a third-party SaaS.
+</div>
+
+<h3>What Langfuse gives you</h3>
+<table>
+  <tr><th>Feature</th><th>What it does</th></tr>
+  <tr><td>Tracing</td><td>Full run traces with token usage, latency, and cost per model call</td></tr>
+  <tr><td>Sessions</td><td>Group traces by user or conversation for end-to-end analysis</td></tr>
+  <tr><td>Prompt management</td><td>Versioned prompts with labels (production/staging), deployable from the UI</td></tr>
+  <tr><td>Evals &amp; datasets</td><td>LLM-as-judge, custom scoring functions, and curated test sets</td></tr>
+  <tr><td>Cost tracking</td><td>Per-project, per-model spend analytics</td></tr>
+  <tr><td>Feedback &amp; guardrails</td><td>User thumbs-up/down, annotation queues, moderation checks</td></tr>
+  <tr><td>Experiments</td><td>A/B-ish comparison of prompts/models against datasets</td></tr>
+</table>
+
+<h3>Deployment options</h3>
+<ul>
+  <li><strong>Langfuse Cloud</strong> — hosted SaaS with a free tier; zero ops.</li>
+  <li><strong>Self-hosted (Docker)</strong> — the popular choice: <code>docker compose up</code> gets a full stack (app + Postgres + ClickHouse for analytics) running locally.</li>
+  <li><strong>Enterprise / Kubernetes</strong> — for large-scale self-hosting with SSO and RBAC.</li>
+</ul>
+
+<pre><code># Self-host with Docker
+git clone https://github.com/langfuse/langfuse.git
+cd langfuse
+cp .env.example .env   # set secrets, then:
+docker compose up -d</code></pre>
+
+<h3>Hooking it up</h3>
+<p>Langfuse integrates with LangChain through a callback handler — again, near-zero code changes:</p>
+<pre><code>from langfuse.callback import CallbackHandler
+
+langfuse_handler = CallbackHandler(
+    public_key="pk-...", secret_key="sk-...",
+    host="http://localhost:3000"   # or https://cloud.langfuse.com
+)
+
+result = chain.invoke({"topic": "RAG"}, config={"callbacks": [langfuse_handler]})</code></pre>
+
+<p>Beyond LangChain, Langfuse supports plain OpenAI/Anthropic SDKs, its own Python/JS SDKs, and — importantly — the <strong>OpenTelemetry GenAI semantic conventions</strong>, meaning any OTel-instrumented app can send traces to it. This is the same OTel story LangSmith adopted, and it's what makes the observe layer genuinely swappable.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 150" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="130" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">SELF-HOSTED STACK</text>
+    <rect x="30" y="50" width="150" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="105" y="77" text-anchor="middle" fill="var(--color-text)" font-size="10">Langfuse app (Next.js)</text>
+    <rect x="200" y="50" width="130" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="265" y="77" text-anchor="middle" fill="var(--color-text)" font-size="10">PostgreSQL</text>
+    <rect x="350" y="50" width="160" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)"/>
+    <text x="430" y="77" text-anchor="middle" fill="var(--color-text)" font-size="10">ClickHouse (analytics)</text>
+    <text x="270" y="122" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">docker compose up — all three behind one command</text>
+  </svg>
+</div>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> Self-hosting is a real operational commitment — Postgres + ClickHouse need backups, upgrades, and monitoring. For a hobby project or early prototype, Langfuse Cloud's free tier is often the right call; move to self-hosted when data governance demands it.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Pick Langfuse when you want open source, self-hosting, or cost control. Pick LangSmith when you want the tightest LangChain integration and managed SaaS simplicity. Both are fine; the lock-in is in the <em>data</em>, not the code — traces are swappable if you standardize early.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What's the headline difference between Langfuse and LangSmith?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Langfuse only works with OpenAI</button>
+    <button class="quiz-btn" data-opt="b">Langfuse is independent open source (self-hostable); LangSmith is LangChain Inc.'s proprietary SaaS</button>
+    <button class="quiz-btn" data-opt="c">Langfuse is a model provider</button>
+    <button class="quiz-btn" data-opt="d">LangSmith can't run evals</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How do you integrate Langfuse with a LangChain app?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Rewrite the app in Langfuse's DSL</button>
+    <button class="quiz-btn" data-opt="b">Install a sidecar proxy in front of OpenAI</button>
+    <button class="quiz-btn" data-opt="c">Pass a CallbackHandler to the run's config</button>
+    <button class="quiz-btn" data-opt="d">You can't — Langfuse requires its own SDK end-to-end</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What standard makes observability platforms swappable?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The LangChain callback API only</button>
+    <button class="quiz-btn" data-opt="b">REST over HTTP</button>
+    <button class="quiz-btn" data-opt="c">JSON Lines log files</button>
+    <button class="quiz-btn" data-opt="d">OpenTelemetry GenAI semantic conventions</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://langfuse.com/docs" target="_blank" rel="noopener">Langfuse docs</a></li>
+  <li><a href="https://langfuse.com/docs/deployment/self-host" target="_blank" rel="noopener">Langfuse self-hosting guide</a></li>
+  <li><a href="https://langfuse.com/docs/integrations/langchain" target="_blank" rel="noopener">Langfuse × LangChain integration</a></li>
+  <li><a href="https://github.com/langfuse/langfuse" target="_blank" rel="noopener">Langfuse GitHub</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

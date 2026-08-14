@@ -1,0 +1,5 @@
+{
+  "title": "Memory — LangMem &amp; the Persistence Stack",
+  "description": "Context vs. short-term (checkpointer/threads) vs. long-term (LangMem) memory: semantic, episodic, and procedural stores, and when each layer is worth adding.",
+  "readingTime": "8 min"
+}

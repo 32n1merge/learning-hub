@@ -1,0 +1,18 @@
+{
+  "title": "The Lang Universe: LangChain, LangGraph, LangSmith & Langfuse",
+  "description": "The complete map of the Lang ecosystem: LangChain and LCEL for composable LLM pipelines, LangGraph for stateful agents, LangSmith and Langfuse for observability and evaluation, LangServe and the LangGraph Platform for deployment — plus when to use each, how they work together, and when to swap them for alternatives.",
+  "difficulty": "intermediate",
+  "estimatedDuration": "90 min",
+  "tags": [
+    "llm",
+    "langchain",
+    "langgraph",
+    "agents",
+    "langsmith",
+    "langfuse",
+    "llmops",
+    "observability"
+  ],
+  "lastUpdated": "2026-08-14",
+  "icon": "🔗"
+}

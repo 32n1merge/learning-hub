@@ -1,0 +1,5 @@
+{
+  "title": "Serving &amp; Deploying — LangServe, Platform, Studio",
+  "description": "How Lang apps become APIs: LangServe for stateless chains, the LangGraph Platform for stateful production agents, LangGraph Studio for local debugging — and a decision table for which to use.",
+  "readingTime": "9 min"
+}

@@ -1,0 +1,164 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: The Wider Ecosystem &amp; When to Swap</h2>
+
+<p>The Lang universe doesn't exist in a vacuum. Adjacent frameworks, agent libraries, and observability tools overlap with it — and the skill of choosing well is knowing <em>when the Lang stack is the right answer and when it isn't</em>. This lesson covers the landscape beyond Lang and a practical swapping playbook.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> Every piece of the Lang stack is replaceable — that's the point of the layered design. Models are swappable behind <code>BaseChatModel</code>, observability is swappable behind OTel/callbacks, and even LangGraph itself competes with other orchestration frameworks. Choose the layer, not the brand.
+</div>
+
+<h3>What else is out there</h3>
+<table>
+  <tr><th>Tool</th><th>Layer</th><th>Positioning vs. Lang</th></tr>
+  <tr><td>LlamaIndex (LlamaCloud)</td><td>Build (data/RAG)</td><td>Data-framework-first; superb RAG/ingestion, Workflows engine competes with LangGraph</td></tr>
+  <tr><td>CrewAI</td><td>Orchestrate</td><td>Higher-level role-based "crews"; less control, faster to prototype</td></tr>
+  <tr><td>Microsoft AutoGen</td><td>Orchestrate</td><td>Multi-agent conversations with strong research pedigree</td></tr>
+  <tr><td>OpenAI Agents SDK</td><td>Orchestrate</td><td>Lightweight, OpenAI-native agents; minimal abstraction</td></tr>
+  <tr><td>Haystack</td><td>Build</td><td>Modular NLP pipelines; great for search/RAG, less agentic</td></tr>
+  <tr><td>Semantic Kernel</td><td>Build/Orchestrate</td><td>Microsoft's LLM framework, C#/Python, enterprise-y</td></tr>
+  <tr><td>Plain SDK + FastAPI</td><td>Everything</td><td>Zero-dependency route; fine for simple apps</td></tr>
+</table>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 180" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="160" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">THE LAYERS ARE SWAPPABLE</text>
+    <text x="60" y="60" fill="var(--color-accent)" font-size="11" font-weight="700">BUILD</text>
+    <text x="130" y="60" fill="var(--color-text-secondary)" font-size="10">LangChain · LlamaIndex · Haystack · plain SDK</text>
+    <text x="60" y="86" fill="var(--color-success)" font-size="11" font-weight="700">ORCHESTRATE</text>
+    <text x="130" y="86" fill="var(--color-text-secondary)" font-size="10">LangGraph · CrewAI · AutoGen · OpenAI Agents SDK</text>
+    <text x="60" y="112" fill="var(--color-warning)" font-size="11" font-weight="700">OBSERVE</text>
+    <text x="130" y="112" fill="var(--color-text-secondary)" font-size="10">LangSmith · Langfuse · Phoenix · Weave · Helicone</text>
+    <text x="60" y="138" fill="var(--color-text)" font-size="11" font-weight="700">SERVE</text>
+    <text x="130" y="138" fill="var(--color-text-secondary)" font-size="10">LangServe · LangGraph Platform · FastAPI · any host</text>
+    <text x="270" y="162" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">Pick per layer — nothing forces you to go all-Lang</text>
+  </svg>
+</div>
+
+<h3>When to swap LangChain out entirely</h3>
+<ul>
+  <li><strong>You have one model and one prompt</strong> → a plain SDK call is less code and fewer deps.</li>
+  <li><strong>You live in the OpenAI/Anthropic ecosystem and never change models</strong> → the abstraction tax isn't worth it (yet).</li>
+  <li><strong>You need deep RAG/ingestion</strong> → LlamaIndex's data tooling may beat LangChain's.</li>
+  <li><strong>You want opinionated, fast multi-agent setups</strong> → CrewAI gets a demo running in hours.</li>
+  <li><strong>You're in a Microsoft shop</strong> → Semantic Kernel may fit your stack better.</li>
+</ul>
+
+<h3>When Lang wins</h3>
+<ul>
+  <li>You'll swap models or providers over the app's life (abstraction pays off).</li>
+  <li>You need production-grade state, persistence, HITL — LangGraph's checkpointer story is hard to beat.</li>
+  <li>You want observability without writing instrumentation by hand.</li>
+  <li>You value a huge community, docs, and integrations catalog.</li>
+</ul>
+
+<h3>The swapping playbook</h3>
+<table>
+  <tr><th>Swap</th><th>How</th></tr>
+  <tr><td>Model provider</td><td>Change the constructor (<code>ChatOpenAI</code> → <code>ChatAnthropic</code>); keep the rest of the chain</td></tr>
+  <tr><td>Observability</td><td>Swap callback handlers / OTel endpoint; standardize on OTel early to keep it cheap</td></tr>
+  <tr><td>Vector store</td><td>Implement the standard <code>VectorStore</code> interface; swap backend without touching retrieval code</td></tr>
+  <tr><td>Orchestrator</td><td>Hardest swap — isolate graph logic behind your own service boundary so LangGraph↔CrewAI is contained</td></tr>
+  <tr><td>Serving</td><td>The graph/chain is just a callable — host it with FastAPI, Platform, or anything else</td></tr>
+</table>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> Framework hopping is a hobby; shipping is the goal. The worst outcome is rewriting the same app in three frameworks to avoid committing. Pick per layer, keep the seams clean, and only swap when there's a concrete pain — not because a blog post said so.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> Start boring: LangChain + LCEL for the pipeline, LangGraph when it loops, one observability tool from day one, and LangServe/FastAPI for serving. Revisit each choice only when the current tool costs you more than switching does.
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. When is a plain SDK + FastAPI the better choice over LangChain?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">When you need multi-agent orchestration</button>
+    <button class="quiz-btn" data-opt="b">When the app is one model + one prompt and you'll never swap providers</button>
+    <button class="quiz-btn" data-opt="c">When you need human-in-the-loop approval</button>
+    <button class="quiz-btn" data-opt="d">When you need long-term memory</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What's the cheapest, safest way to keep observability swappable?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Hardcode LangSmith everywhere</button>
+    <button class="quiz-btn" data-opt="b">Write your own tracing format</button>
+    <button class="quiz-btn" data-opt="c">Standardize on OpenTelemetry GenAI conventions early</button>
+    <button class="quiz-btn" data-opt="d">Log everything as JSON to stdout</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which framework is the strongest alternative when RAG/ingestion is the core of your app?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LlamaIndex</button>
+    <button class="quiz-btn" data-opt="b">CrewAI</button>
+    <button class="quiz-btn" data-opt="c">Semantic Kernel</button>
+    <button class="quiz-btn" data-opt="d">AutoGen</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.llamaindex.ai/" target="_blank" rel="noopener">LlamaIndex</a></li>
+  <li><a href="https://docs.crewai.com/" target="_blank" rel="noopener">CrewAI docs</a></li>
+  <li><a href="https://openai.github.io/openai-agents-python/" target="_blank" rel="noopener">OpenAI Agents SDK</a></li>
+  <li><a href="https://microsoft.github.io/autogen/" target="_blank" rel="noopener">Microsoft AutoGen</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

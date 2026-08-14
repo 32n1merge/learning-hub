@@ -1,0 +1,267 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 11: Grand Quiz — The Lang Universe</h2>
+
+<p>Twenty questions, two per lesson. Answer all of them to reveal your grade. No peeking at the lessons — this is the retrieval practice that makes the material stick.</p>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Grand Quiz</h3>
+
+  <h3 style="color:var(--color-accent)">The Map &amp; LangChain</h3>
+
+  <p class="quiz-q">1. Which layer does the Langfuse platform occupy?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Build</button>
+    <button class="quiz-btn" data-opt="b">Orchestrate</button>
+    <button class="quiz-btn" data-opt="c">Observe &amp; evaluate</button>
+    <button class="quiz-btn" data-opt="d">Serve</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Who makes LangGraph?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LangChain Inc.</button>
+    <button class="quiz-btn" data-opt="b">Langfuse GmbH</button>
+    <button class="quiz-btn" data-opt="c">Microsoft</button>
+    <button class="quiz-btn" data-opt="d">An independent OSS collective</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What abstraction lets you swap OpenAI for Anthropic with minimal code change?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The vector store interface</button>
+    <button class="quiz-btn" data-opt="b">The chat model interface (BaseChatModel)</button>
+    <button class="quiz-btn" data-opt="c">The document loader</button>
+    <button class="quiz-btn" data-opt="d">The output parser</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. Which package holds the core interfaces?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a">langchain</button>
+    <button class="quiz-btn" data-opt="b">langchain-openai</button>
+    <button class="quiz-btn" data-opt="c">langchain-community</button>
+    <button class="quiz-btn" data-opt="d">langchain-core</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3 style="color:var(--color-accent)">LCEL &amp; LangGraph</h3>
+
+  <p class="quiz-q">5. What does <code>chain.with_fallbacks([...])</code> do?</p>
+  <div class="quiz-opts" data-q="4" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Runs chains in parallel</button>
+    <button class="quiz-btn" data-opt="b">Adds retry attempts on failure</button>
+    <button class="quiz-btn" data-opt="c">Degrades to backup runnables when the primary fails</button>
+    <button class="quiz-btn" data-opt="d">Streams output to multiple sinks</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. LCEL's biggest limitation is…</p>
+  <div class="quiz-opts" data-q="5" data-answer="a">
+    <button class="quiz-btn" data-opt="a">No native loops or persistent state across runs</button>
+    <button class="quiz-btn" data-opt="b">No streaming support</button>
+    <button class="quiz-btn" data-opt="c">Python only, no JS</button>
+    <button class="quiz-btn" data-opt="d">No way to call tools</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <p class="quiz-q">7. What does the <code>add_messages</code> reducer do in LangGraph state?</p>
+  <div class="quiz-opts" data-q="6" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Deletes old messages to save tokens</button>
+    <button class="quiz-btn" data-opt="b">Merges new messages into the existing list instead of overwriting</button>
+    <button class="quiz-btn" data-opt="c">Encrypts message history</button>
+    <button class="quiz-btn" data-opt="d">Sorts messages by timestamp</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. Which LangGraph feature pauses execution for human approval and resumes later?</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Checkpointing</button>
+    <button class="quiz-btn" data-opt="b">Streaming mode</button>
+    <button class="quiz-btn" data-opt="c">Subgraphs</button>
+    <button class="quiz-btn" data-opt="d">interrupt() + Command(resume=...)</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3 style="color:var(--color-accent)">Observability</h3>
+
+  <p class="quiz-q">9. Which of these is a LangSmith feature?</p>
+  <div class="quiz-opts" data-q="8" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Datasets and LLM-as-judge evaluations</button>
+    <button class="quiz-btn" data-opt="b">Vector search for RAG</button>
+    <button class="quiz-btn" data-opt="c">Model fine-tuning</button>
+    <button class="quiz-btn" data-opt="d">Docker-based graph hosting</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. How do you enable LangSmith tracing on a LangChain app?</p>
+  <div class="quiz-opts" data-q="9" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Install a tracing decorator on every function</button>
+    <button class="quiz-btn" data-opt="b">Set LANGCHAIN_TRACING_V2 and an API key</button>
+    <button class="quiz-btn" data-opt="c">Run your app inside LangGraph Studio</button>
+    <button class="quiz-btn" data-opt="d">Switch to the JS SDK</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <p class="quiz-q">11. Which statement about Langfuse is true?</p>
+  <div class="quiz-opts" data-q="10" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It is proprietary and cloud-only</button>
+    <button class="quiz-btn" data-opt="b">It only works with LangChain apps</button>
+    <button class="quiz-btn" data-opt="c">It is open source and self-hostable via Docker</button>
+    <button class="quiz-btn" data-opt="d">It replaces LangGraph for orchestration</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. What makes observability platforms interchangeable?</p>
+  <div class="quiz-opts" data-q="11" data-answer="d">
+    <button class="quiz-btn" data-opt="a">They all use the same database</button>
+    <button class="quiz-btn" data-opt="b">They all cost the same</button>
+    <button class="quiz-btn" data-opt="c">They're all made by the same company</button>
+    <button class="quiz-btn" data-opt="d">OpenTelemetry GenAI semantic conventions</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <p class="quiz-q">13. Which scenario favors Langfuse over LangSmith?</p>
+  <div class="quiz-opts" data-q="12" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A bank that must keep all prompts on its own infrastructure</button>
+    <button class="quiz-btn" data-opt="b">A team that wants zero-friction LangChain tracing</button>
+    <button class="quiz-btn" data-opt="c">A team already using the Prompt Hub</button>
+    <button class="quiz-btn" data-opt="d">A prototype with a free-tier budget</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. Which observability tool operates as a proxy in front of model APIs?</p>
+  <div class="quiz-opts" data-q="13" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Arize Phoenix</button>
+    <button class="quiz-btn" data-opt="b">Helicone</button>
+    <button class="quiz-btn" data-opt="c">W&amp;B Weave</button>
+    <button class="quiz-btn" data-opt="d">LangSmith</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <h3 style="color:var(--color-accent)">Serving, Memory &amp; Swapping</h3>
+
+  <p class="quiz-q">15. LangServe is best suited for…</p>
+  <div class="quiz-opts" data-q="14" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Stateful agents with threads and cron jobs</button>
+    <button class="quiz-btn" data-opt="b">Multi-agent orchestrations</button>
+    <button class="quiz-btn" data-opt="c">Stateless LCEL chains exposed as REST APIs</button>
+    <button class="quiz-btn" data-opt="d">Vector database hosting</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. Which capability belongs to the LangGraph Platform but not LangServe?</p>
+  <div class="quiz-opts" data-q="15" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Streaming output</button>
+    <button class="quiz-btn" data-opt="b">A web playground</button>
+    <button class="quiz-btn" data-opt="c">REST endpoints</button>
+    <button class="quiz-btn" data-opt="d">Persistent threads with checkpointing</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <p class="quiz-q">17. What does LangMem add on top of LangGraph's checkpointer?</p>
+  <div class="quiz-opts" data-q="16" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Long-term memory that persists across conversations (facts, preferences, procedures)</button>
+    <button class="quiz-btn" data-opt="b">Faster SQLite checkpointing</button>
+    <button class="quiz-btn" data-opt="c">Token caching for cheaper calls</button>
+    <button class="quiz-btn" data-opt="d">A built-in vector database</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. Short-term memory in LangGraph is scoped by…</p>
+  <div class="quiz-opts" data-q="17" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Model name</button>
+    <button class="quiz-btn" data-opt="b">thread_id in the run config</button>
+    <button class="quiz-btn" data-opt="c">The prompt template hash</button>
+    <button class="quiz-btn" data-opt="d">API key</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <p class="quiz-q">19. When should you skip LangChain and use a plain SDK?</p>
+  <div class="quiz-opts" data-q="18" data-answer="c">
+    <button class="quiz-btn" data-opt="a">When you need human-in-the-loop approval</button>
+    <button class="quiz-btn" data-opt="b">When the app will grow into multi-agent orchestration</button>
+    <button class="quiz-btn" data-opt="c">When it's one model + one prompt and you'll never swap providers</button>
+    <button class="quiz-btn" data-opt="d">When you need long-term memory</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. Which framework is the strongest alternative for RAG/ingestion-heavy apps?</p>
+  <div class="quiz-opts" data-q="19" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LlamaIndex</button>
+    <button class="quiz-btn" data-opt="b">CrewAI</button>
+    <button class="quiz-btn" data-opt="c">AutoGen</button>
+    <button class="quiz-btn" data-opt="d">Semantic Kernel</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <div class="score-panel" id="quiz-11-score" style="display:none">
+    <div class="progress" id="quiz-11-progress">Answered 0 of 20</div>
+    <div id="quiz-11-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  var TOTAL = 20;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-11-score');
+  var progressEl = document.getElementById('quiz-11-progress');
+  var resultEl = document.getElementById('quiz-11-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 17) { grade = 'A'; msg = 'You have the whole universe mapped — build something with it.'; }
+      else if (correct >= 13) { grade = 'B'; msg = 'Strong grasp of the stack. Revisit the layers you missed and you are golden.'; }
+      else if (correct >= 9) { grade = 'C'; msg = 'Solid foundation, but some layers are fuzzy. Skim the lessons again before your next agent.'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons — the map is the easy part, and it unlocks everything else.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,167 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: LCEL — The Expression Language</h2>
+
+<p>LCEL (<span class="glossary-term">LangChain Expression Language</span>) is the composition layer that turns LangChain components into pipelines. It's the difference between writing a pipeline as nested function calls and writing it as a readable chain: <code>prompt | model | parser</code>. The pipe operator is not just syntax sugar — every piece of an LCEL chain implements a common <strong>Runnable</strong> interface, which buys you a lot for free.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> LCEL chains are <em>runnables</em>. Anything you can build with <code>|</code> inherits the same superpowers: <code>invoke()</code>, <code>stream()</code>, <code>batch()</code>, and their async versions — without writing any glue code.
+</div>
+
+<h3>The Runnable interface</h3>
+<p>Every component (model, prompt, parser, retriever, tool, or composed chain) exposes the same methods:</p>
+<table>
+  <tr><th>Method</th><th>What it does</th></tr>
+  <tr><td><code>invoke(input)</code></td><td>Run once, return the result</td></tr>
+  <tr><td><code>stream(input)</code></td><td>Run, yielding output chunks as they arrive (token-by-token for models)</td></tr>
+  <tr><td><code>batch(inputs)</code></td><td>Run over a list of inputs, returning a list of results</td></tr>
+  <tr><td><code>ainvoke / astream / abatch</code></td><td>Async equivalents</td></tr>
+</table>
+
+<p>Because streaming, batching, and async come from the interface rather than each component, a complex chain streams just like a bare model call. That's the "free" part.</p>
+
+<h3>Composition primitives</h3>
+<pre><code>from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+
+# Pipe: feed previous output into next
+chain = prompt | model | StrOutputParser()
+
+# RunnablePassthrough: pass input through unchanged (or assign new keys)
+passthrough = RunnablePassthrough.assign(upcased=lambda x: x["topic"].upper())
+
+# RunnableLambda: wrap arbitrary Python as a chain step
+def word_count(text: str) -&gt; int:
+    return len(text.split())
+step = RunnableLambda(word_count)
+
+# Parallel: run multiple chains on the same input, merge results
+parallel = {
+    "summary": summary_chain,
+    "keywords": keyword_chain,
+} | RunnableLambda(merge_results)</code></pre>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 160" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="10" width="520" height="140" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">LCEL PIPELINE: prompt | model | parser</text>
+    <rect x="30" y="52" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="85" y="79" text-anchor="middle" fill="var(--color-text)" font-size="11">prompt</text>
+    <text x="270" y="79" text-anchor="middle" fill="var(--color-text-secondary)" font-size="16">|</text>
+    <rect x="180" y="52" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="235" y="79" text-anchor="middle" fill="var(--color-text)" font-size="11">model</text>
+    <text x="400" y="79" text-anchor="middle" fill="var(--color-text-secondary)" font-size="16">|</text>
+    <rect x="330" y="52" width="110" height="44" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="385" y="79" text-anchor="middle" fill="var(--color-text)" font-size="11">parser</text>
+    <path d="M 140 74 L 180 74" stroke="var(--color-border)" stroke-width="2"/>
+    <path d="M 290 74 L 330 74" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="270" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Result: string output, streamed token-by-token, batchable, async-ready</text>
+  </svg>
+</div>
+
+<h3>Resilience features</h3>
+<p>LCEL runnables include built-in failure handling that would otherwise be a lot of boilerplate:</p>
+<ul>
+  <li><strong>Retries</strong> — <code>chain.with_retry(stop_after_attempt=3)</code> handles transient API errors.</li>
+  <li><strong>Fallbacks</strong> — <code>model.with_fallbacks([cheaper_model, local_model])</code> degrades gracefully when a provider is down or rate-limited.</li>
+  <li><strong>Configuration</strong> — <code>.with_config({"max_concurrency": 5})</code> for batch runs; <code>.bind(...)</code> to pin model parameters.</li>
+  <li><strong>Timeouts</strong> — <code>.with_timeout(30)</code> for hard deadlines.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> LCEL is powerful but linear. It has no native concept of <em>state that persists across runs</em> or <em>loops back to an earlier step</em>. Teams that try to bolt loops onto LCEL usually end up rebuilding a graph engine badly — which is exactly why LangGraph exists.
+</div>
+
+<div class="callout-success">
+  <strong>Rule of thumb:</strong> LCEL for linear/parallel pipelines with streaming and retries. When control flow needs to <em>branch based on model output</em> or <em>remember history across calls</em>, move the orchestration to LangGraph.
+</div>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does the <code>|</code> operator do in LCEL?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It's bitwise OR on prompt strings</button>
+    <button class="quiz-btn" data-opt="b">It concatenates two prompt templates</button>
+    <button class="quiz-btn" data-opt="c">It pipes the output of one runnable into the next, building a chain</button>
+    <button class="quiz-btn" data-opt="d">It marks a step as optional</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which superpowers does every LCEL runnable get for free?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Retries, fallbacks, and vector search</button>
+    <button class="quiz-btn" data-opt="b">invoke, stream, batch, and async variants</button>
+    <button class="quiz-btn" data-opt="c">Persistence and human-in-the-loop approval</button>
+    <button class="quiz-btn" data-opt="d">Automatic prompt optimization</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What is LCEL NOT well-suited for?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Streaming token-by-token output</button>
+    <button class="quiz-btn" data-opt="b">Running several chains in parallel on one input</button>
+    <button class="quiz-btn" data-opt="c">Adding retries and fallbacks to a model call</button>
+    <button class="quiz-btn" data-opt="d">Loops, branching on model output, and persistent state across runs</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://python.langchain.com/docs/concepts/lcel/" target="_blank" rel="noopener">LCEL concept docs</a></li>
+  <li><a href="https://python.langchain.com/docs/how_to/sequence/" target="_blank" rel="noopener">Chaining runnables how-to</a></li>
+  <li><a href="https://python.langchain.com/docs/how_to/fallbacks/" target="_blank" rel="noopener">Fallbacks how-to</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
