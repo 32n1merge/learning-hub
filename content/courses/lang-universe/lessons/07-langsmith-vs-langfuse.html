@@ -39,13 +39,14 @@
 <h3>Head-to-head</h3>
 <table>
   <tr><th>Dimension</th><th>LangSmith</th><th>Langfuse</th></tr>
-  <tr><td>License</td><td>Proprietary (free tier, paid tiers, enterprise self-hosted)</td><td>MIT open-source core; paid cloud + enterprise</td></tr>
-  <tr><td>Self-hosting</td><td>Available for enterprise plans</td><td>First-class: Docker compose, K8s, any infra</td></tr>
+  <tr><td>License</td><td>Proprietary (free tier, paid tiers)</td><td>Open source (Apache 2.0) + paid cloud/enterprise</td></tr>
+  <tr><td>Self-hosting</td><td>Not available — SaaS only</td><td>First-class: Docker compose, K8s, Terraform</td></tr>
   <tr><td>Tracing</td><td>Deep LangChain/LangGraph integration, OTel support</td><td>LangChain callback, OTel GenAI conventions, many SDKs</td></tr>
   <tr><td>Evals</td><td>LLM-as-judge, custom scorers, datasets, automations</td><td>LLM-as-judge, custom scorers, datasets, experiments</td></tr>
   <tr><td>Prompt management</td><td>Prompt Hub (versioned, shareable)</td><td>Prompt management (versioned, labels)</td></tr>
   <tr><td>Cost tracking</td><td>Token/cost on traces</td><td>Dedicated cost analytics per model/project</td></tr>
-  <tr><td>Lock-in</td><td>Closest to the LangChain ecosystem; data lives in their cloud (unless enterprise self-host)</td><td>Open source — export data, self-host, no vendor dependency</td></tr>
+  <tr><td>Lock-in</td><td>Closest to the LangChain ecosystem; data lives in their cloud</td><td>Open source — export data, self-host, no vendor dependency</td></tr>
+  <tr><td>Recent moves</td><td>—</td><td>v4 (Aug 2026): 165× faster, real-time ingestion; team part of ClickHouse</td></tr>
   <tr><td>Best for</td><td>Teams already deep in LangChain/LangGraph wanting zero-friction setup</td><td>Teams needing on-prem data control, open source, or cost visibility</td></tr>
 </table>
 
@@ -68,7 +69,7 @@
   <li><strong>Arize Phoenix</strong> — open source, OpenTelemetry-native; strong notebook/local debugging story.</li>
   <li><strong>W&amp;B Weave</strong> — observability inside the Weights &amp; Biases ML platform; great if you already live in W&amp;B.</li>
   <li><strong>Helicone</strong> — proxy-based; sits in front of model APIs, adds caching and analytics without SDK changes.</li>
-  <li><strong>Langtrace, OpenLIT, Traceloop OpenLLMetry</strong> — smaller OTel-based OSS options.</li>
+  <li><strong>Langtrace, OpenLIT, OpenLLMetry</strong> — smaller OTel-based OSS options (Langtrace's site was 404 as of mid-2026 — verify before committing to it).</li>
 </ul>
 
 <div class="callout-warn">

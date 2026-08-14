@@ -30,14 +30,18 @@
 
 <h2>Lesson 8: Serving &amp; Deploying — LangServe, LangGraph Platform, Studio</h2>
 
-<p>You've built a chain or a graph. Now: how does it become an <span class="glossary-term">API</span>? The Lang universe has three answers, from simplest to most full-featured: LangServe for plain chains, the LangGraph Platform for production agents, and LangGraph Studio for local development. Understanding which serves what keeps you from over- or under-deploying.</p>
+<p>You've built a chain or a graph. Now: how does it become an <span class="glossary-term">API</span>? The Lang universe has three answers, from simplest to most full-featured: LangServe for plain chains, the LangGraph Platform for production agents, and LangGraph Studio for local development. Understanding which serves what keeps you from over- or under-deploying — and knowing which of these the maintainers still recommend.</p>
 
-<div class="callout">
-  <strong>Key idea:</strong> "Serve" is the layer that turns your Python object into an HTTP endpoint with streaming, batch, and playground support. LangServe is the lightweight option for LCEL chains; the LangGraph Platform is the heavyweight for stateful, checkpointed agents at scale.
+<div class="callout-warn">
+  <strong>Heads-up (verified 2026):</strong> LangServe was <strong>archived May 5, 2026</strong> — the repo is read-only with a deprecation notice, superseded by the LangGraph Platform. It still works and many existing apps run on it, but <strong>new projects should not build on LangServe</strong>: use the LangGraph Platform (or plain FastAPI) instead. The rest of this lesson explains what LangServe was and what replaced it.
 </div>
 
-<h3>LangServe — chains as REST APIs</h3>
-<p>LangServe wraps a Runnable in a FastAPI app in a few lines, exposing <code>/invoke</code>, <code>/batch</code>, <code>/stream</code>, and a web playground:</p>
+<div class="callout">
+  <strong>Key idea:</strong> "Serve" is the layer that turns your Python object into an HTTP endpoint with streaming, batch, and playground support. LangServe was the lightweight option for LCEL chains (archived May 2026 — use FastAPI or the Platform for new work); the LangGraph Platform is the heavyweight for stateful, checkpointed agents at scale.
+</div>
+
+<h3>LangServe — chains as REST APIs (archived 2026)</h3>
+<p>LangServe wrapped a Runnable in a FastAPI app in a few lines, exposing <code>/invoke</code>, <code>/batch</code>, <code>/stream</code>, and a web playground:</p>
 <pre><code>from fastapi import FastAPI
 from langserve import add_routes
 
@@ -45,7 +49,7 @@ app = FastAPI(title="My Chain API")
 add_routes(app, chain, path="/chain")
 
 # Now live at http://localhost:8000/chain/playground</code></pre>
-<p>LangServe is ideal for LCEL pipelines: minimal code, immediate HTTP + streaming + playground. Its limitation: it serves a <em>stateless runnable</em>. If your app needs threads, checkpoints, or human-in-the-loop resumption, you're back to needing graph infrastructure — which is exactly what the Platform provides.</p>
+<p>LangServe was ideal for LCEL pipelines: minimal code, immediate HTTP + streaming + playground. Its limitation: it served a <em>stateless runnable</em>. If your app needed threads, checkpoints, or human-in-the-loop resumption, you needed graph infrastructure — exactly what the Platform provides. Since the May 2026 archive, the migration path is: keep existing LangServe deployments running (it still works), but point new work at the LangGraph Platform — or skip the serving layer entirely and expose your chain with plain FastAPI, which is a few lines anyway.</p>
 
 <h3>LangGraph Platform — production agents</h3>
 <p>The LangGraph Platform (formerly LangGraph Cloud) is a deployment stack purpose-built for LangGraph apps. It runs your graph as a managed service — either in LangChain's cloud or self-hosted (Docker/K8s) — and adds what a bare API can't:</p>
@@ -61,11 +65,11 @@ add_routes(app, chain, path="/chain")
   <svg viewBox="0 0 540 160" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
     <rect x="10" y="10" width="520" height="140" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
     <text x="270" y="34" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="700">LANGSERVE vs LANGGRAPH PLATFORM</text>
-    <rect x="30" y="50" width="225" height="86" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
-    <text x="142" y="72" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">LangServe</text>
+    <rect x="30" y="50" width="225" height="86" rx="8" fill="var(--color-elevated)" stroke="var(--color-danger)"/>
+    <text x="142" y="72" text-anchor="middle" fill="var(--color-danger)" font-size="11" font-weight="700">LangServe — ARCHIVED 2026</text>
     <text x="142" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">LCEL chains only</text>
     <text x="142" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">stateless · REST + stream</text>
-    <text x="142" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">playground included</text>
+    <text x="142" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">superseded by Platform</text>
     <rect x="285" y="50" width="225" height="86" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)"/>
     <text x="397" y="72" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="700">LangGraph Platform</text>
     <text x="397" y="92" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">stateful agents</text>
@@ -80,9 +84,10 @@ add_routes(app, chain, path="/chain")
 <h3>Choosing a serving layer</h3>
 <table>
   <tr><th>You have…</th><th>Use…</th></tr>
-  <tr><td>An LCEL chain, stateless</td><td>LangServe (or plain FastAPI if you need custom routes)</td></tr>
+  <tr><td>An LCEL chain, stateless, new project</td><td>Plain FastAPI (LangServe is archived — don't start new work on it)</td></tr>
   <tr><td>A LangGraph agent needing threads/persistence</td><td>LangGraph Platform (managed or self-hosted)</td></tr>
   <tr><td>Complex custom API logic around the model</td><td>Plain FastAPI, calling the graph as a library</td></tr>
+  <tr><td>An existing LangServe deployment</td><td>Keep it running, but plan a migration to FastAPI or the Platform</td></tr>
   <tr><td>Local development/debugging of a graph</td><td>LangGraph Studio + <code>langgraph dev</code></td></tr>
 </table>
 
@@ -91,7 +96,7 @@ add_routes(app, chain, path="/chain")
 </div>
 
 <div class="callout-success">
-  <strong>Rule of thumb:</strong> Stateless → LangServe. Stateful agent → Platform. Custom app → FastAPI calling the graph directly. The graph object itself is just a Python callable — you can always skip the serving layer entirely and host it however you like.
+  <strong>Rule of thumb:</strong> Stateless → FastAPI (or an existing LangServe deployment, but don't start new ones). Stateful agent → Platform. Custom app → FastAPI calling the graph directly. The graph object itself is just a Python callable — you can always skip the serving layer entirely and host it however you like.
 </div>
 
 <div class="quiz-block" id="quiz-8">

@@ -30,7 +30,7 @@
 
 <h2>Lesson 5: LangSmith — Observability &amp; Evaluation</h2>
 
-<p>Once your app runs, you need to <em>see</em> it. LangSmith is LangChain Inc.'s <span class="glossary-term">LLMOps platform</span>: a hosted (or self-hosted) service for tracing every LLM call, evaluating outputs, managing prompts, and monitoring production. It's the closest thing the Lang ecosystem has to "the official dashboard."</p>
+<p>Once your app runs, you need to <em>see</em> it. LangSmith is LangChain Inc.'s <span class="glossary-term">LLMOps platform</span>: a proprietary, cloud-hosted service for tracing every LLM call, evaluating outputs, managing prompts, and monitoring production. It's the closest thing the Lang ecosystem has to "the official dashboard."</p>
 
 <div class="callout">
   <strong>Key idea:</strong> LLM apps fail differently than regular software — outputs are probabilistic, costs accumulate per token, and "it works" is a spectrum. LangSmith turns those invisible failure modes into inspectable traces, scored evals, and live dashboards.
@@ -84,7 +84,7 @@ result = chain.invoke({"topic": "RAG"}, config=config)</code></pre>
 <p>The workflow that makes LangSmith (or any LLMOps tool) valuable is the <strong>eval loop</strong>: collect a dataset of real inputs → run them through your app → score outputs automatically → fix the worst failures → re-run. With LLM-as-judge scorers you can grade hundreds of outputs in minutes. This is how "good enough" becomes "measurably better."</p>
 
 <div class="callout-warn">
-  <strong>Pitfall:</strong> Tracing every single call is the default, but production traffic is noisy and costs storage/quota. Use projects to separate dev/staging/prod, and filter or sample high-volume traces. Also: LangSmith is a <em>paid SaaS</em> (free tier available) — it is not open source, which is exactly why Langfuse exists.
+  <strong>Pitfall:</strong> Tracing every single call is the default, but production traffic is noisy and costs storage/quota. Use projects to separate dev/staging/prod, and filter or sample high-volume traces. Also: LangSmith is a <em>paid SaaS with no self-hosted option</em> (free tier available) — it is not open source, which is exactly why Langfuse exists.
 </div>
 
 <div class="callout-success">
@@ -126,7 +126,7 @@ result = chain.invoke({"topic": "RAG"}, config=config)</code></pre>
 <ul>
   <li><a href="https://docs.smith.langchain.com/" target="_blank" rel="noopener">LangSmith docs</a></li>
   <li><a href="https://docs.smith.langchain.com/evaluation/" target="_blank" rel="noopener">LangSmith evaluation guide</a></li>
-  <li><a href="https://docs.smith.langchain.com/self-hosting" target="_blank" rel="noopener">LangSmith self-hosting</a></li>
+  <li><a href="https://docs.smith.langchain.com/observability" target="_blank" rel="noopener">LangSmith observability concepts</a></li>
 </ul>
 
 <script>

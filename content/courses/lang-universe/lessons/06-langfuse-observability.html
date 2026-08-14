@@ -30,10 +30,14 @@
 
 <h2>Lesson 6: Langfuse — Open-Source Observability</h2>
 
-<p>Langfuse is the <span class="glossary-term">open-source challenger</span> on the observe layer: an independent, self-hostable platform for LLM tracing, evaluation, prompt management, and cost tracking. If LangSmith is the Apple of LLMOps (polished, hosted, integrated), Langfuse is the Linux — MIT-licensed core, run it on your own hardware, no vendor lock-in.</p>
+<p>Langfuse is the <span class="glossary-term">open-source challenger</span> on the observe layer: an independent, self-hostable platform for LLM tracing, evaluation, prompt management, and cost tracking. If LangSmith is the Apple of LLMOps (polished, hosted, integrated), Langfuse is the Linux — open-source core, run it on your own hardware, no vendor lock-in. (The Langfuse team is now part of ClickHouse, and v4 shipped in August 2026 with major performance and real-time ingestion upgrades.)</p>
 
 <div class="callout">
-  <strong>Key idea:</strong> Langfuse covers almost the same feature set as LangSmith — traces, evals, datasets, prompt versioning, sessions, feedback — but its license and self-hosting story are the deciding factors for teams that can't (or won't) send prompts and outputs to a third-party SaaS.
+  <strong>Key idea:</strong> Langfuse covers almost the same feature set as LangSmith — traces, evals, datasets, prompt versioning, sessions, feedback — but its open-source license (Apache 2.0) and self-hosting story are the deciding factors for teams that can't (or won't) send prompts and outputs to a third-party SaaS.
+</div>
+
+<div class="callout-success">
+  <strong>Langfuse v4 (August 2026):</strong> the big 2026 release is built on OpenTelemetry to reduce lock-in, claims up to <strong>165× faster</strong> at scale, and adds <strong>real-time ingestion</strong> (data appears instantly instead of waiting on batch jobs). Built on Postgres + ClickHouse for storage and analytics.
 </div>
 
 <h3>What Langfuse gives you</h3>
