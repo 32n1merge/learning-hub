@@ -3,7 +3,11 @@
   "description": "Everything about pi, the terminal coding agent you can extend: sessions and the TUI, models and providers, the TypeScript extension API, skills, prompt templates, pi packages, compaction and token economics, and headless SDK/RPC modes — then the oh-my-pi (omp) fork, and how to decide between vanilla pi and omp.",
   "difficulty": "intermediate",
   "estimatedDuration": "90 min",
-  "tags": ["pi", "coding-agents", "cli", "terminal", "llm", "token-economics", "extensions", "ai-tools"],
+  "tags": [
+    "pi",
+    "coding-agents",
+    "llm"
+  ],
   "lastUpdated": "2026-08-17",
   "icon": "🥧"
 }

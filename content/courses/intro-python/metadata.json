@@ -3,7 +3,11 @@
   "description": "Master Python basics from variables to functions with hands-on examples",
   "difficulty": "beginner",
   "estimatedDuration": "30 min",
-  "tags": ["python", "programming", "beginner", "scripting"],
+  "tags": [
+    "python",
+    "programming",
+    "beginner"
+  ],
   "lastUpdated": "2024-02-20",
   "icon": "🐍",
   "coverImage": null

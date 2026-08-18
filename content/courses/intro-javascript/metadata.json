@@ -3,7 +3,11 @@
   "description": "Learn the fundamentals of JavaScript programming language",
   "difficulty": "beginner",
   "estimatedDuration": "25 min",
-  "tags": ["javascript", "programming", "beginner"],
+  "tags": [
+    "javascript",
+    "programming",
+    "beginner"
+  ],
   "lastUpdated": "2024-01-15",
   "icon": "📘"
 }

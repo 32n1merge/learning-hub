@@ -5,15 +5,8 @@
   "estimatedDuration": "90 min",
   "tags": [
     "ai",
-    "red teaming",
-    "security",
     "llm",
-    "prompt injection",
-    "jailbreak",
-    "nist",
-    "governance",
-    "mitre atlas",
-    "owasp"
+    "security"
   ],
   "lastUpdated": "2026-08-13",
   "icon": "🎯"

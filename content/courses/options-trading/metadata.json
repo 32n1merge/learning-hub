@@ -3,7 +3,11 @@
   "description": "Learn options trading the fun way — calls, puts, Greeks, margin, and the strategies that made (and broke) WallStreetBets legends. No suits, no jargon worship, just what actually matters.",
   "difficulty": "intermediate",
   "estimatedDuration": "90 min",
-  "tags": ["options", "trading", "stocks", "finance", "derivatives", "margin", "wsb"],
+  "tags": [
+    "options",
+    "trading",
+    "finance"
+  ],
   "lastUpdated": "2026-07-24",
   "icon": "🎰",
   "coverImage": null

@@ -3,7 +3,11 @@
   "description": "Master GNU Make: dependency graphs, rule syntax, variables, pattern rules, and advanced automation techniques — plus a practical framework for knowing exactly when Make is the right tool and when it isn't.",
   "difficulty": "intermediate",
   "estimatedDuration": "90 min",
-  "tags": ["make", "build automation", "devops", "shell", "tooling", "ci"],
+  "tags": [
+    "make",
+    "build automation",
+    "devops"
+  ],
   "lastUpdated": "2026-08-08",
   "icon": "🔨"
 }

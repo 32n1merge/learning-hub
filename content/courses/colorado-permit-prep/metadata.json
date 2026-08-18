@@ -1,1 +1,14 @@
-{"title":"Colorado Instruction Permit Prep","description":"A practical, exam-focused course covering Colorado permit eligibility, rules of the road, signs, defensive driving, and a final practice test.","difficulty":"beginner","estimatedDuration":"90 min","tags":["colorado","driver permit","road safety","practice test"],"lastUpdated":"2026-07-26","icon":"🏔️","coverImage":null}
+{
+  "title": "Colorado Instruction Permit Prep",
+  "description": "A practical, exam-focused course covering Colorado permit eligibility, rules of the road, signs, defensive driving, and a final practice test.",
+  "difficulty": "beginner",
+  "estimatedDuration": "90 min",
+  "tags": [
+    "colorado",
+    "driver permit",
+    "road safety"
+  ],
+  "lastUpdated": "2026-07-26",
+  "icon": "🏔️",
+  "coverImage": null
+}

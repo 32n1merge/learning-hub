@@ -4,6 +4,7 @@ import path from 'path';
 const CONTENT_DIR = 'content';
 const DIST_DIR = 'dist';
 const TEMPLATES_DIR = 'templates';
+const SITE_URL = 'https://learn.32n1.com';
 
 async function build() {
   console.log('Building Learning Hub...');
@@ -27,6 +28,9 @@ async function build() {
   
   // Copy static assets
   await copyAssets();
+  
+  // Generate RSS feed
+  await fs.writeFile(path.join(DIST_DIR, 'feed.xml'), buildRssFeed(courses));
   
   console.log('Build complete!');
 }
@@ -300,6 +304,63 @@ async function copyDir(src, dest) {
       await fs.copyFile(srcPath, destPath);
     }
   }
+}
+
+function xmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function toRfc2822(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  return d.toUTCString().replace('GMT', '+0000');
+}
+
+function buildRssFeed(courses) {
+  // One <item> per course, newest update first. Feed lives at /feed.xml
+  // (linked from every page's <head> via rel="alternate" autodiscovery).
+  const items = [...courses]
+    .filter(c => c.lastUpdated)
+    .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+    .map(c => {
+      const link = `${SITE_URL}/courses/${c.slug}/`;
+      const lessonCount = `${c.lessons.length} lesson${c.lessons.length !== 1 ? 's' : ''}`;
+      const description = [c.description, lessonCount, c.estimatedDuration]
+        .filter(Boolean).join(' — ');
+      const categories = (c.tags || [])
+        .map(t => `    <category>${xmlEscape(t)}</category>`)
+        .join('\n');
+      return `  <item>
+    <title>${xmlEscape(c.title)}</title>
+    <link>${link}</link>
+    <guid isPermaLink="true">${link}</guid>
+    <pubDate>${toRfc2822(c.lastUpdated)}</pubDate>
+${categories}
+    <description>${xmlEscape(description)}</description>
+  </item>`;
+    })
+    .join('\n');
+
+  const lastBuild = toRfc2822(new Date().toISOString().slice(0, 10));
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>32N1 Learning Hub</title>
+    <link>${SITE_URL}/</link>
+    <description>New and updated courses from the 32N1 Learning Hub (learn.32n1.com)</description>
+    <language>en</language>
+    <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>${lastBuild}</lastBuildDate>
+${items}
+  </channel>
+</rss>
+`;
 }
 
 build().catch(err => {

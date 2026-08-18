@@ -3,8 +3,12 @@
   "description": "Master hydroponic farming in shipping containers — from nutrient science and LED lighting to building a closed-loop system where mushrooms and vegetables boost each other's growth. Covers solar power, environmental controls, sensors, automation, and the complete design of a self-sustaining two-container farm.",
   "difficulty": "intermediate",
   "estimatedDuration": "120 min",
-  "tags": ["hydroponics", "container-farming", "mushrooms", "vertical-farming", "sustainability", "automation", "solar-power", "greenhouse"],
+  "tags": [
+    "hydroponics",
+    "container-farming",
+    "sustainability"
+  ],
   "lastUpdated": "2026-07-24",
-  "icon": "\ud83c\udf31",
+  "icon": "🌱",
   "coverImage": null
 }

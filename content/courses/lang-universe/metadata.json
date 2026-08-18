@@ -6,12 +6,7 @@
   "tags": [
     "llm",
     "langchain",
-    "langgraph",
-    "agents",
-    "langsmith",
-    "langfuse",
-    "llmops",
-    "observability"
+    "agents"
   ],
   "lastUpdated": "2026-08-14",
   "icon": "🔗"
