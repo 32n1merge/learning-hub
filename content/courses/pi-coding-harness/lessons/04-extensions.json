@@ -1,0 +1,5 @@
+{
+  "title": "Extensions — Rewire the Harness in TypeScript",
+  "description": "The extension API: locations, registerTool/registerCommand/registerShortcut, lifecycle events, ctx.ui, state persistence, and extension patterns — including extensions as a token-control plane (ctx.compact, ctx.getContextUsage, input rewriting).",
+  "readingTime": "10 min"
+}

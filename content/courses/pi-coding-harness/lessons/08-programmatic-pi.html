@@ -1,0 +1,119 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Headless Pi — SDK, RPC &amp; JSON Modes</h2>
+
+<p>Pi isn't only an interactive TUI. The same engine runs <span class="glossary-term">non-interactive</span>: one-shot prompts, a JSON event stream for tooling, an RPC protocol for embedding, and a TypeScript SDK for building your own agent surfaces on top of pi.</p>
+
+<h3>One-shot prompts</h3>
+<pre><code>pi -p "Summarize this repo's architecture"
+pi --name "CI audit" -p "Review this build failure"
+
+# project trust in non-interactive runs:
+pi -p "..." --approve        # trust project resources for this run
+pi -p "..." --no-approve     # ignore them</code></pre>
+
+<p>Non-interactive modes (<code>-p</code>, <code>--mode json</code>, <code>--mode rpc</code>) never show the trust prompt — they fall back to <code>defaultProjectTrust</code> (or your explicit <code>--approve</code>/<code>--no-approve</code>).</p>
+
+<h3>JSON event stream mode</h3>
+<p><code>--mode json</code> emits structured events (messages, tool calls, results, notifications) as JSON lines on stdout — the standard way to drive pi from scripts, CI, or a custom frontend. <code>--mode rpc</code> is the richer protocol for interactive embedding (e.g. building a custom editor UI around pi). Both are documented with full event schemas.</p>
+
+<h3>The SDK</h3>
+<p>The <code>@earendil-works/pi-coding-agent</code> npm package isn't just the CLI — it exports the types and session machinery extensions use (<code>ExtensionAPI</code>, <code>ExtensionContext</code>, session types, the <code>SessionManager</code> API). That's the same library your own tooling can import. Extensions can also shell out with <code>pi.exec()</code> and register whole providers at runtime.</p>
+
+<h3>Sessions as data</h3>
+<p>Every session is a portable JSONL file with a documented format — export with <code>/export</code>, resume with <code>/import</code>, or <code>/share</code> to a private gist with a shareable HTML link. The tree structure with <code>id</code>/<code>parentId</code> is exactly what makes forking and branch summarization possible.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Headless modes strip the TUI overhead and make runs deterministic and scriptable: the same prompt in CI costs the same every time, results are parseable (no human reading), and <code>--no-session</code> keeps one-off automation from accumulating session files. When you script pi, you can also pin the cheapest adequate model and the lowest thinking level for the job class — the exact knobs from Lesson 3 — turning routine chores (changelog drafts, test triage, doc updates) into near-free batch work.
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/sdk" target="_blank" rel="noopener">SDK — programmatic usage</a></li>
+  <li><a href="https://pi.dev/docs/latest/rpc" target="_blank" rel="noopener">RPC Mode</a></li>
+  <li><a href="https://pi.dev/docs/latest/json" target="_blank" rel="noopener">JSON Event Stream Mode</a></li>
+  <li><a href="https://pi.dev/docs/latest/session-format" target="_blank" rel="noopener">Session Format — JSONL reference</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which flag runs a one-shot prompt without entering the TUI?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">pi -p "prompt"</button>
+    <button class="quiz-btn" data-opt="b">pi --ask "prompt"</button>
+    <button class="quiz-btn" data-opt="c">pi --once "prompt"</button>
+    <button class="quiz-btn" data-opt="d">pi /prompt "prompt"</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What does --mode json emit on stdout?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A single markdown answer</button>
+    <button class="quiz-btn" data-opt="b">Raw HTTP responses from the provider</button>
+    <button class="quiz-btn" data-opt="c">Structured JSON lines for messages, tool calls, results, and notifications</button>
+    <button class="quiz-btn" data-opt="d">HTML rendering of the transcript</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does --mode json/rpc never show the project trust prompt?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Because non-interactive modes never load project resources</button>
+    <button class="quiz-btn" data-opt="b">Because they fall back to defaultProjectTrust or explicit --approve/--no-approve</button>
+    <button class="quiz-btn" data-opt="c">Because project trust is only enforced on Windows</button>
+    <button class="quiz-btn" data-opt="d">Because the JSON mode disables extensions entirely</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

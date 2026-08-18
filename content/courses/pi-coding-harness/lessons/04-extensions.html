@@ -1,0 +1,207 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: Extensions — Rewire the Harness in TypeScript</h2>
+
+<p>This is pi's primary extension surface. An <span class="glossary-term">extension</span> is a TypeScript module that exports a default factory function receiving the <code>ExtensionAPI</code>. It can subscribe to lifecycle events, register tools the LLM can call, add slash commands, shortcuts, and CLI flags, render custom TUI components, and persist state across restarts. Extensions are loaded with <code>jiti</code>, so TypeScript runs without a build step, and they hot-reload with <code>/reload</code>.</p>
+
+<div class="callout-warn">
+  <strong>Security:</strong> Extensions run with your full system permissions and can execute arbitrary code. Only install and run extensions from sources you trust.
+</div>
+
+<h3>Locations</h3>
+<pre><code>~/.pi/agent/extensions/*.ts        # global (all projects)
+~/.pi/agent/extensions/*/index.ts  # global, multi-file
+.pi/extensions/*.ts                # project-local (after project trust)
+.pi/extensions/*/index.ts          # project-local, multi-file
+# quick tests:
+pi -e ./my-extension.ts</code></pre>
+
+<h3>A minimal extension</h3>
+<pre><code>import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
+export default function (pi: ExtensionAPI) {
+  // Block dangerous tool calls before they run
+  pi.on("tool_call", async (event, ctx) =&gt; {
+    if (event.toolName === "bash" &amp;&amp; event.input.command?.includes("rm -rf")) {
+      const ok = await ctx.ui.confirm("Dangerous!", "Allow rm -rf?");
+      if (!ok) return { block: true, reason: "Blocked by user" };
+    }
+  });
+
+  // A custom tool the LLM can call
+  pi.registerTool({
+    name: "greet",
+    label: "Greet",
+    description: "Greet someone by name",
+    parameters: Type.Object({ name: Type.String({ description: "Name to greet" }) }),
+    async execute(toolCallId, params) {
+      return { content: [{ type: "text", text: `Hello, ${params.name}!` }], details: {} };
+    },
+  });
+
+  // A slash command
+  pi.registerCommand("hello", {
+    description: "Say hello",
+    handler: async (args, ctx) =&gt; { ctx.ui.notify(`Hello ${args || "world"}!`, "info"); },
+  });
+}</code></pre>
+
+<h3>What you can hook</h3>
+<table>
+  <tr><th>Surface</th><th>API</th><th>What it's for</th></tr>
+  <tr><td>Lifecycle events</td><td><code>pi.on("session_start" | "project_trust" | "resources_discover" ...)</code></td><td>Init work, trust decisions, resource loading</td></tr>
+  <tr><td>Agent events</td><td><code>before_agent_request</code> and friends</td><td>Inspect/modify what gets sent to the model</td></tr>
+  <tr><td>Tool events</td><td><code>tool_call</code>, tool result events</td><td>Block, allow, or rewrite tool calls (permission gates)</td></tr>
+  <tr><td>Input events</td><td><code>input</code></td><td>Intercept, transform, or handle user prompts</td></tr>
+  <tr><td>Model events</td><td>model switch / thinking events</td><td>React to model and reasoning changes</td></tr>
+  <tr><td>Commands</td><td><code>pi.registerCommand()</code></td><td>Custom slash commands (<code>/mycommand</code>)</td></tr>
+  <tr><td>Shortcuts / flags</td><td><code>pi.registerShortcut()</code>, <code>pi.registerFlag()</code></td><td>Keybindings and CLI flags</td></tr>
+  <tr><td>Custom tools</td><td><code>pi.registerTool()</code></td><td>New tools the LLM can call (typebox schemas)</td></tr>
+  <tr><td>UI</td><td><code>ctx.ui</code> — notify, confirm, select, input, setStatus, setWidget, custom()</td><td>Dialogs, wizards, footer status, widgets, full TUI components</td></tr>
+  <tr><td>State</td><td><code>pi.appendEntry()</code>, <code>setLabel()</code>, <code>sendMessage()</code></td><td>Persist state that survives restarts; inject messages</td></tr>
+  <tr><td>Rendering</td><td><code>registerMessageRenderer()</code>, <code>registerEntryRenderer()</code>, <code>registerMarkdownTransformer()</code></td><td>Custom display for tool calls, entries, markdown</td></tr>
+  <tr><td>Runtime</td><td><code>pi.exec()</code>, <code>pi.setModel()</code>, <code>pi.setActiveTools()</code>, <code>pi.registerProvider()</code></td><td>Run processes, swap models, toggle tool surface, add providers</td></tr>
+</table>
+
+<h3>The extension lifecycle</h3>
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 300" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="520" height="280" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="30" y="38" fill="var(--color-accent)" font-size="13" font-family="var(--font-mono)">pi starts</text>
+    <text x="30" y="62" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ project_trust  (user/global extensions only)</text>
+    <text x="30" y="84" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ session_start  (reason: startup)</text>
+    <text x="30" y="106" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">└─ resources_discover</text>
+    <text x="30" y="136" fill="var(--color-accent)" font-size="13" font-family="var(--font-mono)">user prompt</text>
+    <text x="30" y="160" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ extension commands checked first (bypass if found)</text>
+    <text x="30" y="182" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ input event        → can intercept / transform</text>
+    <text x="30" y="204" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ skill/template expansion</text>
+    <text x="30" y="226" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">├─ before_agent_request → edit what the model sees</text>
+    <text x="30" y="248" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">└─ tool_call events  → block / allow / rewrite</text>
+    <text x="30" y="276" fill="var(--color-warning)" font-size="12" font-family="var(--font-mono)">extensions can also: ctx.compact() · ctx.getContextUsage()</text>
+  </svg>
+</div>
+
+<p>Because the factory can be <code>async</code>, extensions can fetch remote configuration (e.g. dynamically discover models from a local server and register them via <code>pi.registerProvider()</code>) before the session starts. Doc guidance: don't start long-lived background resources from the factory itself — defer them to <code>session_start</code> and clean up in <code>session_shutdown</code>.</p>
+
+<h3>Real-world extension patterns</h3>
+<ul>
+  <li><strong>Permission gates</strong> — confirm before <code>rm -rf</code>, <code>sudo</code>, etc. (the example above)</li>
+  <li><strong>Git checkpointing</strong> — stash at each turn, restore on branch</li>
+  <li><strong>Path protection</strong> — block writes to <code>.env</code>, <code>node_modules/</code></li>
+  <li><strong>Custom compaction</strong> — summarize the conversation your way (Lesson 7)</li>
+  <li><strong>Interactive tools</strong> — questions, wizards, custom dialogs</li>
+  <li><strong>Stateful tools</strong> — todo lists, connection pools</li>
+  <li><strong>External integrations</strong> — file watchers, webhooks, CI triggers</li>
+</ul>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Extensions are also your token-control plane:
+  <ul style="margin:0.4rem 0 0">
+    <li><code>ctx.compact()</code> — trigger compaction programmatically when you know a milestone has passed.</li>
+    <li><code>ctx.getContextUsage()</code> — read the current budget and warn/inject reminders near the limit.</li>
+    <li><code>input</code> event — rewrite verbose user prompts into tighter ones before they reach the model.</li>
+    <li><code>tool_call</code> blocker — deny expensive tools or cap their output (e.g. refuse <code>bash</code> calls that dump huge files into context).</li>
+    <li>Custom summarizers (via <code>session_before_compact</code>) produce better, shorter summaries — quality in compaction directly reduces what re-enters context later.</li>
+    <li><code>pi.setThinkingLevel()</code> and <code>pi.setActiveTools()</code> — shrink the tool surface and reasoning budget per task (fewer declared tools = smaller system prompt).</li>
+  </ul>
+</div>
+
+<div class="watch-box">
+  <strong>📺 Watch:</strong>
+  <ul>
+    <li><a href="https://youtu.be/0sI0MbCt4f4" target="_blank" rel="noopener">You Can Learn Pi Minimal Coding Agent Harness In 22 Min | Skills, Extensions, Packages — Sean's AI Stories</a> — the exact extension/skills/packages workflow from this and the next two lessons.</li>
+  </ul>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/extensions" target="_blank" rel="noopener">Extensions — full reference (events, context, API)</a></li>
+  <li><a href="https://github.com/badlogic/pi-mono" target="_blank" rel="noopener">pi-mono on GitHub — see examples/extensions/ for working implementations</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. How does pi load TypeScript extensions without a build step?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Via jiti, so TS runs directly; /reload hot-reloads them</button>
+    <button class="quiz-btn" data-opt="b">They must be compiled with tsc first</button>
+    <button class="quiz-btn" data-opt="c">They are written in JSON, not TypeScript</button>
+    <button class="quiz-btn" data-opt="d">They ship as prebuilt .so binaries</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which event lets an extension block a dangerous tool call like rm -rf before it runs?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">session_start</button>
+    <button class="quiz-btn" data-opt="b">resources_discover</button>
+    <button class="quiz-btn" data-opt="c">tool_call</button>
+    <button class="quiz-btn" data-opt="d">project_trust</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which ExtensionContext method lets an extension monitor how much of the context window is in use?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">ctx.memory()</button>
+    <button class="quiz-btn" data-opt="b">ctx.usage()</button>
+    <button class="quiz-btn" data-opt="c">ctx.meter()</button>
+    <button class="quiz-btn" data-opt="d">ctx.getContextUsage()</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,154 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: Sessions, Trees &amp; the TUI</h2>
+
+<p>Pi treats every conversation as a <span class="glossary-term">session</span>: a JSONL file with a <em>tree</em> structure, auto-saved to <code>~/.pi/agent/sessions/</code> and organized by working directory. Because sessions are trees, you can jump back to any earlier turn and branch from there — like <code>git</code> for your conversation.</p>
+
+<h3>Session commands and flags</h3>
+<pre><code>pi -c                      # continue the most recent session
+pi -r                      # browse and pick a past session
+pi --no-session            # ephemeral: do not save anything
+pi --name "Refactor auth"  # human-readable session name
+pi --session &lt;path|id&gt;      # resume a specific session
+pi --fork &lt;path|id&gt;        # fork a session into a new one</code></pre>
+
+<p>Inside the TUI, the big ones are <code>/tree</code> (navigate the session tree), <code>/fork</code> (new session from a previous user message), <code>/clone</code> (duplicate the current branch), <code>/resume</code> (picker), <code>/new</code>, <code>/session</code> (show file, ID, message count, <strong>tokens, and cost</strong>), <code>/export</code> (HTML/JSONL), <code>/import</code>, and <code>/share</code> (private GitHub gist with a shareable HTML link).</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 210" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="500" height="190" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="30" y="40" fill="var(--color-text-secondary)" font-size="13" font-family="var(--font-mono)">user: "add auth"</text>
+    <line x1="45" y1="55" x2="45" y2="70" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="30" y="86" fill="var(--color-text-secondary)" font-size="13" font-family="var(--font-mono)">├─ assistant: plan (branch A)</text>
+    <line x1="60" y1="100" x2="60" y2="115" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="45" y="131" fill="var(--color-text-secondary)" font-size="13" font-family="var(--font-mono)">│  ├─ user: "use JWT"</text>
+    <text x="45" y="151" fill="var(--color-text-secondary)" font-size="13" font-family="var(--font-mono)">│  └─ assistant: implements JWT</text>
+    <text x="30" y="176" fill="var(--color-text-secondary)" font-size="13" font-family="var(--font-mono)">└─ assistant: plan (branch B)</text>
+    <text x="45" y="196" fill="var(--color-warning)" font-size="12" font-family="var(--font-mono)">   ▲ /tree jumps back here and forks</text>
+  </svg>
+</div>
+
+<h3>Editor features that save you (and the model) time</h3>
+<ul>
+  <li><code>@</code> — fuzzy-search project files to reference</li>
+  <li><code>Tab</code> — path completion</li>
+  <li><code>Shift+Enter</code> — multi-line input</li>
+  <li><code>!command</code> — run a shell command <em>and send its output to the model</em></li>
+  <li><code>!!command</code> — run a shell command <em>without</em> sending output to the model</li>
+  <li><code>Ctrl+X</code> — copy the last assistant message</li>
+  <li><code>Ctrl+G</code> — open an external editor (e.g. <code>code --wait</code>)</li>
+  <li><code>Ctrl+V</code> — paste images directly into the terminal</li>
+</ul>
+
+<h3>The message queue</h3>
+<p>You don't have to wait for the agent to finish: <code>Enter</code> queues a <em>steering</em> message (delivered after the current tool calls), <code>Alt+Enter</code> queues a <em>follow-up</em> (delivered after all work completes), <code>Escape</code> aborts and restores queued messages, and <code>Alt+Up</code> pulls them back. Delivery order is configurable via <code>steeringMode</code> and <code>followUpMode</code> settings.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong>
+  <ul style="margin:0.4rem 0 0">
+    <li><code>/session</code> shows tokens and cost for the current session — check it before committing to a long task.</li>
+    <li><code>!!command</code> is a quiet token win: run setup/verification commands without dumping their output into context.</li>
+    <li><code>--no-session</code> is perfect for one-off questions you'll never resume — nothing saved, nothing to compact later.</li>
+    <li><code>/fork</code> or <code>/clone</code> lets you explore an alternative path in a <em>fresh</em> context instead of dragging exploratory turns through the main session.</li>
+  </ul>
+</div>
+
+<div class="watch-box">
+  <strong>📺 Watch:</strong>
+  <ul>
+    <li><a href="https://youtu.be/8Dt0HM8HIq4" target="_blank" rel="noopener">Learn 90% Of Pi Agent in Under 17 Minutes — Brandon Melville</a> — a fast hands-on tour of the TUI, sessions, and daily workflow.</li>
+  </ul>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/usage" target="_blank" rel="noopener">Using Pi — interactive mode, commands, CLI reference</a></li>
+  <li><a href="https://pi.dev/docs/latest/sessions" target="_blank" rel="noopener">Sessions — storage, branching, resuming</a></li>
+  <li><a href="https://pi.dev/docs/latest/keybindings" target="_blank" rel="noopener">Keybindings</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What shape do pi sessions have on disk?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A JSONL tree, where any turn can be a branch point</button>
+    <button class="quiz-btn" data-opt="b">A single flat markdown transcript</button>
+    <button class="quiz-btn" data-opt="c">A SQLite database shared across all projects</button>
+    <button class="quiz-btn" data-opt="d">A directory of numbered text files per message</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which command runs a shell command WITHOUT sending its output to the model?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">!command</button>
+    <button class="quiz-btn" data-opt="b">/bash command</button>
+    <button class="quiz-btn" data-opt="c">!!command</button>
+    <button class="quiz-btn" data-opt="d">$ command</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. How can you see the token count and cost of the current session?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">/cost</button>
+    <button class="quiz-btn" data-opt="b">/stats</button>
+    <button class="quiz-btn" data-opt="c">pi --tokens</button>
+    <button class="quiz-btn" data-opt="d">/session</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

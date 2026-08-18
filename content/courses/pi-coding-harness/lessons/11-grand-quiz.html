@@ -1,0 +1,279 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 11: Grand Quiz — The Pi Coding Harness</h2>
+
+<p>Twenty questions covering all ten lessons, two per lesson. Answer everything to get your grade. This is the final retrieval-practice pass — if you can answer these from memory, you know the harness.</p>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Grand Quiz</h3>
+
+  <h3 style="color:var(--color-accent)">Meet Pi</h3>
+
+  <p class="quiz-q">1. Who created pi, and under what lineage does it ship today?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Mario Zechner (badlogic) — started as pi-mono, now @earendil-works/pi-coding-agent</button>
+    <button class="quiz-btn" data-opt="b">Sam Altman — OpenAI Labs</button>
+    <button class="quiz-btn" data-opt="c">Andrej Karpathy — NanoChat Inc.</button>
+    <button class="quiz-btn" data-opt="d">Linus Torvalds — Linux kernel project</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What four tools does pi give the model by default?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">ls, cat, grep, find</button>
+    <button class="quiz-btn" data-opt="b">git, npm, curl, jq</button>
+    <button class="quiz-btn" data-opt="c">read, write, edit, bash</button>
+    <button class="quiz-btn" data-opt="d">python, node, make, docker</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <h3 style="color:var(--color-accent)">Sessions &amp; the TUI</h3>
+
+  <p class="quiz-q">3. What makes pi sessions different from a flat chat log?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">They are encrypted by default</button>
+    <button class="quiz-btn" data-opt="b">They auto-delete after 24 hours</button>
+    <button class="quiz-btn" data-opt="c">They only exist in RAM while pi runs</button>
+    <button class="quiz-btn" data-opt="d">They are JSONL trees you can branch from at any turn with /tree and /fork</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. Which command shows the current session's token count and cost?</p>
+  <div class="quiz-opts" data-q="3" data-answer="b">
+    <button class="quiz-btn" data-opt="a">/tokens</button>
+    <button class="quiz-btn" data-opt="b">/session</button>
+    <button class="quiz-btn" data-opt="c">/bill</button>
+    <button class="quiz-btn" data-opt="d">/stats --cost</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3 style="color:var(--color-accent)">Models &amp; Providers</h3>
+
+  <p class="quiz-q">5. In models.json, which four cost fields can a model declare?</p>
+  <div class="quiz-opts" data-q="4" data-answer="a">
+    <button class="quiz-btn" data-opt="a">input, output, cacheRead, cacheWrite</button>
+    <button class="quiz-btn" data-opt="b">prompt, completion, retry, error</button>
+    <button class="quiz-btn" data-opt="c">base, tax, tip, surcharge</button>
+    <button class="quiz-btn" data-opt="d">tokens, credits, quota, rate</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. What do thinking budgets like "low: 4096" control?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">How many tokens the session can store</button>
+    <button class="quiz-btn" data-opt="b">The max size of a single tool result</button>
+    <button class="quiz-btn" data-opt="c">The token budget each thinking level may spend on reasoning</button>
+    <button class="quiz-btn" data-opt="d">The number of retries per API call</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <h3 style="color:var(--color-accent)">Extensions</h3>
+
+  <p class="quiz-q">7. Which event lets an extension block or rewrite a tool call before it executes?</p>
+  <div class="quiz-opts" data-q="6" data-answer="b">
+    <button class="quiz-btn" data-opt="a">session_start</button>
+    <button class="quiz-btn" data-opt="b">tool_call</button>
+    <button class="quiz-btn" data-opt="c">project_trust</button>
+    <button class="quiz-btn" data-opt="d">resources_discover</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. Which ExtensionAPI method registers a new tool the LLM can call?</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">pi.addTool()</button>
+    <button class="quiz-btn" data-opt="b">pi.defineTool()</button>
+    <button class="quiz-btn" data-opt="c">pi.newTool()</button>
+    <button class="quiz-btn" data-opt="d">pi.registerTool()</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3 style="color:var(--color-accent)">Skills &amp; Templates</h3>
+
+  <p class="quiz-q">9. When is a skill's full content loaded into the model's context?</p>
+  <div class="quiz-opts" data-q="8" data-answer="a">
+    <button class="quiz-btn" data-opt="a">On demand, when the task matches the skill</button>
+    <button class="quiz-btn" data-opt="b">At every session start</button>
+    <button class="quiz-btn" data-opt="c">Never — skills only affect tool permissions</button>
+    <button class="quiz-btn" data-opt="d">Only after you run pi --install-skill</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. In a prompt template, what does $@ expand to?</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The first argument only</button>
+    <button class="quiz-btn" data-opt="b">The template filename</button>
+    <button class="quiz-btn" data-opt="c">All arguments joined</button>
+    <button class="quiz-btn" data-opt="d">The current git branch</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <h3 style="color:var(--color-accent)">Packages &amp; Themes</h3>
+
+  <p class="quiz-q">11. Which command installs a pi package from npm?</p>
+  <div class="quiz-opts" data-q="10" data-answer="b">
+    <button class="quiz-btn" data-opt="a">npm i @foo/bar</button>
+    <button class="quiz-btn" data-opt="b">pi install npm:@foo/bar@1.0.0</button>
+    <button class="quiz-btn" data-opt="c">pi fetch @foo/bar</button>
+    <button class="quiz-btn" data-opt="d">bun add @foo/bar --pi</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. What can a pi package bundle?</p>
+  <div class="quiz-opts" data-q="11" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Only themes</button>
+    <button class="quiz-btn" data-opt="b">Only extensions</button>
+    <button class="quiz-btn" data-opt="c">Only skills</button>
+    <button class="quiz-btn" data-opt="d">Extensions, skills, prompt templates, and themes</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <h3 style="color:var(--color-accent)">Token Economics</h3>
+
+  <p class="quiz-q">13. What is the default compaction.reserveTokens value, and what is it for?</p>
+  <div class="quiz-opts" data-q="12" data-answer="a">
+    <button class="quiz-btn" data-opt="a">16,384 — context headroom left for the model's response</button>
+    <button class="quiz-btn" data-opt="b">20,000 — tokens kept unsummarized</button>
+    <button class="quiz-btn" data-opt="c">4,096 — the thinking budget for low level</button>
+    <button class="quiz-btn" data-opt="d">1,024 — the minimum prompt size</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. Why does pi skip prompt-cache writes for compaction requests?</p>
+  <div class="quiz-opts" data-q="13" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Compaction requests are too large to cache</button>
+    <button class="quiz-btn" data-opt="b">Providers ban caching summaries</button>
+    <button class="quiz-btn" data-opt="c">Each summary prompt is one-off and unlikely to be reused, so cache-write cost is wasted</button>
+    <button class="quiz-btn" data-opt="d">Caching corrupts the session tree</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <h3 style="color:var(--color-accent)">Headless Pi</h3>
+
+  <p class="quiz-q">15. Which flag runs pi as a one-shot non-interactive prompt?</p>
+  <div class="quiz-opts" data-q="14" data-answer="b">
+    <button class="quiz-btn" data-opt="a">--once</button>
+    <button class="quiz-btn" data-opt="b">-p "prompt"</button>
+    <button class="quiz-btn" data-opt="c">--headless</button>
+    <button class="quiz-btn" data-opt="d">/run</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. What does --mode json emit?</p>
+  <div class="quiz-opts" data-q="15" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A single final answer in JSON</button>
+    <button class="quiz-btn" data-opt="b">The session file as-is</button>
+    <button class="quiz-btn" data-opt="c">HTTP traffic logs</button>
+    <button class="quiz-btn" data-opt="d">Structured JSON lines for messages, tool calls, results, and notifications</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <h3 style="color:var(--color-accent)">Oh My Pi</h3>
+
+  <p class="quiz-q">17. What engine powers omp's heavy lifting?</p>
+  <div class="quiz-opts" data-q="16" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A native Rust core (~80k lines) with a TypeScript/Bun layer</button>
+    <button class="quiz-btn" data-opt="b">A Go microservice</button>
+    <button class="quiz-btn" data-opt="c">A Python asyncio server</button>
+    <button class="quiz-btn" data-opt="d">A Zig compiler toolchain</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. What makes hashline edits cheaper per edit?</p>
+  <div class="quiz-opts" data-q="17" data-answer="c">
+    <button class="quiz-btn" data-opt="a">They compress output with zstd</button>
+    <button class="quiz-btn" data-opt="b">They run edits on the local GPU</button>
+    <button class="quiz-btn" data-opt="c">The model references content-hash anchors instead of retyping lines, killing retry loops on failed diffs</button>
+    <button class="quiz-btn" data-opt="d">They batch multiple edits into one request</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <h3 style="color:var(--color-accent)">Vanilla vs omp</h3>
+
+  <p class="quiz-q">19. What is pi's default tool surface compared to omp's?</p>
+  <div class="quiz-opts" data-q="18" data-answer="b">
+    <button class="quiz-btn" data-opt="a">10 tools vs 5 tools</button>
+    <button class="quiz-btn" data-opt="b">4 tools (read/write/edit/bash) vs 31 built-in tools</button>
+    <button class="quiz-btn" data-opt="c">Same 31 tools in both</button>
+    <button class="quiz-btn" data-opt="d">Pi has more tools than omp</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. Which statement about running both is true?</p>
+  <div class="quiz-opts" data-q="19" data-answer="d">
+    <button class="quiz-btn" data-opt="a">They conflict and cannot coexist</button>
+    <button class="quiz-btn" data-opt="b">omp overwrites pi's sessions</button>
+    <button class="quiz-btn" data-opt="c">You must uninstall one before installing the other</button>
+    <button class="quiz-btn" data-opt="d">They coexist — different config dirs (~/.pi vs ~/.omp) and different commands</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <div class="score-panel" id="quiz-11-score" style="display:none">
+    <div class="progress" id="quiz-11-progress">Answered 0 of 20</div>
+    <div id="quiz-11-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  var TOTAL = 20;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-11-score');
+  var progressEl = document.getElementById('quiz-11-progress');
+  var resultEl = document.getElementById('quiz-11-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 18) { grade = 'A'; msg = 'Outstanding. You know the harness end to end — go build something with it.'; }
+      else if (correct >= 15) { grade = 'B'; msg = 'Strong grasp. Revisit the lessons you missed and you are there.'; }
+      else if (correct >= 11) { grade = 'C'; msg = 'Solid foundation. A pass through Lessons 4, 7, and 9 will close the gaps.'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons — especially the extension API and token economics.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

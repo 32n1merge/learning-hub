@@ -1,0 +1,5 @@
+{
+  "title": "Token Economics — Compaction, Caching & Context Budgets",
+  "description": "How auto-compaction works (reserveTokens, keepRecentTokens, iterative summaries, branch summarization), prompt-cache awareness, custom summarizers via extensions, and a ten-item token-saving checklist.",
+  "readingTime": "10 min"
+}

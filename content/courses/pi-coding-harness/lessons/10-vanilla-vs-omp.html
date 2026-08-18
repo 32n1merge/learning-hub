@@ -1,0 +1,161 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Vanilla Pi vs Oh My Pi — the Decision Guide</h2>
+
+<p>You now know both harnesses. The honest answer to "which should I use?" is: it depends on what you optimize for. Here is the comparison and a practical decision path.</p>
+
+<table>
+  <tr><th>Dimension</th><th>Vanilla Pi (pi.dev)</th><th>Oh My Pi (omp.sh)</th></tr>
+  <tr><td>Engine</td><td>TypeScript/Node core, Earendil-maintained</td><td>Fork with ~80k-line native Rust engine, Bun runtime</td></tr>
+  <tr><td>Default tool surface</td><td>4 tools (read/write/edit/bash) + optional read-only helpers</td><td>31 built-in tools across files, runtime, LSP, DAP, subagents, browser</td></tr>
+  <tr><td>Extension model</td><td>TypeScript extensions: events, tools, commands, UI, state</td><td>Same lineage, plus its own tool/devices surface (xd://), magic keywords, roles</td></tr>
+  <tr><td>Skills</td><td>Agent Skills standard, on-demand SKILL.md</td><td>Agent Skills + managed skills via learn/manage_skill</td></tr>
+  <tr><td>Packages</td><td>First-class: npm/git packages bundling all resource types</td><td>Not the focus; config is ~/.omp/agent/*.yml + rules import</td></tr>
+  <tr><td>IDE wiring</td><td>Terminal-first</td><td>LSP + DAP built in; ACP for editor (Zed) integration</td></tr>
+  <tr><td>Memory</td><td>Session tree + compaction + branch summaries</td><td>That plus agent-curated memory banks (retain/learn/recall, pluggable backends)</td></tr>
+  <tr><td>Model routing</td><td>/model + /scoped-models + thinking levels</td><td>Ten named roles (smol/slow/plan/advisor/…) with per-role fallback chains</td></tr>
+  <tr><td>Config</td><td>settings.json + models.json (JSON)</td><td>config.yml + models.yml (YAML)</td></tr>
+  <tr><td>Team rules</td><td>AGENTS.md context files</td><td>Reads Cursor MDC, Cline, Codex AGENTS.md, Copilot applyTo natively</td></tr>
+  <tr><td>Update cadence</td><td>Stable, documented releases</td><td>Fast-moving community fork</td></tr>
+</table>
+
+<h3>Reach for vanilla pi when…</h3>
+<ul>
+  <li>You want a <strong>minimal, predictable core</strong> — you'd rather add exactly what you need than disable what you don't.</li>
+  <li>You want to <strong>build your own agent surface</strong> on the TypeScript extension API, SDK, RPC, or JSON modes.</li>
+  <li>You care about the <strong>packages ecosystem</strong> — sharing skills/templates/extensions via npm/git and the pi.dev gallery.</li>
+  <li>You trust Earendil's direction and want a stable, well-documented target.</li>
+  <li>You're on a <strong>constrained environment</strong> where a lean binary and a small prompt surface matter (e.g. a container, a work laptop).</li>
+</ul>
+
+<h3>Reach for omp when…</h3>
+<ul>
+  <li>You want <strong>IDE-grade capability out of the box</strong> — LSP renames, real debugger sessions, code intelligence without setup.</li>
+  <li>You're doing <strong>token-sensitive heavy work</strong> and want the aggressive edit efficiency (hashline anchors), summarized reads, and role-based routing.</li>
+  <li>You need <strong>subagent fan-out</strong>, an advisor model, agent-curated memory, or live collaboration (<code>/collab</code>).</li>
+  <li>You already live in <strong>Cursor/Cline/Codex conventions</strong> and want those rule files read as-is.</li>
+  <li>You want <strong>native performance</strong> (in-process ripgrep/glob/shell, no fork/exec, real Windows support).</li>
+</ul>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 540 190" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="520" height="170" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="30" y="40" fill="var(--color-accent)" font-size="13" font-family="var(--font-mono)">Decision path</text>
+    <text x="30" y="66" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">Need IDE-grade LSP/DAP, subagents, memory, collab, or</text>
+    <text x="30" y="86" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">max token-efficient edits out of the box?  →  use omp</text>
+    <text x="30" y="116" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">Want a minimal, stable, package-driven core you extend in</text>
+    <text x="30" y="136" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">TypeScript, or a headless SDK/RPC surface?  →  use pi</text>
+    <text x="30" y="166" fill="var(--color-warning)" font-size="12" font-family="var(--font-mono)">Neither is wrong — both read AGENTS.md, both save sessions</text>
+  </svg>
+</div>
+
+<h3>Token-efficiency, head to head</h3>
+<ul>
+  <li><strong>Pi's wins:</strong> on-demand skills, prompt-cache-aware compaction, thinking budgets, per-model cost fields, and a four-tool default surface (tiny system prompt). You control the economics with knobs, not defaults.</li>
+  <li><strong>omp's wins:</strong> hashline edits (−61% output tokens claimed on Grok 4 Fast), summarized reads, stream rules that inject only on violation, an advisor on separate context, and role-routed models (cheap <code>smol</code> fan-out, expensive <code>slow</code> reserved for deep reasoning).</li>
+  <li><strong>The catch:</strong> omp's 31 declared tools are a larger standing system prompt than pi's four — you can pin the surface with <code>--tools read,edit,bash,…</code>. Pi's package/skill ecosystem can grow your prompt too if you install everything; enable only what you use.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Practical advice:</strong> Install both. They coexist (different config dirs: <code>~/.pi/</code> vs <code>~/.omp/</code>). Use vanilla pi as your everyday driver and reach for omp when a session needs debugging, refactoring across files, or heavy multi-agent work. The skills and habits transfer in both directions.
+</div>
+
+<div class="watch-box">
+  <strong>📺 Watch:</strong>
+  <ul>
+    <li><a href="https://youtu.be/wNw9fKErhdg" target="_blank" rel="noopener">This Free Terminal Agent Made Me Delete Claude Code (Oh-My-Pi Full Test) — AI Stack Engineer</a> — see omp do real work before you commit to it.</li>
+  </ul>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest" target="_blank" rel="noopener">Pi documentation</a></li>
+  <li><a href="https://omp.sh/docs/tools" target="_blank" rel="noopener">omp tool reference</a></li>
+  <li><a href="https://blog.can.ac/2026/02/12/the-harness-problem/" target="_blank" rel="noopener">The Harness Problem — why edit mechanics dominate token spend</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which scenario points clearly to vanilla pi?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">You need LSP renames and a live debugger session today</button>
+    <button class="quiz-btn" data-opt="b">You want a minimal core and plan to build your own surface on the TypeScript extension API and SDK</button>
+    <button class="quiz-btn" data-opt="c">You have Cursor MDC files that must be read as-is</button>
+    <button class="quiz-btn" data-opt="d">You want an advisor model watching every turn</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why does omp carry a larger standing token cost than vanilla pi?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It uses a more expensive default model</button>
+    <button class="quiz-btn" data-opt="b">It re-sends the whole repository on every turn</button>
+    <button class="quiz-btn" data-opt="c">Its 31 built-in tools are declared in the system prompt</button>
+    <button class="quiz-btn" data-opt="d">It stores sessions in plaintext HTML</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Can pi and omp be installed side by side?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">No — omp overwrites pi's binary</button>
+    <button class="quiz-btn" data-opt="b">No — they share the same config directory</button>
+    <button class="quiz-btn" data-opt="c">Yes, but only one can run at a time</button>
+    <button class="quiz-btn" data-opt="d">Yes — different config dirs (~/.pi vs ~/.omp) and different commands</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,117 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Pi Packages &amp; Themes</h2>
+
+<p><span class="glossary-term">Pi packages</span> are the distribution layer: they bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. This is how the community-built surfaces from the last three lessons travel between machines and teams — and the <a href="https://pi.dev/packages" target="_blank" rel="noopener">pi.dev gallery</a> is where you browse them.</p>
+
+<h3>Installing and managing</h3>
+<pre><code>pi install npm:@foo/bar@1.0.0
+pi install git:github.com/user/repo@v1
+pi install https://github.com/user/repo
+pi install /absolute/path/to/package</code></pre>
+
+<p>A package declares its resources either in <code>package.json</code> under the <code>pi</code> key, or via conventional directories (<code>extensions/</code>, <code>skills/</code>, <code>prompts/</code>, <code>themes/</code>). Runtime dependencies must live in <code>dependencies</code> — installation uses production installs (<code>npm install --omit=dev</code>) by default.</p>
+
+<h3>Keeping the surface lean</h3>
+<p>Packages support <strong>filtering</strong> (choose which resources to pull), <strong>enable/disable</strong> per resource, and <strong>scope and deduplication</strong> (the same resource isn't loaded twice when multiple packages provide it). These aren't just organizational niceties — every loaded extension adds tools, commands, and event handlers to the session, and every loaded skill adds its description to the model's view.</p>
+
+<div class="callout-warn">
+  <strong>Security:</strong> Pi packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to run executables. Review the source of third-party packages before installing.
+</div>
+
+<h3>Themes</h3>
+<p>Themes customize the TUI's colors and styling. The <code>theme</code> setting in <code>settings.json</code> picks one (<code>"dark"</code>, <code>"light"</code>, or a custom theme), and custom themes can be bundled into packages alongside everything else. It's the least "token-relevant" surface — but a readable TUI keeps your own eye on the footer's cost meter.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Treat every installed package as a standing token tax. Each enabled extension contributes tools and hooks to the session; each enabled skill contributes its description to what the model sees. Enable only what you use, disable the rest, and pin versions for deterministic behavior. A lean tool surface means a smaller system prompt and fewer opportunities for the model to wander into expensive tool calls.
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/packages" target="_blank" rel="noopener">Pi Packages — install, structure, filtering</a></li>
+  <li><a href="https://pi.dev/packages" target="_blank" rel="noopener">Package gallery on pi.dev</a></li>
+  <li><a href="https://pi.dev/docs/latest/themes" target="_blank" rel="noopener">Themes</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What can a pi package bundle?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Only compiled binaries</button>
+    <button class="quiz-btn" data-opt="b">Only prompt templates</button>
+    <button class="quiz-btn" data-opt="c">Extensions, skills, prompt templates, and themes</button>
+    <button class="quiz-btn" data-opt="d">Models and API keys</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How do you install a package from npm?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">npm install @foo/bar</button>
+    <button class="quiz-btn" data-opt="b">pi install npm:@foo/bar@1.0.0</button>
+    <button class="quiz-btn" data-opt="c">pi add @foo/bar</button>
+    <button class="quiz-btn" data-opt="d">curl -fsSL @foo/bar | sh</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does every installed skill cost tokens even before you use it?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Skills are always fully loaded into context</button>
+    <button class="quiz-btn" data-opt="b">Skills require paid licenses</button>
+    <button class="quiz-btn" data-opt="c">Skills run background processes</button>
+    <button class="quiz-btn" data-opt="d">Their descriptions are visible to the model so it knows when to load them</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,5 @@
+{
+  "title": "Sessions, Trees & the TUI",
+  "description": "Session storage as JSONL trees, /tree /fork /clone /resume, editor features (@ refs, ! vs !! commands), the message queue, and the token-saving power of ephemeral and forked sessions.",
+  "readingTime": "8 min"
+}

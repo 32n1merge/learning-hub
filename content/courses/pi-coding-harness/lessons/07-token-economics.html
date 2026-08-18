@@ -1,0 +1,160 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: Token Economics — Compaction, Caching &amp; Context Budgets</h2>
+
+<p>LLMs have finite context windows, and every token you send costs money (or burns subscription quota). Pi's answer is <span class="glossary-term">compaction</span>: when the conversation grows too long, older messages are summarized while recent work is preserved. This lesson covers exactly how that works and every knob that shapes your token bill.</p>
+
+<h3>When compaction fires</h3>
+<p>Auto-compaction triggers when <code>contextTokens &gt; contextWindow − reserveTokens</code>. The default <code>reserveTokens</code> is <strong>16,384</strong> — headroom left for the model's response. You can also trigger it manually with <code>/compact [instructions]</code>, where optional instructions focus the summary ("focus on decisions made and files touched").</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 250" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="540" height="230" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="24" y="36" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">Before compaction:</text>
+    <rect x="24" y="46" width="500" height="16" rx="4" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <rect x="24" y="46" width="300" height="16" rx="4" fill="var(--color-warning)" opacity="0.35"/>
+    <text x="336" y="59" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">messagesToSummarize</text>
+    <text x="460" y="59" fill="var(--color-success)" font-size="10" font-family="var(--font-mono)">kept</text>
+    <text x="24" y="90" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">Walk back from the newest message, accumulating token estimates</text>
+    <text x="24" y="108" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">until keepRecentTokens (default 20,000) is reached → cut point.</text>
+    <text x="24" y="136" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">After compaction (LLM sees):</text>
+    <rect x="24" y="148" width="500" height="16" rx="4" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <rect x="24" y="148" width="90" height="16" rx="4" fill="var(--color-accent)" opacity="0.4"/>
+    <text x="34" y="160" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">summary</text>
+    <rect x="122" y="148" width="402" height="16" rx="4" fill="var(--color-success)" opacity="0.25"/>
+    <text x="132" y="160" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">messages from firstKeptEntryId onwards</text>
+    <text x="24" y="200" fill="var(--color-warning)" font-size="11" font-family="var(--font-mono)">summary is iterative: previous summary feeds the next one</text>
+    <text x="24" y="220" fill="var(--color-warning)" font-size="11" font-family="var(--font-mono)">/compact [instructions] lets you steer what gets preserved</text>
+  </svg>
+</div>
+
+<p>The mechanics: find a cut point by walking backward from the newest message until <code>keepRecentTokens</code> (default <strong>20,000</strong>) is accumulated; summarize everything older into a structured <code>CompactionEntry</code> (summary + <code>firstKeptEntryId</code>); rebuild the context as <em>system + summary + kept messages</em>. On repeated compactions, the summarized span starts at the previous compaction's kept boundary — messages that survived one compaction get included in the next. Two related mechanisms share the same structured summary format: <strong>branch summarization</strong> (when you navigate with <code>/tree</code>, preserving context across branches) and <strong>cumulative file tracking</strong> (file operations are tracked across compactions so the summary stays accurate).</p>
+
+<h3>Prompt caching</h3>
+<p>Most providers cache the stable prefix of your request. The cost fields <code>cacheRead</code>/<code>cacheWrite</code> make that visible in the footer. Pi is cache-aware: compaction and branch-summary requests use <em>fresh routing session IDs</em> and <strong>disable prompt-cache writes</strong>, because those one-off prompts are unlikely to be reused — no point paying cache-write prices for a prompt you'll never send again. The <code>showCacheMissNotices</code> setting surfaces significant cache misses in the transcript, and <code>warnings.anthropicExtraUsage</code> warns about subscription providers that bill extra usage on top of a plan.</p>
+
+<h3>Custom summarization via extensions</h3>
+<p>Extensions can hook <code>session_before_compact</code>, <code>session_compact_failed</code>, and <code>session_before_tree</code> to replace or tune the summarization — your domain's important details (API names, decisions, TODOs) can be forced into every summary, which keeps later turns cheaper because the model doesn't re-derive lost context.</p>
+
+<h3>The full token knob table</h3>
+<table>
+  <tr><th>Setting</th><th>Default</th><th>Effect</th></tr>
+  <tr><td><code>compaction.enabled</code></td><td>true</td><td>Master switch for auto-compaction</td></tr>
+  <tr><td><code>compaction.reserveTokens</code></td><td>16384</td><td>Context headroom for the model's response</td></tr>
+  <tr><td><code>compaction.keepRecentTokens</code></td><td>20000</td><td>Recent tokens exempt from summarization</td></tr>
+  <tr><td><code>branchSummary.reserveTokens</code></td><td>16384</td><td>Reserve for branch summarization on /tree</td></tr>
+  <tr><td><code>branchSummary.skipPrompt</code></td><td>false</td><td>Skip the "summarize branch?" prompt (defaults to no summary)</td></tr>
+  <tr><td><code>defaultThinkingLevel</code></td><td>—</td><td>off/minimal/low/medium/high/xhigh/max reasoning budget</td></tr>
+  <tr><td><code>thinkingBudgets</code></td><td>1024…32768</td><td>Custom token budget per thinking level</td></tr>
+  <tr><td><code>hideThinkingBlock</code></td><td>false</td><td>Hide reasoning text in output (display only)</td></tr>
+  <tr><td><code>showCacheMissNotices</code></td><td>false</td><td>Surface significant prompt-cache misses</td></tr>
+  <tr><td><code>retry.maxRetries</code></td><td>3</td><td>Agent-level retries — each retry re-sends the context</td></tr>
+</table>
+
+<div class="callout-token">
+  <strong>🪙 Token-saving checklist:</strong>
+  <ol style="margin:0.4rem 0 0">
+    <li>Pick the cheapest model that can do the job (Lesson 3) — biggest lever by far.</li>
+    <li>Run <code>/compact "keep API names and open decisions"</code> before starting a new phase of work.</li>
+    <li>Keep sessions short; fork instead of piling unrelated tasks into one context.</li>
+    <li>Use <code>!!command</code> so verification commands don't dump output into context.</li>
+    <li>Write skills and prompt templates so instructions are only paid for when used.</li>
+    <li>Watch <code>showCacheMissNotices</code> — a session that constantly misses cache is paying full input price.</li>
+    <li>Set thinking level to <code>minimal</code>/<code>low</code> for mechanical tasks.</li>
+    <li>Trim <code>keepRecentTokens</code> if you trust your summaries (less re-sent context per turn).</li>
+    <li>Use a custom <code>session_before_compact</code> summarizer for high-stakes repos.</li>
+    <li>Prefer subscription auth (flat-rate) for heavy daily use; API keys for sporadic use.</li>
+  </ol>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/compaction" target="_blank" rel="noopener">Compaction &amp; Branch Summarization — full internals</a></li>
+  <li><a href="https://pi.dev/docs/latest/settings" target="_blank" rel="noopener">Settings — all token, compaction, thinking, and retry knobs</a></li>
+  <li><a href="https://pi.dev/docs/latest/extensions" target="_blank" rel="noopener">Extensions — session_before_compact and friends</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. When does auto-compaction trigger?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">After every 100 messages</button>
+    <button class="quiz-btn" data-opt="b">When the session file exceeds 1 MB</button>
+    <button class="quiz-btn" data-opt="c">When contextTokens exceeds contextWindow minus reserveTokens (default 16,384)</button>
+    <button class="quiz-btn" data-opt="d">When you run out of disk space</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What does keepRecentTokens (default 20,000) control?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The maximum output length of the model</button>
+    <button class="quiz-btn" data-opt="b">How many recent tokens are kept unsummarized when compaction picks its cut point</button>
+    <button class="quiz-btn" data-opt="c">The token budget for thinking levels</button>
+    <button class="quiz-btn" data-opt="d">How often the context cache is refreshed</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why does pi disable prompt-cache writes for compaction requests?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Because compaction requests are too large to cache</button>
+    <button class="quiz-btn" data-opt="b">Because providers refuse to cache summaries</button>
+    <button class="quiz-btn" data-opt="c">Because caching would corrupt the session tree</button>
+    <button class="quiz-btn" data-opt="d">Because each summary prompt is one-off and unlikely to be reused, so cache-write cost is wasted</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,5 @@
+{
+  "title": "Oh My Pi (omp) — the Rust-Powered Fork",
+  "description": "What omp is, how to install it, the feature tour (hashline edits, eval kernels, LSP/DAP, subagents, advisor, stream rules, memory, collab), model roles, and the token-efficiency claims behind the headline numbers.",
+  "readingTime": "10 min"
+}

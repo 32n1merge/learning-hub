@@ -1,0 +1,141 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: Models &amp; Providers — Choose Your Engine</h2>
+
+<p>Pi is model-agnostic. The <span class="glossary-term">providers</span> system connects it to Anthropic, OpenAI (including Codex), Google Gemini, xAI, DeepSeek, Mistral, Groq, OpenRouter, and many more — plus local servers like Ollama, LM Studio, vLLM, and llama.cpp. You switch with <code>/model</code>, and <code>/scoped-models</code> decides which models the <code>Ctrl+P</code> cycle offers. <code>/login</code> manages credentials (subscription OAuth or stored API keys).</p>
+
+<h3>Custom providers and models: models.json</h3>
+<p>The extension point here is <code>~/.pi/agent/models.json</code>. You declare a provider with a <code>baseUrl</code>, an API dialect, and a list of models. Four API dialects are supported: <code>openai-completions</code>, <code>openai-responses</code>, <code>anthropic-messages</code>, and <code>google-generative-ai</code>.</p>
+
+<pre><code>{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://localhost:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "models": [
+        { "id": "llama3.1:8b" },
+        { "id": "qwen2.5-coder:7b" }
+      ]
+    },
+    "my-google": {
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "api": "google-generative-ai",
+      "apiKey": "$GEMINI_API_KEY",
+      "models": [
+        { "id": "gemma-4-31b-it", "reasoning": true, "contextWindow": 262144, "input": ["text", "image"] }
+      ]
+    }
+  }
+}</code></pre>
+
+<p>Per-model fields worth knowing: <code>id</code>, <code>name</code>, <code>reasoning</code>, <code>input</code> (text/image), <code>contextWindow</code>, <code>maxTokens</code>, and the four cost fields that drive the footer's cost estimate: <code>cost.input</code>, <code>cost.output</code>, <code>cost.cacheRead</code>, and <code>cost.cacheWrite</code>. Some OpenAI-compatible servers need <code>compat.supportsDeveloperRole: false</code> or <code>compat.supportsReasoningEffort: false</code> (common with Ollama, vLLM, and SGLang).</p>
+
+<p>API keys support shell-command resolution (<code>"apiKey": "!op read 'op://vault/item/credential'"</code>), environment interpolation (<code>$MY_API_KEY</code> or <code>${KEY_PREFIX}_${SUFFIX}</code>), and literal values. The file reloads every time you open <code>/model</code> — no restart needed.</p>
+
+<h3>Thinking levels</h3>
+<p>Pi exposes thinking as a dial, not a switch: <code>off</code>, <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code> (set via <code>/settings</code> or <code>defaultThinkingLevel</code>). You can remap the token budget each level spends with <code>thinkingBudgets</code> in settings.json:</p>
+
+<pre><code>{
+  "thinkingBudgets": { "minimal": 1024, "low": 4096, "medium": 10240, "high": 32768 }
+}</code></pre>
+
+<h3>Local inference</h3>
+<p><code>/llama</code> downloads, loads, and unloads llama.cpp router models — a fully local option. Local models (Ollama, vLLM, LM Studio) have <em>zero marginal cost per token</em> and no data leaves your machine; the trade-off is capability and speed. Pi's docs also cover running pi inside containers for sandboxing.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Model choice is the single biggest token lever — a cheap model at 1/100th the price per token beats any prompt optimization. And because cost fields (<code>input</code>, <code>output</code>, <code>cacheRead</code>, <code>cacheWrite</code>) are declared per model, the footer's live cost estimate is only as accurate as the numbers you (or the built-in catalog) declare. For long sessions, cache pricing matters: <code>cacheRead</code> tokens are typically far cheaper than fresh input tokens, so a high cache-hit rate is real savings. Lower thinking levels (<code>minimal</code>/<code>low</code>) also cut reasoning tokens dramatically on simple tasks.
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/providers" target="_blank" rel="noopener">Providers — supported providers and setup</a></li>
+  <li><a href="https://pi.dev/docs/latest/models" target="_blank" rel="noopener">Custom Models — models.json reference</a></li>
+  <li><a href="https://pi.dev/docs/latest/custom-provider" target="_blank" rel="noopener">Custom Provider — full configuration guide</a></li>
+  <li><a href="https://pi.dev/docs/latest/llama-cpp" target="_blank" rel="noopener">llama.cpp — local inference via /llama</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Where do you declare custom providers and models?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">~/.pi/agent/extensions.ts</button>
+    <button class="quiz-btn" data-opt="b">~/.pi/agent/models.json</button>
+    <button class="quiz-btn" data-opt="c">~/.pi/config.yaml</button>
+    <button class="quiz-btn" data-opt="d">package.json under the "pi" key</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which four cost fields does a model entry declare?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">prompt, completion, total, overhead</button>
+    <button class="quiz-btn" data-opt="b">tokensIn, tokensOut, latency, retries</button>
+    <button class="quiz-btn" data-opt="c">input, output, cacheRead, cacheWrite</button>
+    <button class="quiz-btn" data-opt="d">base, surcharge, discount, flat</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What do thinking budgets like "minimal: 1024" control?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">How many tool calls per turn are allowed</button>
+    <button class="quiz-btn" data-opt="b">The max tokens in the session context window</button>
+    <button class="quiz-btn" data-opt="c">How many retries the provider performs</button>
+    <button class="quiz-btn" data-opt="d">The token budget each thinking level may spend on reasoning</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

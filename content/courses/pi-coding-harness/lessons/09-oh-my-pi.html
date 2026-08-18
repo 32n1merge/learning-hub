@@ -1,0 +1,150 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Oh My Pi (omp) — the Rust-Powered Fork</h2>
+
+<p><span class="glossary-term">Oh My Pi</span> (<code>omp</code>, omp.sh) is a fork of pi by <a href="https://github.com/can1357" target="_blank" rel="noopener">can1357</a> that keeps the pi experience and adds an IDE's worth of machinery: a native <strong>Rust engine</strong> (~80k lines) doing the heavy lifting, with the tooling layer in TypeScript/Bun. Its tagline is "a coding agent with the IDE wired in" — subagents, plan mode, LSP, DAP, hindsight memory, hashline edits, and time-traveling rules.</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> omp is the "batteries included" pi. The pitch: 60+ providers, 31 built-in tools, 14 LSP operations, 28 DAP operations — and a claim on omp.sh that reads are "summarized snippets" rather than file dumps, with edits that land on the first attempt.
+</div>
+
+<h3>Installing omp</h3>
+<pre><code># macOS / Linux
+curl -fsSL https://omp.sh/install | sh
+# Homebrew
+brew install can1357/tap/omp
+# Bun
+bun install -g @oh-my-pi/pi-coding-agent
+# Nix (run without installing)
+nix run github:can1357/oh-my-pi
+# Windows
+irm https://omp.sh/install.ps1 | iex</code></pre>
+
+<h3>The feature tour (highlights)</h3>
+<table>
+  <tr><th>Feature</th><th>What it does</th></tr>
+  <tr><td><strong>Hashline edits</strong></td><td>Patch by content-hash anchors instead of retyping lines — stale anchors get rejected before they corrupt. omp claims Grok 4 Fast spends 61% fewer output tokens on the same work.</td></tr>
+  <tr><td><strong>Eval kernels</strong></td><td>Persistent Python and Bun cells that can call back into the agent's own tools (read, search, task) over a loopback bridge.</td></tr>
+  <tr><td><strong>LSP wired into writes</strong></td><td>Renames go through workspace/willRenameFiles; references, symbols, diagnostics, code actions — the agent knows what the IDE knows.</td></tr>
+  <tr><td><strong>DAP debugging</strong></td><td>Drives real debuggers (lldb, dlv, debugpy): breakpoints, stepping, threads, variables.</td></tr>
+  <tr><td><strong>Subagents (task)</strong></td><td>Fan out into isolated worktrees; each worker has its own tool surface; results return as schema-validated objects. Agent Hub (<code>Alt+A</code>) supervises the roster.</td></tr>
+  <tr><td><strong>Advisor role</strong></td><td>A second model reads every turn on its own context and injects notes — quiet asides, concerns, or blockers.</td></tr>
+  <tr><td><strong>Time-traveling stream rules</strong></td><td>Rules stay dormant until a regex match aborts the stream mid-token, injects the rule, and retries from the same point — course correction without paying context tax every turn. Injections survive compaction.</td></tr>
+  <tr><td><strong>Memory</strong></td><td><code>retain</code>, <code>learn</code>, <code>recall</code> with pluggable backends (local, Hindsight, Mnemopi), project-scoped by default.</td></tr>
+  <tr><td><strong>/collab</strong></td><td>Live session sharing via relay link + QR; <code>omp join</code> from another terminal, or a read-only browser view.</td></tr>
+  <tr><td><strong>web_search</strong></td><td>One tool across 23 chained providers with site-aware extraction (arXiv PDFs, GitHub, Stack Overflow → structured markdown).</td></tr>
+  <tr><td><strong>GitHub as a filesystem</strong></td><td><code>read pr://1428</code>, <code>issue://</code>, <code>agent://</code>, <code>ssh://</code> — internal schemes resolve inside every FS-shaped tool.</td></tr>
+  <tr><td><strong>Native everything</strong></td><td>ripgrep, glob, find in-process; <code>brush</code> shell with 58 built-in utilities — no fork/exec per call, works on Windows without WSL.</td></tr>
+  <tr><td><strong>Rules import</strong></td><td>Reads Cursor MDC, Cline .clinerules, Codex AGENTS.md, and Copilot applyTo natively — no migration.</td></tr>
+  <tr><td><strong>omp commit &amp; /review</strong></td><td>Atomic commit splitting with dependency ordering; parallel reviewer subagents returning P0–P3 ranked verdicts.</td></tr>
+  <tr><td><strong>Browser &amp; computer</strong></td><td>Headless Chromium with Stealth, a relay to adopt your own Chrome tabs, and desktop control (windows, screenshots, input, accessibility tree).</td></tr>
+</table>
+
+<h3>Model roles — routing by intent</h3>
+<p>omp assigns a role to each kind of work: <code>default</code> (normal turns), <code>smol</code> (cheap subagent fan-out), <code>slow</code> (deep reasoning), <code>plan</code> (plan mode), <code>commit</code> (changelogs), plus <code>vision</code>, <code>designer</code>, <code>task</code>, <code>advisor</code>, and <code>tiny</code>. Override at launch with <code>--smol</code>, <code>--slow</code>, <code>--plan</code>; cycle role models with <code>Ctrl+P</code>; swap mid-session with <code>/model</code>. Custom providers go in <code>~/.omp/agent/models.yml</code> (nine API dialects, from <code>openai-completions</code> to <code>bedrock-converse-stream</code>), with per-role fallback chains, path-scoped model sets, and round-robin API keys.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> omp's headline numbers are token numbers. Hashline edits reportedly cut Grok 4 Fast output tokens by 61% by killing the retry loop on bad diffs; summarized reads mean the agent pays for a digest instead of a file dump; stream rules inject only on violation (no per-turn context tax) and survive compaction; the advisor runs on its own context and model; and the <code>smol</code>/<code>tiny</code> roles route subagent traffic to the cheapest models while <code>slow</code> reserves the big reasoning model for the hard parts. The flip side: 31 declared tools is a bigger system prompt than pi's four — pin the active set with <code>--tools read,edit,bash,…</code> when you want the leaner surface.
+</div>
+
+<div class="watch-box">
+  <strong>📺 Watch:</strong>
+  <ul>
+    <li><a href="https://youtu.be/8ukl-0tlVgM" target="_blank" rel="noopener">Stop Using Claude Code CLI. Use THIS Instead! (Oh-My-Pi) — Better Stack</a> — omp vs Claude Code with real workflows.</li>
+    <li><a href="https://youtu.be/wNw9fKErhdg" target="_blank" rel="noopener">This Free Terminal Agent Made Me Delete Claude Code (Oh-My-Pi Full Test) — AI Stack Engineer</a> — a full-test walkthrough.</li>
+  </ul>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://omp.sh" target="_blank" rel="noopener">omp.sh — home</a></li>
+  <li><a href="https://github.com/can1357/oh-my-pi" target="_blank" rel="noopener">oh-my-pi on GitHub</a></li>
+  <li><a href="https://omp.sh/docs/tools" target="_blank" rel="noopener">Full tool reference</a></li>
+  <li><a href="https://blog.can.ac/2026/02/12/the-harness-problem/" target="_blank" rel="noopener">"The Harness Problem" — omp's benchmark post</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is Oh My Pi (omp) relative to pi?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A cloud service that wraps pi</button>
+    <button class="quiz-btn" data-opt="b">A plugin pack you install into vanilla pi</button>
+    <button class="quiz-btn" data-opt="c">A fork of pi with a native Rust engine and more built-in tooling</button>
+    <button class="quiz-btn" data-opt="d">A deprecated version of pi</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What makes hashline edits token-efficient?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They compress the output with gzip</button>
+    <button class="quiz-btn" data-opt="b">The model points at content-hash anchors instead of retyping lines, eliminating retry loops on failed diffs</button>
+    <button class="quiz-btn" data-opt="c">They cache every edit in a local database</button>
+    <button class="quiz-btn" data-opt="d">They use a smaller embedding model for edits</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What is the purpose of omp's "advisor" model role?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">To approve every git commit before it is made</button>
+    <button class="quiz-btn" data-opt="b">To choose which provider to bill for each turn</button>
+    <button class="quiz-btn" data-opt="c">To generate the session's changelog automatically</button>
+    <button class="quiz-btn" data-opt="d">A second model that reads every turn on its own context and injects notes for the main agent</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

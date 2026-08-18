@@ -1,0 +1,148 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: Meet Pi — the Terminal Agent That's Yours</h2>
+
+<p>Pi is a <span class="glossary-term">terminal-based coding agent</span>: a program that sits in your shell, reads your repository, and uses an LLM plus a small set of tools (<code>read</code>, <code>write</code>, <code>edit</code>, <code>bash</code>) to do software work. It is a <em>harness</em>, not a model — it doesn't contain intelligence, it <em>wires intelligence to your filesystem</em>. The marketing line on pi.dev says it best: "There are many agent harnesses, but this one is yours."</p>
+
+<div class="callout">
+  <strong>Key idea:</strong> A harness is everything around the model: the tool loop, session storage, prompt construction, compaction, extensions. Pi's philosophy is a minimal, predictable core that you extend in TypeScript instead of a giant monolithic product.
+</div>
+
+<h3>Where pi came from</h3>
+<p>Pi was created by <span class="glossary-term">Mario Zechner</span> (better known as <code>badlogic</code>, the creator of the libGDX game framework). It started as the open-source <code>pi-mono</code> repository and is now maintained by Earendil Inc. as the <code>@earendil-works/pi-coding-agent</code> npm package. It's MIT-licensed, and its docs, news, model catalog, and package gallery all live at <a href="https://pi.dev" target="_blank" rel="noopener">pi.dev</a>. Mario's talks — "Building pi in a World of Slop" and "I Hated Every Coding Agent, So I Built My Own" — are the definitive design philosophy statements.</p>
+
+<h3>Installing and running</h3>
+<pre><code># npm (also used by the curl installer)
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+
+# then, in your project
+cd /path/to/project
+pi</code></pre>
+
+<p>On first launch you authenticate: <code>/login</code> supports subscription providers (Claude Pro/Max, ChatGPT Plus/Pro via Codex, GitHub Copilot), or you can set an API key via environment variable (e.g. <code>ANTHROPIC_API_KEY</code>) or store it in <code>~/.pi/agent/auth.json</code>. By default the agent gets four tools: <code>read</code>, <code>write</code>, <code>edit</code>, and <code>bash</code>. Read-only helpers like <code>grep</code>, <code>find</code>, and <code>ls</code> are available through tool options.</p>
+
+<h3>The four areas of the TUI</h3>
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 240" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="540" height="220" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <rect x="24" y="22" width="512" height="34" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="34" y="44" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">1 · startup header — shortcuts, skills, templates, extensions</text>
+    <rect x="24" y="64" width="512" height="96" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="34" y="86" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">2 · messages — user, assistant, tool calls/results</text>
+    <text x="34" y="104" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">   notifications, errors, extension UI</text>
+    <rect x="24" y="168" width="512" height="34" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="34" y="190" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-mono)">3 · editor — border color shows thinking level</text>
+    <rect x="24" y="208" width="512" height="18" rx="6" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="34" y="220" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">4 · footer — cwd · session · tokens/cache · cost · context % · model</text>
+  </svg>
+</div>
+
+<p>The footer is where the economics live: it shows <strong>token and prompt-cache usage, running cost, context-window usage, and the active model</strong>. This is the single most important thing to glance at when you start a long session.</p>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Pi's footer turns your token spend into a live dashboard — watch the <em>cost</em> and <em>cache</em> columns, not just the context bar. Your choice of authentication also shapes the budget: subscription logins (Claude Pro, Codex, Copilot) are flat-rate, while API keys meter per token. If you're cost-sensitive, that choice matters more than any prompt trick.
+</div>
+
+<h3>Project context</h3>
+<p>Pi loads <span class="glossary-term">context files</span> at startup — <code>AGENTS.md</code> and similar — so the model starts with your repo's conventions. You can also give it one-off project instructions interactively. Everything is saved as a <em>session</em> (a JSONL tree) so you can resume, branch, and revisit later turns — the topic of Lesson 2.</p>
+
+<div class="watch-box">
+  <strong>📺 Watch before continuing:</strong>
+  <ul>
+    <li><a href="https://youtu.be/RjfbvDXpFls" target="_blank" rel="noopener">Building pi in a World of Slop — Mario Zechner</a> (AI Engineer) — the creator on why the harness matters more than the model.</li>
+    <li><a href="https://youtu.be/Dli5slNaJu0" target="_blank" rel="noopener">I Hated Every Coding Agent, So I Built My Own — Mario Zechner</a> (Mastra) — origin story and design goals.</li>
+  </ul>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev" target="_blank" rel="noopener">pi.dev — home page</a></li>
+  <li><a href="https://pi.dev/docs/latest/quickstart" target="_blank" rel="noopener">Pi Quickstart</a></li>
+  <li><a href="https://github.com/badlogic/pi-mono" target="_blank" rel="noopener">pi-mono source on GitHub</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is pi, fundamentally?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A proprietary model trained by Earendil Inc.</button>
+    <button class="quiz-btn" data-opt="b">A fork of Claude Code</button>
+    <button class="quiz-btn" data-opt="c">An open-source terminal harness that wires an LLM to your filesystem via tools</button>
+    <button class="quiz-btn" data-opt="d">A cloud IDE with AI autocomplete</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which four tools does pi give the model by default?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">grep, find, ls, cat</button>
+    <button class="quiz-btn" data-opt="b">read, write, edit, bash</button>
+    <button class="quiz-btn" data-opt="c">ls, cd, git, npm</button>
+    <button class="quiz-btn" data-opt="d">curl, jq, node, python</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. What does the TUI footer show that is directly relevant to token spending?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Git branch and uncommitted changes</button>
+    <button class="quiz-btn" data-opt="b">CPU and memory usage</button>
+    <button class="quiz-btn" data-opt="c">Uptime and version number</button>
+    <button class="quiz-btn" data-opt="d">Token/cache usage, cost, context usage, and the active model</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

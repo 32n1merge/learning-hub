@@ -1,0 +1,144 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Skills &amp; Prompt Templates</h2>
+
+<p>Two complementary ways to package knowledge for the agent. <span class="glossary-term">Skills</span> are self-contained capability packages loaded <em>on demand</em>; <span class="glossary-term">prompt templates</span> are Markdown snippets that expand into full prompts when you type <code>/name</code>. Pi can even create both for you — just ask it.</p>
+
+<h3>Skills: the Agent Skills standard</h3>
+<p>Pi implements the open <span class="glossary-term">Agent Skills standard</span> (agentskills.io), which means skills written for other harnesses mostly work here. A skill is a directory with a <code>SKILL.md</code> file: YAML frontmatter (name, description) plus body content — setup instructions, workflows, helper scripts, reference docs.</p>
+
+<pre><code>~/.pi/agent/skills/        # global
+~/.agents/skills/          # global, shared across agents
+.pi/skills/                # project-local (after trust)
+.agents/skills/            # project-local, shared
+
+# invoke with:
+/skill:name</code></pre>
+
+<p>Skills are <em>loaded on demand</em>: pi keeps their description in the model's view and only injects the full content when the task matches. That is their superpower — capability without constant context cost. The docs also cover skill repositories for distributing collections.</p>
+
+<div class="callout-warn">
+  <strong>Security:</strong> Skills can instruct the model to perform any action and may include executable code the model invokes. Review skill content before use.
+</div>
+
+<h3>Prompt templates</h3>
+<p>A template is a Markdown file whose filename becomes a slash command. Type <code>/review</code> and <code>review.md</code> expands inline into the editor. Frontmatter can add a <code>description</code> and an <code>argument-hint</code> that renders in autocomplete:</p>
+
+<pre><code>---
+description: Review staged git changes
+argument-hint: "&lt;PR-URL&gt;"
+---
+Review the staged changes (`git diff --cached`). Focus on:
+- Bugs and logic errors
+- Security issues
+- Error handling gaps</code></pre>
+
+<p>Locations: <code>~/.pi/agent/prompts/*.md</code> (global), <code>.pi/prompts/*.md</code> (project), package <code>prompts/</code> dirs, a <code>prompts</code> array in settings, or <code>--prompt-template &lt;path&gt;</code> flags. Discovery is non-recursive; subdirectories need explicit registration. <code>--no-prompt-templates</code> disables them.</p>
+
+<h3>Template arguments</h3>
+<pre><code>$1 $2 ...          positional args
+$@ / $ARGUMENTS    all args joined
+${1:-default}      arg with fallback
+${@:-default}      all args with fallback
+${@:N}             args from position N
+${@:N:L}           L args starting at N
+
+# usage: /component Button "click handler" "disabled support"
+---
+description: Create a component
+---
+Create a React component named $1 with features: $@</code></pre>
+
+<div class="callout-token">
+  <strong>🪙 Token angle:</strong> Skills are the textbook "pay only when used" pattern: a skill's full instructions cost tokens only in the turns where it's actually needed, instead of being baked into every request like a global system prompt. Prompt templates make you (and teammates) send tighter, more consistent prompts — and <code>argument-hint</code> frontmatter plus precise <code>$1</code>/<code>${1:-default}</code> expansion means the model gets exactly the shape of request you intended, no rambling preamble. Both are cheaper than typing the same paragraph by hand each time.
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pi.dev/docs/latest/skills" target="_blank" rel="noopener">Pi Skills — locations, structure, SKILL.md format</a></li>
+  <li><a href="https://pi.dev/docs/latest/prompt-templates" target="_blank" rel="noopener">Prompt Templates — format, arguments, loading rules</a></li>
+  <li><a href="https://agentskills.io" target="_blank" rel="noopener">Agent Skills — the open standard pi implements</a></li>
+</ul>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. When does pi load a skill's full content into context?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">At startup, always</button>
+    <button class="quiz-btn" data-opt="b">On demand, when the task matches the skill</button>
+    <button class="quiz-btn" data-opt="c">Never — skills only run on other machines</button>
+    <button class="quiz-btn" data-opt="d">Only when you pass --load-skill</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What file defines a skill, and in what format?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">config.yaml, YAML</button>
+    <button class="quiz-btn" data-opt="b">skill.json, JSON</button>
+    <button class="quiz-btn" data-opt="c">README.md, freeform</button>
+    <button class="quiz-btn" data-opt="d">SKILL.md, Markdown with YAML frontmatter</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. In a prompt template, what does ${1:-default} mean?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Positional arg 1, falling back to "default" when absent</button>
+    <button class="quiz-btn" data-opt="b">All arguments, with a default separator</button>
+    <button class="quiz-btn" data-opt="c">The first line of the file as an argument</button>
+    <button class="quiz-btn" data-opt="d">An environment variable named 1:-default</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
