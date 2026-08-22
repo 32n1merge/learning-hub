@@ -1,0 +1,4 @@
+{
+  "title": "Lesson 2: How Quantization Actually Works",
+  "description": "Bits, groups, scales, bpw, and why some weights matter more than others."
+}

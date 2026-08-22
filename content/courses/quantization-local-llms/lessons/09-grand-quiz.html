@@ -1,0 +1,215 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Grand Quiz: Pick Your Quant</h2>
+<p>Sixteen questions across all eight lessons, in four sections: <strong>Foundations (1-4)</strong>, <strong>GGUF &amp; Squeezing (5-8)</strong>, <strong>Formats &amp; Fine-Tunes (9-12)</strong>, and <strong>Choosing &amp; Verifying (13-16)</strong>. Answer all of them to reveal your grade.</p>
+<div class="quiz-block" id="quiz-9">
+  <h3>&#129504; Grand Quiz</h3>
+  <p class="quiz-q">1. 1. Qwen3.8-27B at Q4_K_M is roughly:</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">6 GB</button>
+    <button class="quiz-btn" data-opt="b">10 GB</button>
+    <button class="quiz-btn" data-opt="c">16.5 GB</button>
+    <button class="quiz-btn" data-opt="d">29 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. 2. Which loss curve shape describes quantization?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Linear losses from 8-bit down</button>
+    <button class="quiz-btn" data-opt="b">8-bit nearly free, 4-bit ~2%, 2-bit falls off a cliff</button>
+    <button class="quiz-btn" data-opt="c">No losses until 2-bit</button>
+    <button class="quiz-btn" data-opt="d">Losses only affect speed</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. 3. In grouped quantization, the per-block scale lets the model:</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Store weights as small ints and reconstruct them at inference</button>
+    <button class="quiz-btn" data-opt="b">Skip the attention layers</button>
+    <button class="quiz-btn" data-opt="c">Increase context for free</button>
+    <button class="quiz-btn" data-opt="d">Run without a tokenizer</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+  <p class="quiz-q">4. 4. Calibrated quant methods (imatrix, AWQ, GPTQ) work by:</p>
+  <div class="quiz-opts" data-q="3" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Adding more layers</button>
+    <button class="quiz-btn" data-opt="b">Protecting the outlier weights that dominate behavior</button>
+    <button class="quiz-btn" data-opt="c">Shrinking the tokenizer</button>
+    <button class="quiz-btn" data-opt="d">Training a new model</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+  <p class="quiz-q">5. 5. Q5_K_M vs Q5_K_S — which is higher quality?</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Q5_K_S</button>
+    <button class="quiz-btn" data-opt="b">Q5_K_M</button>
+    <button class="quiz-btn" data-opt="c">Identical</button>
+    <button class="quiz-btn" data-opt="d">Depends on the GPU</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+  <p class="quiz-q">6. 6. Faced with legacy Q4_0 and Q4_K_M at similar sizes, pick:</p>
+  <div class="quiz-opts" data-q="5" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Q4_0 (it is simpler)</button>
+    <button class="quiz-btn" data-opt="b">Q4_K_M (mixed-precision K-quant, strictly better)</button>
+    <button class="quiz-btn" data-opt="c">Both (they merge)</button>
+    <button class="quiz-btn" data-opt="d">Neither</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+  <p class="quiz-q">7. 7. A 27B on a 16 GB GPU with room for context:</p>
+  <div class="quiz-opts" data-q="6" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Q8_0</button>
+    <button class="quiz-btn" data-opt="b">BF16</button>
+    <button class="quiz-btn" data-opt="c">IQ3_XXS (~10.9 GB)</button>
+    <button class="quiz-btn" data-opt="d">Q6_K</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+  <p class="quiz-q">8. 8. imatrix and UD quants matter most when:</p>
+  <div class="quiz-opts" data-q="7" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Running at high bitrates</button>
+    <button class="quiz-btn" data-opt="b">Running at low bitrates (Q4 and below)</button>
+    <button class="quiz-btn" data-opt="c">Serving with vLLM</button>
+    <button class="quiz-btn" data-opt="d">Using Apple Silicon</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+  <p class="quiz-q">9. 9. AWQ means:</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Automatic Weight Quilting</button>
+    <button class="quiz-btn" data-opt="b">Activation-aware Weight Quantization</button>
+    <button class="quiz-btn" data-opt="c">Adaptive Window Quantization</button>
+    <button class="quiz-btn" data-opt="d">All Weights Quantized</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+  <p class="quiz-q">10. 10. nvfp4 achieves its speed benefit on:</p>
+  <div class="quiz-opts" data-q="9" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Any GPU</button>
+    <button class="quiz-btn" data-opt="b">NVIDIA Blackwell (RTX 50-series) tensor cores</button>
+    <button class="quiz-btn" data-opt="c">Apple Silicon</button>
+    <button class="quiz-btn" data-opt="d">Intel iGPUs</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+  <p class="quiz-q">11. 11. An abliterated model:</p>
+  <div class="quiz-opts" data-q="10" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Is quantized to 1 bit</button>
+    <button class="quiz-btn" data-opt="b">Has refusal behavior removed by deleting the refusal direction</button>
+    <button class="quiz-btn" data-opt="c">Runs twice as fast</button>
+    <button class="quiz-btn" data-opt="d">Has a 1M context</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+  <p class="quiz-q">12. 12. A separate MTP file is used for:</p>
+  <div class="quiz-opts" data-q="11" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Vision encoding</button>
+    <button class="quiz-btn" data-opt="b">Speculative decoding speedup (multi-token prediction)</button>
+    <button class="quiz-btn" data-opt="c">Fine-tuning</button>
+    <button class="quiz-btn" data-opt="d">Better quant calibration</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+  <p class="quiz-q">13. Sanity-check math: a 27B model at 4.0 bpw ≈</p>
+  <div class="quiz-opts" data-q="12" data-answer="a">
+    <button class="quiz-btn" data-opt="a">13.5 GB</button>
+    <button class="quiz-btn" data-opt="b">27 GB</button>
+    <button class="quiz-btn" data-opt="c">54 GB</button>
+    <button class="quiz-btn" data-opt="d">6.75 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+  <p class="quiz-q">14. 14. Which is a red flag on Hugging Face?</p>
+  <div class="quiz-opts" data-q="13" data-answer="b">
+    <button class="quiz-btn" data-opt="a">File size matches bpw math</button>
+    <button class="quiz-btn" data-opt="b">No model card and a mysterious quant name</button>
+    <button class="quiz-btn" data-opt="c">Model card with benchmarks</button>
+    <button class="quiz-btn" data-opt="d">Apache-2.0 license</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+  <p class="quiz-q">15. 15. The golden rule of local LLM choice:</p>
+  <div class="quiz-opts" data-q="14" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Smallest model that loads fastest</button>
+    <button class="quiz-btn" data-opt="b">Biggest model that fits, then highest quant that fits</button>
+    <button class="quiz-btn" data-opt="c">Always the official bf16 weights</button>
+    <button class="quiz-btn" data-opt="d">Newest upload date wins</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+  <p class="quiz-q">16. 16. A 32 GB Mac should prefer:</p>
+  <div class="quiz-opts" data-q="15" data-answer="b">
+    <button class="quiz-btn" data-opt="a">GPTQ-Int4</button>
+    <button class="quiz-btn" data-opt="b">MLX 4-bit or 8-bit</button>
+    <button class="quiz-btn" data-opt="c">NVFP4</button>
+    <button class="quiz-btn" data-opt="d">GGUF Q2_K</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+  <div class="score-panel" id="quiz-9-score" style="display:none">
+    <div class="progress" id="quiz-9-progress">Answered 0 of 16</div>
+    <div id="quiz-9-result"></div>
+  </div>
+</div>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  var TOTAL = 16;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-9-score');
+  var progressEl = document.getElementById('quiz-9-progress');
+  var resultEl = document.getElementById('quiz-9-result');
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 14) { grade = 'A'; msg = 'Outstanding. You can decode any filename on the Hub and pick the right quant for your hardware.'; }
+      else if (correct >= 11) { grade = 'B'; msg = 'Strong grasp. You know the formats and the tradeoffs — go download something and test it.'; }
+      else if (correct >= 8) { grade = 'C'; msg = 'Solid foundation. Re-read lessons 3-5 for the quant ladder and format zoo.'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons — especially the GGUF alphabet and the decision framework.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,142 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 7: Decoding Any Hugging Face Repo</h2>
+
+<p>By now you can read almost any filename on the Hub. Let's dissect four real Qwen3.8-27B examples:</p>
+
+<pre><code>Qwen3.8-27B-UD-Q4_K_M.gguf
+└─family─┘└─size─┘└─quantizer─┘└─quant─┘└container┘
+  Qwen3.8    27B      unsloth    4-bit K-medium   llama.cpp
+
+Qwen3.8-27B-AWQ-INT4
+  family + size + format (activation-aware int4, for vLLM/LM Studio)
+
+qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf
+  family + size + fine-tune (refusal-stripped) + bits-per-weight +
+  target size + MTP draft module
+
+Qwen3.8-27B-NVFP4
+  family + size + NVIDIA 4-bit float (Blackwell GPUs)</code></pre>
+
+<h3>Where to look before downloading</h3>
+<ol>
+<li><strong>Model card (README)</strong> — the author states what the file is, what it was calibrated on, and how to run it. No card = suspicious.</li>
+<li><strong>Files tab</strong> — check the actual sizes. A "27B" repo whose Q4 file is 6 GB is mislabeled or broken; expected ≈ <code>bpw × 27 / 8</code>.</li>
+<li><strong>config.json</strong> — architecture, context length, <code>quantization_config</code>. Multimodal models have a vision encoder; chat models have a chat template.</li>
+<li><strong>Quantization method</strong> — is it calibrated (imatrix/UD/AWQ/GPTQ/SC) or naive? Calibrated wins at every bit level.</li>
+<li><strong>Community signal</strong> — downloads, likes, recent comments, and "used in" datasets. On the HF search page, the <code>?local-app=llama.cpp</code> view even shows hardware compatibility and a ready-made run command.</li>
+</ol>
+
+<h3>Trusted publishers (for Qwen3.8-era models)</h3>
+<table>
+<tr><th>Publisher</th><th>Specialty</th><th>Trust level</th></tr>
+<tr><td>Qwen (official org)</td><td>Original bf16/fp8 weights, official GGUF</td><td>Source of truth</td></tr>
+<tr><td>unsloth</td><td>UD GGUFs, NVFP4, imatrix — best-in-class quants</td><td>Excellent</td></tr>
+<tr><td>bartowski</td><td>Clean GGUFs, imatrix, thorough model cards</td><td>Excellent</td></tr>
+<tr><td>turboderp</td><td>EXL2/EXL3 quants with calibration traces</td><td>Excellent</td></tr>
+<tr><td>mlx-community</td><td>MLX quants for Apple Silicon</td><td>Excellent</td></tr>
+<tr><td>huihui-ai / orcarouter / Blackfrost-AI</td><td>Abliterated / uncensored variants</td><td>Good (community)</td></tr>
+<tr><td>ggml-org</td><td>Official GGUF conversions</td><td>Good</td></tr>
+</table>
+
+<h3>Red flags</h3>
+<ul>
+<li>File size wildly off the bpw math.</li>
+<li>No model card, no license, no quantization_config.</li>
+<li>Names that don't match content ("Qwen3.8-27B" that's actually a 1B Mistral).</li>
+<li>Weird "premium" or "paywalled" reposts of official weights — everything here is Apache-2.0, free.</li>
+<li>Old repos still shipping only Q4_0/Q4_1 when K-quants exist.</li>
+<li>Bleeding-edge quant names with no benchmarks (the i1-* family is legit but young — check before adopting).</li>
+</ul>
+
+<div class="callout-success">
+<strong>The 60-second check:</strong> open the repo → read the first 10 lines of the model card → look at file sizes → compare bpw math → check downloads. That's enough to separate a good quant from a trap 95% of the time.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. A 27B Q4_K_M file should be about:</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">6 GB</button>
+    <button class="quiz-btn" data-opt="b">10 GB</button>
+    <button class="quiz-btn" data-opt="c">16.5 GB</button>
+    <button class="quiz-btn" data-opt="d">29 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Which is the most trustworthy source for a GGUF?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A random 3-download repo with no card</button>
+    <button class="quiz-btn" data-opt="b">unsloth / bartowski with calibration details</button>
+    <button class="quiz-btn" data-opt="c">A repo whose name contains 'premium'</button>
+    <button class="quiz-btn" data-opt="d">Any file named q4_k_m.gguf</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What does the bpw sanity check look like for 27B at 4 bpw?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">4 × 27 / 8 ≈ 13.5 GB</button>
+    <button class="quiz-btn" data-opt="b">4 × 27 ≈ 108 GB</button>
+    <button class="quiz-btn" data-opt="c">27 / 4 ≈ 7 GB</button>
+    <button class="quiz-btn" data-opt="d">4 + 27 ≈ 31 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/models?apps=llama.cpp&sort=trending" target="_blank" rel="noopener">HF search filtered for llama.cpp models</a></li>
+  <li><a href="https://huggingface.co/docs/hub/gguf-llamacpp" target="_blank" rel="noopener">HF docs: GGUF + llama.cpp</a></li>
+  <li><a href="https://huggingface.co/Qwen/Qwen3.8-27B" target="_blank" rel="noopener">Qwen3.8-27B official repo</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

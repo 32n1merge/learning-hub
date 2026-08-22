@@ -1,0 +1,4 @@
+{
+  "title": "Lesson 1: Why Quantization Exists",
+  "description": "Precision, bit math, and why a 54 GB model can run on a 24 GB GPU."
+}

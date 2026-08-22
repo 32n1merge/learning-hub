@@ -1,0 +1,148 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 1: Why Quantization Exists</h2>
+
+<p>A local LLM is a pile of numbers — billions of <span class="glossary-term">weights</span> (parameters) organized into matrices. Qwen3.8-27B has about 27 billion of them. How much space they take depends on how precisely each number is stored:</p>
+
+<table>
+<tr><th>Precision</th><th>Bytes per weight</th><th>Qwen3.8-27B size</th><th>Notes</th></tr>
+<tr><td>fp32</td><td>4</td><td>~108 GB</td><td>Training precision, never shipped</td></tr>
+<tr><td>bf16 / fp16</td><td>2</td><td>~54.7 GB</td><td>Original release quality</td></tr>
+<tr><td>8-bit</td><td>1</td><td>~29 GB (Q8_0)</td><td>Nearly lossless</td></tr>
+<tr><td>4-bit</td><td>0.5</td><td>~16.5 GB (Q4_K_M)</td><td>The local sweet spot</td></tr>
+<tr><td>2-bit</td><td>0.25</td><td>~6-10 GB (IQ2/UD-Q2)</td><td>Cramming mode, real quality loss</td></tr>
+</table>
+
+<p>The bf16 file for Qwen3.8-27B is 54.7 GB (two ~50 GB + ~4.7 GB shards in the unsloth repo). A typical consumer GPU has 8-24 GB of VRAM. Something has to give — and what gives is <span class="glossary-term">quantization</span>: storing each weight with fewer bits, plus a small per-group scale factor to keep the values roughly right.</p>
+
+<div class="callout">
+<strong>Key idea:</strong> quantized models are the <em>same model</em>, with the numbers rounded to fewer levels. You are not downloading a worse model — you are downloading a compressed copy of the same one. The art is compressing it without breaking it.
+</div>
+
+<h3>How much quality do you lose?</h3>
+
+<p>The standard yardstick is <span class="glossary-term">perplexity</span> (lower = better prediction). Measured on a 7B-class model against the fp16 baseline:</p>
+
+<table>
+<tr><th>Quant</th><th>Perplexity vs fp16</th><th>Verdict</th></tr>
+<tr><td>Q8_0</td><td>+0.03%</td><td>Indistinguishable</td></tr>
+<tr><td>Q6_K</td><td>+0.13%</td><td>Best quality/size ratio</td></tr>
+<tr><td>Q5_K_M</td><td>+0.39%</td><td>Balanced</td></tr>
+<tr><td>Q4_K_M</td><td>+1.68%</td><td><strong>Recommended default</strong></td></tr>
+<tr><td>Q3_K_M</td><td>+6.07%</td><td>Noticeable, small models only</td></tr>
+<tr><td>Q2_K</td><td>+15.3%</td><td>Last resort</td></tr>
+</table>
+
+<p>These exact numbers shift per model family, but the shape of the curve never does: 8-bit is basically free, 6-bit and 5-bit are nearly free, 4-bit costs a little, and below 3-bit quality falls off a cliff.</p>
+
+<h3>The one rule that matters more than any quant choice</h3>
+
+<div class="callout-success">
+<strong>Rule of thumb:</strong> pick the <em>biggest model that fits your hardware</em>, then the <em>highest quant that still fits</em>. A 27B at 4-bit beats a 7B at 8-bit on almost every real task. Quantization is how you fit the big model — not a way to polish a small one.
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 260" xmlns="http://www.w3.org/2000/svg">
+    <text x="20" y="24" fill="var(--color-text)" font-size="14" font-weight="600">Qwen3.8-27B — file size by quantization (GB)</text>
+    <rect x="20" y="40" width="470" height="18" rx="4" fill="#8b5cf6"/><text x="500" y="54" fill="var(--color-text)" font-size="12">BF16: 54.7 GB</text>
+    <rect x="20" y="66" width="249" height="18" rx="4" fill="#22c55e"/><text x="279" y="80" fill="var(--color-text)" font-size="12">Q8_0: 29.0</text>
+    <rect x="20" y="92" width="189" height="18" rx="4" fill="#22c55e"/><text x="219" y="106" fill="var(--color-text)" font-size="12">Q6_K: 22.0</text>
+    <rect x="20" y="118" width="170" height="18" rx="4" fill="#2ea8ff"/><text x="200" y="132" fill="var(--color-text)" font-size="12">Q5_K_M: 19.8</text>
+    <rect x="20" y="144" width="141" height="18" rx="4" fill="#2ea8ff"/><text x="171" y="158" fill="var(--color-text)" font-size="12">Q4_K_M: 16.5</text>
+    <rect x="20" y="170" width="94" height="18" rx="4" fill="#f59e0b"/><text x="124" y="184" fill="var(--color-text)" font-size="12">IQ3_XXS: 10.9</text>
+    <rect x="20" y="196" width="53" height="18" rx="4" fill="#ef4444"/><text x="83" y="210" fill="var(--color-text)" font-size="12">IQ1_S: 6.2</text>
+    <text x="20" y="240" fill="var(--color-text-secondary)" font-size="11">16 GB GPU fits everything above the dashed line with room for context.</text>
+    <line x1="20" y1="228" x2="500" y2="228" stroke="var(--color-border)" stroke-dasharray="6 4"/>
+  </svg>
+</div>
+
+<h3>Bonus: speed and cost</h3>
+<p>Fewer bits means less memory bandwidth per token — and memory bandwidth is the bottleneck on local GPUs. A 4-bit model doesn't just fit; it also runs meaningfully faster than the same model at 8-bit, and leaves VRAM free for a longer context (the KV cache). Quantization is the rare win-win: it makes models <em>smaller, faster, and cheaper</em>, at the price of a few percent of quality.</p>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. Qwen3.8-27B in bf16 is about how large?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">27 GB</button>
+    <button class="quiz-btn" data-opt="b">54.7 GB</button>
+    <button class="quiz-btn" data-opt="c">16.5 GB</button>
+    <button class="quiz-btn" data-opt="d">108 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Which statement is correct?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A 4-bit model is a different, smaller model</button>
+    <button class="quiz-btn" data-opt="b">Quantization compresses the same model's weights into fewer bits</button>
+    <button class="quiz-btn" data-opt="c">Quantization only affects speed, never quality</button>
+    <button class="quiz-btn" data-opt="d">Lower bit counts always improve quality</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Perplexity increase at Q4_K_M (vs fp16) is roughly:</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">+0.03%</button>
+    <button class="quiz-btn" data-opt="b">+0.39%</button>
+    <button class="quiz-btn" data-opt="c">+1.7%</button>
+    <button class="quiz-btn" data-opt="d">+15.3%</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/Qwen/Qwen3.8-27B" target="_blank" rel="noopener">Qwen3.8-27B official model card</a></li>
+  <li><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" target="_blank" rel="noopener">unsloth Qwen3.8-27B GGUF repo (real file sizes)</a></li>
+  <li><a href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener">llama.cpp GitHub</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

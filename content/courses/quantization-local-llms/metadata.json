@@ -1,0 +1,13 @@
+{
+  "title": "Pick Your Quant: A Field Guide to Local LLM Files",
+  "description": "Everything behind the suffixes on Hugging Face: what quantization actually does, the full GGUF alphabet (Q4_K_M, Q6_K, IQ quants, UD, imatrix), the other formats (AWQ, GPTQ, EXL3, MLX, FP8, NVFP4, QAT), the fine-tune zoo (instruct, thinking, uncensored, flash, MTP), how to decode any repo, and a step-by-step framework for choosing the right model for your hardware \u2014 using Qwen3.8-27B as the running example.",
+  "difficulty": "beginner",
+  "estimatedDuration": "75 min",
+  "tags": [
+    "llm",
+    "ai",
+    "devops"
+  ],
+  "lastUpdated": "2026-08-21",
+  "icon": "\ud83e\uddee"
+}

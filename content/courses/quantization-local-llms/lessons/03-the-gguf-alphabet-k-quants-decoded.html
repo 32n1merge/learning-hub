@@ -1,0 +1,129 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 3: The GGUF Alphabet: K-Quants Decoded</h2>
+
+<p><span class="glossary-term">GGUF</span> is the container format of the llama.cpp universe: Ollama, LM Studio, koboldcpp, Jan, GPT4All, and every llama.cpp fork. It bundles weights, tokenizer, and metadata in one file — that's the <code>.gguf</code> extension. Within GGUF, the quant name tells you everything. Here is the full ladder, with <strong>real file sizes from the unsloth Qwen3.8-27B repo</strong>:</p>
+
+<table>
+<tr><th>Quant name</th><th>~bpw</th><th>Qwen3.8-27B size</th><th>What it is</th><th>Use when</th></tr>
+<tr><td><code>Q2_K</code></td><td>2.9</td><td>~9.8 GB (UD-Q2_K_XL)</td><td>2-bit K-quant</td><td>Desperate fit</td></tr>
+<tr><td><code>Q3_K_S / M / XL</code></td><td>3.4-3.9</td><td>~13.2 GB (XL)</td><td>3-bit K-quants</td><td>Fitting on 16 GB, quality drops</td></tr>
+<tr><td><code>Q4_0</code> (legacy)</td><td>4.6</td><td>16.06 GB</td><td>Old plain 4-bit</td><td>Avoid if K-quants exist</td></tr>
+<tr><td><code>Q4_K_S</code></td><td>4.6</td><td>15.36 GB</td><td>4-bit, small tier</td><td>Tight 16 GB fit</td></tr>
+<tr><td><code>Q4_K_M</code></td><td>4.9</td><td>16.46 GB</td><td>4-bit, medium — <strong>the default</strong></td><td>Best all-round choice</td></tr>
+<tr><td><code>Q4_K_XL</code></td><td>5.2</td><td>17.56 GB</td><td>4-bit, large tier</td><td>4-bit with extra attention precision</td></tr>
+<tr><td><code>Q5_K_S / M / XL</code></td><td>5.5-6.2</td><td>18.7-20.9 GB</td><td>5-bit K-quants</td><td>24 GB GPUs, code/math work</td></tr>
+<tr><td><code>Q6_K</code></td><td>6.6</td><td>21.98 GB</td><td>6-bit, no tiers originally</td><td>32 GB GPUs, near-lossless feel</td></tr>
+<tr><td><code>Q6_K_M / L / XL</code></td><td>7-7.6</td><td>23.1-25.3 GB</td><td>New 6-bit tiers (2026)</td><td>Big-VRAM quality seekers</td></tr>
+<tr><td><code>Q8_0</code></td><td>8.5</td><td>29.05 GB</td><td>8-bit integer</td><td>Essentially lossless; 32 GB+</td></tr>
+<tr><td><code>Q8_K_L / XL</code></td><td>8.5-9.5</td><td>28.1-31.5 GB</td><td>New 8-bit K-quants</td><td>Same, slightly better</td></tr>
+</table>
+
+<div class="callout">
+<strong>Reading the name:</strong> <code>Q4_K_M</code> = <strong>Q4</strong> (4-bit level) + <strong>K</strong> (k-means mixed-precision scheme) + <strong>M</strong> (medium size tier). <code>Q5_K_S</code> = 5-bit, K-scheme, small tier. <code>Q8_0</code> has no K — it's the older-but-still-great plain 8-bit.
+</div>
+
+<h3>Which GGUF should you actually download?</h3>
+
+<ul>
+<li><strong>Default:</strong> <code>Q4_K_M</code>. Best quality-per-gigabyte; the community consensus pick.</li>
+<li><strong>Headroom on a bigger GPU:</strong> <code>Q5_K_M</code> → <code>Q6_K</code> → <code>Q8_0</code> as VRAM allows. Code and math reward the extra bits more than chat does.</li>
+<li><strong>24 GB card with a 27B:</strong> Q4_K_M fits comfortably; Q5_K_M fits with a shorter context.</li>
+<li><strong>16 GB card with a 27B:</strong> Q4_K_S or Q3_K_XL or an IQ quant (next lesson).</li>
+<li><strong>Never:</strong> legacy <code>Q4_0</code>/<code>Q4_1</code>/<code>Q5_0</code>/<code>Q5_1</code> when a K-quant of the same bit level exists — K-quants are strictly better at similar size. (Q4_0 survives only because it's trivial to compute and some tiny tools still use it.)</li>
+</ul>
+
+<h3>UD- prefix: Unsloth Dynamic</h3>
+<p>Repos by <strong>unsloth</strong> prefix their files with <code>UD-</code> (e.g. <code>Qwen3.8-27B-UD-Q4_K_M.gguf</code>). <span class="glossary-term">UD (Unsloth Dynamic 3.0)</span> re-quantizes additional tensors to higher precision and is the current leader in accuracy-per-byte for GGUF — unsloth claims more than 10% better accuracy at the same size versus plain quants. It's a quant <em>method</em>, not a new format: same .gguf, same runtimes, just better calibration. When a repo offers both plain and UD files at the same bpw, take the UD one.</p>
+
+<div class="callout-success">
+<strong>Practical pick for Qwen3.8-27B:</strong> 24 GB GPU → <code>UD-Q4_K_M</code> (16.5 GB). 32 GB → <code>UD-Q5_K_M</code> or <code>UD-Q6_K</code>. 48 GB → <code>Q8_0</code> or <code>UD-Q8_K_L</code>. 16 GB → <code>UD-Q4_K_S</code> or the IQ quants in the next lesson.
+</div>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. What does the 'M' in Q4_K_M stand for?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Memory-optimized</button>
+    <button class="quiz-btn" data-opt="b">Medium size tier</button>
+    <button class="quiz-btn" data-opt="c">Multi-head</button>
+    <button class="quiz-btn" data-opt="d">Mixed precision weights only</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Qwen3.8-27B at Q4_K_M is roughly:</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">6 GB</button>
+    <button class="quiz-btn" data-opt="b">16.5 GB</button>
+    <button class="quiz-btn" data-opt="c">29 GB</button>
+    <button class="quiz-btn" data-opt="d">54.7 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Why prefer K-quants over legacy Q4_0 at the same bit level?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">K-quants use mixed precision and k-means codebooks for better quality</button>
+    <button class="quiz-btn" data-opt="b">They are smaller</button>
+    <button class="quiz-btn" data-opt="c">They are faster on every GPU</button>
+    <button class="quiz-btn" data-opt="d">They support vision</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs" target="_blank" rel="noopener">unsloth Dynamic 3.0 GGUF explainer</a></li>
+  <li><a href="https://huggingface.co/docs/hub/gguf-llamacpp" target="_blank" rel="noopener">HF docs: GGUF + llama.cpp</a></li>
+  <li><a href="https://www.ollama.com/" target="_blank" rel="noopener">Ollama library</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

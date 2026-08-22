@@ -1,0 +1,125 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 4: IQ Quants, imatrix, and Squeezing Below 4 Bits</h2>
+
+<p>Sometimes the model you want simply doesn't fit at 4 bits. Qwen3.8-27B at Q4_K_M is 16.5 GB — too big for a 16 GB card once context is added. That's what the <span class="glossary-term">IQ family</span> is for: importance-matrix-aware quants that wring more quality out of every bit, at the cost of a little extra dequantization work at inference (invisible on GPU, slightly slower on CPU).</p>
+
+<table>
+<tr><th>Quant</th><th>~bpw</th><th>Qwen3.8-27B size</th><th>Fits in</th><th>Character</th></tr>
+<tr><td><code>IQ1_S / IQ1_M</code></td><td>1.6-1.8</td><td>6.2 / 6.7 GB</td><td>8 GB</td><td>Novelty — heavy quality loss</td></tr>
+<tr><td><code>IQ2_XXS / IQ2_S</code></td><td>2.1-2.5</td><td>7.3 / 8.4 GB</td><td>8-12 GB</td><td>Usable if the model is big enough</td></tr>
+<tr><td><code>IQ3_XXS / IQ3_S</code></td><td>3.1-3.4</td><td>10.9 / 12.0 GB</td><td>12-16 GB</td><td>The 16 GB sweet spot for 27B</td></tr>
+<tr><td><code>IQ4_XS / IQ4_NL</code></td><td>4.2-4.5</td><td>14.3 GB</td><td>16 GB</td><td>Near-Q4_K_S quality, smaller</td></tr>
+</table>
+
+<p>The <code>XXS / XS / S</code> suffixes are size tiers within each bit level (XXS = extra-extra-small). IQ quants are the reason a 27B can run on a 16 GB card — at IQ3_XXS (10.9 GB) you keep several GB free for context.</p>
+
+<h3>imatrix: the secret sauce</h3>
+<p><span class="glossary-term">imatrix</span> (importance matrix) is calibration data produced by running text through the fp16 model before quantizing. Quantizing <em>with</em> an imatrix measurably improves quality — 10-20% better perplexity at Q4, and it's basically mandatory for Q3 and below. It shows up in filenames two ways:</p>
+
+<ul>
+<li><code>-imatrix</code> suffix: <code>Qwen3.8-27B-Q4_K_M-imatrix.gguf</code></li>
+<li>Some repos ship the matrix as a separate <code>imatrix_unsloth.gguf</code>-style file and bake it into all their quants.</li>
+</ul>
+
+<div class="callout">
+<strong>Rule:</strong> if a repo offers the same quant with and without imatrix, take the imatrix version — same size, better quality. (For IQ quants, the imatrix is inherent to the scheme.)
+</div>
+
+<h3>The new experimental names: i1-, KS, KT</h3>
+<p>The llama.cpp world moves fast — you'll see bleeding-edge repos like <code>Qwen3.8-27B-i1-IQ4_KS_KT-GGUF</code>. <code>i1</code> is an experimental quant family (iterative/importance-based variants) that the community is currently benchmarking. General policy: <strong>unknown prefixes are a yellow flag</strong>. Check the model card, look for benchmarks or discussion, and if it's unproven, stick to Q4_K_M / IQ quants / UD quants — they're the boring, reliable choices.</p>
+
+<h3>bpw in filenames</h3>
+<p>EXL2/EXL3-era files name themselves by exact bits per weight and even target size: <code>qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf</code> means ~3.69 bits per weight, a ~12 GB file, with a multi-token-prediction module. Sanity check: <code>GB ≈ bpw × params / 8</code>. For 27B: 3.69 × 27 / 8 = 12.5 GB ✓. That one-line math decodes half the weird filenames on the Hub.</p>
+
+<div class="callout-warn">
+<strong>When to refuse sub-4-bit:</strong> if your task is math, code, agents, or anything precision-heavy, IQ2/IQ3 of a 27B can feel dumber than Q4 of a 14B. When you're cramming, always A/B test the squeezed big model against a comfortably-fitting smaller one — the smaller one often wins.
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. IQ quants (IQ2_XXS, IQ3_XS, IQ4_XS) are:</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Integer-only quants for CPUs</button>
+    <button class="quiz-btn" data-opt="b">Importance-matrix-aware quants with better quality per bit</button>
+    <button class="quiz-btn" data-opt="c">The same as Q2_K/Q3_K/Q4_K</button>
+    <button class="quiz-btn" data-opt="d">Apple Silicon only</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What does imatrix improve?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Inference speed</button>
+    <button class="quiz-btn" data-opt="b">Quantization quality via calibration data</button>
+    <button class="quiz-btn" data-opt="c">Context length</button>
+    <button class="quiz-btn" data-opt="d">Tokenizer size</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. A 27B model at 3.69 bpw should be roughly:</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">6 GB</button>
+    <button class="quiz-btn" data-opt="b">12.5 GB</button>
+    <button class="quiz-btn" data-opt="c">20 GB</button>
+    <button class="quiz-btn" data-opt="d">29 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/ggml-org/llama.cpp/tree/master/quantize" target="_blank" rel="noopener">llama.cpp quantization docs</a></li>
+  <li><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs" target="_blank" rel="noopener">unsloth Dynamic 3.0 GGUF explainer</a></li>
+  <li><a href="https://huggingface.co/turboderp/Qwen3.8-27B-exl3" target="_blank" rel="noopener">turboderp exl3 quants of Qwen3.8-27B (bpw examples)</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

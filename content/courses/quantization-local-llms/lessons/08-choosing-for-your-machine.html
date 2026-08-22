@@ -1,0 +1,164 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 8: Choosing for Your Machine</h2>
+
+<p>Time to make it personal. Here's the exact procedure I'd run to pick a local LLM — using Qwen3.8-27B as the running example.</p>
+
+<h3>Step 1 — Inventory your hardware</h3>
+<ul>
+<li><strong>GPU VRAM</strong> (the king): 8, 12, 16, 24, 32, 48 GB…</li>
+<li><strong>System RAM:</strong> matters for CPU offload and for CPU-only inference.</li>
+<li><strong>Apple Silicon unified memory:</strong> Macs share one pool — treat it like VRAM.</li>
+<li><strong>CPU/GPU vendor:</strong> NVIDIA (everything works), AMD (ROCm — GGUF fine, some formats less), Apple (MLX/Metal), Intel (GGUF, slower).</li>
+</ul>
+
+<h3>Step 2 — Budget memory: file + context + overhead</h3>
+<p>VRAM needed ≈ <strong>model file + KV cache + ~1-2 GB overhead</strong>. Rule of thumb: multiply the file size by 1.15-1.35 for a safe context budget. Qwen3.8-27B's hybrid architecture (Gated DeltaNet linear attention) keeps its KV cache unusually small, but long contexts and thinking-mode outputs still eat memory. Bigger context = more KV, always.</p>
+
+<h3>Step 3 — Pick the biggest model that fits, then the quant</h3>
+<table>
+<tr><th>Your hardware</th><th>Qwen3.8-27B recommendation</th><th>Or step up/down</th></tr>
+<tr><td>8 GB GPU</td><td>No — too small for 27B</td><td>Qwen3-8B at Q4_K_M (~5 GB), or 27B IQ1/IQ2 (miserable)</td></tr>
+<tr><td>12 GB GPU</td><td>IQ2_S / IQ2_XXS (8.4 / 7.3 GB)</td><td>Or a 14B at Q4_K_M for reliability</td></tr>
+<tr><td>16 GB GPU</td><td><strong>IQ3_XXS (10.9) or UD-Q4_K_S (15.4)</strong></td><td>Or 14B at Q5/Q6</td></tr>
+<tr><td>24 GB GPU</td><td><strong>UD-Q4_K_M (16.5) — the sweet spot</strong></td><td>UD-Q5_K_M (19.8) with modest context</td></tr>
+<tr><td>32 GB GPU</td><td>UD-Q5_K_M or UD-Q6_K (22.0)</td><td>Q8_0 (29) if you value near-lossless</td></tr>
+<tr><td>48 GB+</td><td>Q8_0 (29) + huge context</td><td>Or a 70B-class at Q3/Q4</td></tr>
+<tr><td>Mac 16 GB unified</td><td>No — 27B won't fit at 4-bit</td><td>Qwen3-8B MLX 4-bit</td></tr>
+<tr><td>Mac 32 GB unified</td><td>MLX 4-bit (fits with room)</td><td>MLX 8-bit for quality</td></tr>
+<tr><td>Mac 64 GB unified</td><td>MLX 8-bit, comfortably</td><td>Qwen3-32B-class at 4-bit</td></tr>
+<tr><td>CPU-only, 16 GB RAM</td><td>No</td><td>7-9B at Q4 (slow but works)</td></tr>
+<tr><td>CPU-only, 32+ GB RAM</td><td>Q4_K_M (16.5) — expect single-digit tok/s</td><td>IQ3 for speed, or accept the wait</td></tr>
+</table>
+
+<h3>Step 4 — Pick the ecosystem (this decides the format)</h3>
+<table>
+<tr><th>Tool</th><th>Format</th><th>Good for</th></tr>
+<tr><td>Ollama</td><td>GGUF</td><td>Easiest possible start; one command to run</td></tr>
+<tr><td>LM Studio</td><td>GGUF, MLX, AWQ</td><td>GUI, per-model settings, local server</td></tr>
+<tr><td>llama.cpp</td><td>GGUF</td><td>Power users, scripting, MTP support</td></tr>
+<tr><td>ExLlamaV3</td><td>EXL3</td><td>Maximum single-GPU speed</td></tr>
+<tr><td>vLLM / TGI</td><td>AWQ, GPTQ, FP8, NVFP4, QAT</td><td>Serving many users / high throughput</td></tr>
+<tr><td>mlx_lm</td><td>MLX</td><td>Apple Silicon</td></tr>
+<tr><td>transformers + bitsandbytes</td><td>nf4/fp4 on the fly</td><td>Scripts, fine-tuning (QLoRA)</td></tr>
+</table>
+
+<h3>Step 5 — Test before you commit</h3>
+<p>Run the same short prompt suite on the candidate: one math question, one coding task, one instruction-following task, one creative task. Watch for: gibberish or repetition (too-low quant), refusal loops (wrong fine-tune), slow token rates (too big), and context truncation (too small). Then ask: <em>would a comfortably-fitting smaller model have felt better?</em> — that's the question that ends most upgrade loops.</p>
+
+<div class="callout">
+<strong>Golden rules recap:</strong> 1) biggest model that fits, 2) highest quant that fits, 3) Q4_K_M (or UD-Q4_K_M) is the default, 4) calibrated quants beat naive ones, 5) format follows software, 6) if it feels dumb, A/B the same model at Q6/Q8 before jumping models — the quant may be the culprit, 7) context and thinking mode eat your headroom before the weights do.
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="20" width="110" height="70" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="75" y="48" text-anchor="middle" fill="var(--color-text)" font-size="12">Hardware?</text>
+    <text x="75" y="64" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">VRAM/RAM</text>
+    <text x="75" y="78" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Apple/CPU?</text>
+    <text x="150" y="58" fill="var(--color-text-secondary)" font-size="16">→</text>
+    <rect x="170" y="20" width="110" height="70" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="225" y="48" text-anchor="middle" fill="var(--color-text)" font-size="12">Budget?</text>
+    <text x="225" y="64" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">file × 1.2 + ctx</text>
+    <text x="225" y="78" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">≤ memory</text>
+    <text x="300" y="58" fill="var(--color-text-secondary)" font-size="16">→</text>
+    <rect x="320" y="20" width="110" height="70" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="375" y="48" text-anchor="middle" fill="var(--color-text)" font-size="12">Pick quant</text>
+    <text x="375" y="64" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Q4_K_M default</text>
+    <text x="375" y="78" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">IQ/UD when tight</text>
+    <text x="450" y="58" fill="var(--color-text-secondary)" font-size="16">→</text>
+    <rect x="462" y="20" width="80" height="70" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="502" y="48" text-anchor="middle" fill="var(--color-text)" font-size="12">Test</text>
+    <text x="502" y="64" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">5 prompts,</text>
+    <text x="502" y="78" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">A/B if in doubt</text>
+  </svg>
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. A 24 GB GPU running Qwen3.8-27B should pick:</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Q8_0</button>
+    <button class="quiz-btn" data-opt="b">UD-Q4_K_M (~16.5 GB)</button>
+    <button class="quiz-btn" data-opt="c">IQ1_S</button>
+    <button class="quiz-btn" data-opt="d">BF16</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. VRAM needed ≈ model file + …</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">KV cache + overhead (~15-35% on top of the file)</button>
+    <button class="quiz-btn" data-opt="b">Exactly the file size</button>
+    <button class="quiz-btn" data-opt="c">Half the file size</button>
+    <button class="quiz-btn" data-opt="d">The file size minus context</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. You find a 27B Q4 model 'feels dumb'. Next step:</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Buy a bigger GPU immediately</button>
+    <button class="quiz-btn" data-opt="b">A/B it against Q6/Q8 of the same model before changing anything else</button>
+    <button class="quiz-btn" data-opt="c">Switch to a 100B model</button>
+    <button class="quiz-btn" data-opt="d">Blame the tokenizer</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://www.ollama.com/" target="_blank" rel="noopener">Ollama</a></li>
+  <li><a href="https://lmstudio.ai/" target="_blank" rel="noopener">LM Studio</a></li>
+  <li><a href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener">llama.cpp GitHub</a></li>
+  <li><a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener">vLLM GitHub</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

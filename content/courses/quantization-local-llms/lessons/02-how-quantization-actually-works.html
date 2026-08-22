@@ -1,0 +1,137 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 2: How Quantization Actually Works</h2>
+
+<p>A 4-bit number can only hold 16 distinct values (2⁴). If you rounded every weight to one of 16 values, the model would collapse — weights vary across huge ranges. The trick is <span class="glossary-term">grouped quantization with scaling</span>:</p>
+
+<ol>
+<li>Split the weight matrix into <strong>blocks</strong> (typically 32-128 weights each).</li>
+<li>Record one <strong>scale</strong> per block — a normal float that captures that block's magnitude (min/max or similar).</li>
+<li>Store each weight in the block as a small integer relative to the scale (e.g. 0-15 for 4-bit).</li>
+<li>At inference, each value is reconstructed as <code>scale × int</code> on the fly.</li>
+</ol>
+
+<p>The scale is the hidden cost: a 4-bit quant is really ~4.85 bits per weight once you count the scales and metadata. That number — total bits divided by parameter count — is <span class="glossary-term">bits per weight (bpw)</span>, and you'll see it in filenames like <code>3.69bpw</code>.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg">
+    <text x="20" y="24" fill="var(--color-text)" font-size="14" font-weight="600">One block of 16 weights, 4-bit quantized</text>
+    <rect x="20" y="40" width="460" height="26" rx="4" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="30" y="58" fill="var(--color-text-secondary)" font-size="12">fp16 weights:  -0.7 0.3 1.9 -2.1 0.4 1.1 -1.8 2.3 0.9 -0.2 1.5 -2.6 0.6 0.1 -1.4 2.0</text>
+    <text x="30" y="92" fill="var(--color-text)" font-size="13">scale = 2.6 (block magnitude) →  each weight becomes an int 0..15</text>
+    <rect x="20" y="108" width="460" height="26" rx="4" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="30" y="126" fill="var(--color-text-secondary)" font-size="12">4-bit ints:   3  5 12  1  6  9  2 14  8  4 11  0  7  6  3 13   + scale (1 float)</text>
+    <text x="20" y="160" fill="var(--color-text-secondary)" font-size="11">Reconstruct: value ≈ scale × (int / 15 - 0.5). Slight rounding error per weight — that error is "quantization error".</text>
+  </svg>
+</div>
+
+<h3>Why K-quants say "K" and why they're better</h3>
+<p>The old Q4_0/Q4_1 scheme used one simple scale per block. <span class="glossary-term">K-quants</span> (the <code>K</code> in Q4_K_M) use k-means-style codebooks and <strong>mixed precision</strong>: attention and output layers get more bits, feed-forward layers get fewer. Since attention weights do the heavy lifting in reasoning, this buys quality at almost no size cost. The second letter is the size tier: <code>S</code> (small — fewer tensors upgraded), <code>M</code> (medium — the default), <code>L</code>/<code>XL</code> (large — more tensors at higher precision).</p>
+
+<h3>Weights vs activations: W4A16</h3>
+<p>Weights are static — you can spend hours calibrating them. <span class="glossary-term">Activations</span> (the data flowing through the network at inference time) are dynamic and full of wild outliers, so they're much harder to quantize. Most local formats are <strong>W4A16</strong>: 4-bit weights, 16-bit activations. When you see <code>W8A8</code> or <code>W4A8</code>, both weights and activations are quantized — that's what the big serving engines (vLLM, TensorRT) do for throughput.</p>
+
+<h3>Not all errors are equal — calibration is the 2024-2026 revolution</h3>
+<p>Roughly 1% of weights are "outliers" that dominate the model's behavior. Blind rounding destroys them; <span class="glossary-term">calibrated quantization</span> runs a sample of text through the model, measures which weights matter, and protects them:</p>
+
+<ul>
+<li><strong>imatrix</strong> — an importance matrix from calibration data, used when quantizing GGUFs.</li>
+<li><strong>AWQ</strong> — activation-aware: scales the important channels before rounding.</li>
+<li><strong>GPTQ</strong> — error-correction pass that nudges remaining weights to compensate for rounded ones.</li>
+<li><strong>QAT</strong> — the model itself is fine-tuned while simulating quantization, so it learns to be robust to it.</li>
+</ul>
+
+<div class="callout-warn">
+<strong>What breaks first at low bits:</strong> math, code, exact formatting, instruction-following, and long-chain reasoning — anything precision-sensitive. Casual chat and creative writing survive surprisingly deep quantization. If a Q2 model writes decent prose but fails every arithmetic question, that's normal, not a broken file.
+</div>
+
+<h3>The deep lesson</h3>
+<p>Quantization error compounds with <em>model size and task difficulty</em>. A well-calibrated 4-bit quant of a 27B model is often smarter than an 8-bit quant of a 7B model — bigger base + decent compression beats smaller base + lossless. That's the entire game of local LLMs.</p>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. In grouped quantization, what does the scale do?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It stores the model's temperature</button>
+    <button class="quiz-btn" data-opt="b">It captures each block's magnitude so ints can be un-rounded at inference</button>
+    <button class="quiz-btn" data-opt="c">It is a calibration token appended to prompts</button>
+    <button class="quiz-btn" data-opt="d">It encodes the license of the model</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. The 'K' in Q4_K_M refers to:</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Kawrakow-style k-means codebooks with mixed precision across tensors</button>
+    <button class="quiz-btn" data-opt="b">Knowledge distillation</button>
+    <button class="quiz-btn" data-opt="c">K-bit kernels</button>
+    <button class="quiz-btn" data-opt="d">Kullback-Leibler divergence</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. W4A16 means:</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">4-bit weights, 16-bit activations</button>
+    <button class="quiz-btn" data-opt="b">16-bit weights, 4-bit activations</button>
+    <button class="quiz-btn" data-opt="c">4 layers of 16 heads</button>
+    <button class="quiz-btn" data-opt="d">4-bit everything</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/docs/hub/gguf-llamacpp" target="_blank" rel="noopener">HF docs: GGUF + llama.cpp</a></li>
+  <li><a href="https://github.com/casper-hansen/AutoAWQ" target="_blank" rel="noopener">AutoAWQ (activation-aware quantization)</a></li>
+  <li><a href="https://arxiv.org/abs/2210.17323" target="_blank" rel="noopener">GPTQ paper</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

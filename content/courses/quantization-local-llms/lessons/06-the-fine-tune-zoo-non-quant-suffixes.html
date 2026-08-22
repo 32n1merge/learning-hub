@@ -1,0 +1,136 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 6: The Fine-Tune Zoo: Non-Quant Suffixes</h2>
+
+<p>Quant suffixes describe <em>compression</em>. This lesson covers the suffixes that describe <em>content</em> — the fine-tunes and variants layered on top of the base weights. Same family (Qwen3.8-27B), very different behaviors.</p>
+
+<h3>The basics</h3>
+<table>
+<tr><th>Suffix</th><th>Meaning</th><th>Notes</th></tr>
+<tr><td><code>base</code> / no suffix</td><td>Raw pretrained weights</td><td>Good for fine-tuning and completions; bad for chat</td></tr>
+<tr><td><code>instruct</code>, <code>chat</code>, <code>it</code></td><td>Instruction/chat-tuned</td><td>The conversational model — what you actually want for daily use</td></tr>
+<tr><td><code>thinking</code></td><td>Reasoning mode on by default</td><td>Qwen3.8 ships with thinking on, toggleable per request; uses more tokens</td></tr>
+<tr><td><code>vision</code>, <code>VL</code>, <code>omni</code></td><td>Multimodal</td><td>Qwen3.8-27B is natively vision-language — in GGUF form you also need the <code>mmproj-*.gguf</code> projector file</td></tr>
+<tr><td><code>coder</code>, <code>math</code></td><td>Domain-tuned</td><td>e.g. Qwen3-Coder-30B-A3B-Instruct</td></tr>
+<tr><td><code>MTP</code></td><td>Multi-token prediction module</td><td>Separate small file (~1.4 GB) that drafts tokens for speculative decoding — up to ~2x speed on supporting runtimes</td></tr>
+<tr><td><code>-2507</code>, <code>-2601</code></td><td>Release date (YYMM)</td><td>Newer revision usually wins; check the model card for changes</td></tr>
+<tr><td><code>-1M</code>, <code>-128K</code>, <code>-32k</code></td><td>Context window</td><td>Long-context variants trade some efficiency for reach</td></tr>
+</table>
+
+<h3>The uncensored family (the one everyone asks about)</h3>
+<p><code>uncensored</code>, <code>abliterated</code>, <code>OBLITERATED</code>, <code>Unleashed</code>, <code>Heretic</code>, <code>CRACK</code>, <code>AEON-ULTIMATE-UNCENSORED</code>… dozens of names for the same idea: a fine-tune that strips the model's refusal behavior.</p>
+
+<ul>
+<li><strong>Abliteration</strong> (the technical term) works by finding the "refusal direction" in the model's internal activations and deleting it — no fine-tuning needed, so the rest of the weights stay intact.</li>
+<li><strong>What changes:</strong> the model stops refusing requests it was trained to refuse. For creative writing, roleplay, horror, edgy humor — great.</li>
+<li><strong>What doesn't change:</strong> it's not "smarter", it's not free of safety features (it still has no guardrails — that's a feature for RP, a liability for real work), and quality/format-following can dip slightly.</li>
+<li><strong>Trust matters:</strong> these are community uploads. Prefer known-good publishers (huihui-ai, orcarouter, Blackfrost-AI) and check download counts + comments.</li>
+</ul>
+
+<div class="callout-warn">
+<strong>Honest warning:</strong> "uncensored" files are repackaged fine-tunes, not different weights. They will happily write anything — including harmful content — with no refusal. Use them for creative freedom in sandboxed environments; don't point them at your infra or personal data.
+</div>
+
+<h3>Speed and architecture words</h3>
+<ul>
+<li><strong>flash / DFlash2:</strong> FlashAttention or flash-style tuned variants — faster attention and longer contexts. (Not a quality upgrade.)</li>
+<li><strong>MoE naming:</strong> <code>30B-A3B</code> = 30B total parameters, only ~3B <em>active</em> per token. Runs at the speed of a small model with more knowledge; <code>A22B</code> = 22B active, etc.</li>
+<li><strong>Distill:</strong> a smaller student model trained on a bigger teacher's outputs (e.g. <code>Fable-Distill</code>).</li>
+<li><strong>Guard:</strong> safety classifiers (Qwen3Guard) — not chat models.</li>
+<li><strong>TTS / ASR / Embedding / Reranker:</strong> the Qwen3.8 family includes speech, embedding, and reranking models — totally different tasks from chat; don't confuse their files with the LLM.</li>
+<li><strong>Merge names (slerp, TIES, DARE):</strong> community <em>model merges</em> — weight-space recipes blending several models. Can be brilliant or broken; trust the benchmarks, not the name.</li>
+<li><strong>RP / story / NSFW:</strong> roleplay and creative-writing fine-tunes; usually derived from the uncensored family.</li>
+<li><strong>Laser:</strong> sparsity-pruned (half the weights removed) — faster, some quality loss.</li>
+<li><strong>Turbo / Mini / Nano / Lite:</strong> size or speed tiers.</li>
+</ul>
+
+<h3>How fine-tunes change ability</h3>
+<p>Quantization changes <em>precision</em>; fine-tunes change <em>behavior</em>. A coder model writes better code but may lose general chat polish. An abliterated model writes freely but refuses nothing. A thinking model reasons more deeply but answers more slowly. When you see a suffix you don't know, ask three questions: <strong>Who made it? What did they change? Does the model card show benchmarks?</strong> If the answer to any is unclear, default to the official instruct release.</p>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>&#129504; Knowledge Check</h3>
+  <p class="quiz-q">1. What does 'abliterated' mean?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A quant method</button>
+    <button class="quiz-btn" data-opt="b">A fine-tune that removes the model's refusal behavior</button>
+    <button class="quiz-btn" data-opt="c">A context-extension technique</button>
+    <button class="quiz-btn" data-opt="d">A multi-token prediction module</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. 30B-A3B means:</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">30B params, 3B active per token (Mixture of Experts)</button>
+    <button class="quiz-btn" data-opt="b">30GB at 3-bit</button>
+    <button class="quiz-btn" data-opt="c">30B context, A3B attention</button>
+    <button class="quiz-btn" data-opt="d">A 3B model trained on 30B tokens</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. In GGUF form, a vision-language model needs:</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A separate mmproj projector file</button>
+    <button class="quiz-btn" data-opt="b">A bigger GPU</button>
+    <button class="quiz-btn" data-opt="c">The thinking module</button>
+    <button class="quiz-btn" data-opt="d">Nothing extra</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/Qwen/Qwen3.8-27B" target="_blank" rel="noopener">Qwen3.8-27B official card (thinking, vision, MTP details)</a></li>
+  <li><a href="https://huggingface.co/huihui-ai" target="_blank" rel="noopener">huihui-ai abliterated Qwen models</a></li>
+  <li><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" target="_blank" rel="noopener">unsloth Qwen3.8-27B GGUF (MTP files)</a></li>
+</ul>
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">&#10004; Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">&#10008; The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

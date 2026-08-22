@@ -1,0 +1,4 @@
+{
+  "title": "Lesson 5: Beyond GGUF: The Format Zoo",
+  "description": "AWQ, GPTQ, EXL2/EXL3, MLX, bitsandbytes NF4, FP8, NVFP4, QAT, AQLM, HQQ, EETQ, Marlin."
+}
