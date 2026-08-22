@@ -61,11 +61,26 @@
 
 <p><strong>flash:</strong> on the format side, <code>flash</code> usually means <span class="glossary-term">FlashAttention</span> kernels (faster attention, longer contexts, less memory). The famous <code>Qwen2.5-7B-Instruct-1M-flash</code> was a FlashAttention build that fit 1M-token context into a GPU. There are also fine-tunes and model families named "Flash" — check whether the word describes <em>attention kernels</em> or <em>a tuned variant</em>.</p>
 
+<h3>MLX vs GGUF: the Mac question</h3>
+<p>If you're on Apple Silicon this is the fork in the road, so it deserves its own showdown. <span class="glossary-term">MLX</span> is Apple's machine-learning framework — native Metal kernels, built around the Mac's unified memory — while GGUF is the universal llama.cpp container that also runs on Macs (llama.cpp has a mature Metal backend). Both will run the same model on the same Mac; the differences are practical:</p>
+
+<table>
+<tr><th></th><th>GGUF (llama.cpp)</th><th>MLX</th></tr>
+<tr><td><strong>Runs on</strong></td><td>CPU, NVIDIA, AMD, Intel, Apple</td><td>Apple Silicon only</td></tr>
+<tr><td><strong>File shape</strong></td><td>One self-contained <code>.gguf</code> file</td><td>A folder of safetensors shards + config</td></tr>
+<tr><td><strong>Quant ladder</strong></td><td>Q4_K_M, Q6_K, IQ, UD, imatrix — huge choice</td><td>4-bit and 8-bit (plus some 3/6-bit community work)</td></tr>
+<tr><td><strong>Speed on Mac</strong></td><td>Fast (Metal, mature)</td><td>Usually faster — native Metal kernels, no conversion layer</td></tr>
+<tr><td><strong>Tooling</strong></td><td>Ollama, LM Studio, llama.cpp, koboldcpp; MTP support</td><td><code>mlx_lm</code> (CLI + OpenAI-compatible server), built-in LoRA/QLoRA fine-tuning</td></tr>
+<tr><td><strong>Pick when</strong></td><td>You use Ollama/LM Studio, want a specific quant (UD/imatrix/IQ), or also run the model on non-Mac hardware</td><td>You're all-in on Apple Silicon and want maximum native speed or on-Mac fine-tuning</td></tr>
+</table>
+
+<p>Quality at the same bit level is comparable — MLX 4-bit is roughly Q4-class, MLX 8-bit is near-lossless. The honest guidance: <strong>on a Mac, MLX is the fastest native path; GGUF is the most compatible path.</strong> You can't go wrong either way, and you can switch formats without switching models — both live on Hugging Face (official/unsloth repos for GGUF, <code>mlx-community</code> for MLX). One real-world tiebreaker: if you want Ollama's one-command workflow or a specific GGUF quant (like <code>UD-Q4_K_M</code>), go GGUF; if you want every last token per second out of your M-series chip, go MLX.</p>
+
 <h3>safetensors vs gguf</h3>
 <p>The official <code>Qwen/Qwen3.8-27B</code> repo ships <span class="glossary-term">safetensors</span> — the raw, unquantized weights (fp8 in the <code>-FP8</code> repo, bf16 in the main one) that transformers/vLLM load directly. GGUF, EXL3, MLX, AWQ etc. are downstream conversions. As a rule: <strong>safetensors = framework-native; GGUF = llama.cpp family; pick by your software, not by prestige.</strong></p>
 
 <div class="callout-success">
-<strong>Cheat sheet:</strong> Ollama/LM Studio/llama.cpp → GGUF. LM Studio can also load AWQ. vLLM/TGI serving → AWQ, GPTQ, FP8, NVFP4, QAT. Mac → MLX. ExLlama users → EXL3. transformers scripts / fine-tuning → bnb NF4 or GPTQ.
+<strong>Cheat sheet:</strong> Ollama/LM Studio/llama.cpp → GGUF. LM Studio can also load AWQ. vLLM/TGI serving → AWQ, GPTQ, FP8, NVFP4, QAT. Mac → MLX for max speed, GGUF for max compatibility (see MLX vs GGUF above). ExLlama users → EXL3. transformers scripts / fine-tuning → bnb NF4 or GPTQ.
 </div>
 
 <div class="quiz-block" id="quiz-5">
@@ -94,6 +109,14 @@
     <button class="quiz-btn" data-opt="d">GPTQ-Int4</button>
   </div>
   <div class="quiz-feedback" data-q="2"></div>
+  <p class="quiz-q">4. On a Mac, when should you pick GGUF over MLX?</p>
+  <div class="quiz-opts" data-q="3" data-answer="b">
+    <button class="quiz-btn" data-opt="a">When you want maximum native Metal speed</button>
+    <button class="quiz-btn" data-opt="b">When you use Ollama/LM Studio or want a specific quant like UD-Q4_K_M</button>
+    <button class="quiz-btn" data-opt="c">When running on NVIDIA GPUs</button>
+    <button class="quiz-btn" data-opt="d">When you need FP4 tensor cores</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
 </div>
 <h3>Further Reading</h3>
 <ul>
