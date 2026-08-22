@@ -45,6 +45,33 @@
 <h3>Step 2 — Budget memory: file + context + overhead</h3>
 <p>VRAM needed ≈ <strong>model file + KV cache + ~1-2 GB overhead</strong>. Rule of thumb: multiply the file size by 1.15-1.35 for a safe context budget. Qwen3.8-27B's hybrid architecture (Gated DeltaNet linear attention) keeps its KV cache unusually small, but long contexts and thinking-mode outputs still eat memory. Bigger context = more KV, always.</p>
 
+<h3>Context window: the silent VRAM eater</h3>
+<p>The <span class="glossary-term">context window</span> is the maximum number of tokens the model can see at once — Qwen3.8-27B ships with 262,144 tokens natively, extensible to ~1M. But context is not free: every token of history must be stored in the <span class="glossary-term">KV cache</span> (the key/value activations attention needs), and that cache lives in VRAM for the whole session.</p>
+
+<p><strong>The math:</strong> KV ≈ 2 (K and V) × attention layers × KV heads × head dim × 2 bytes, per token. Qwen3.8-27B is a hybrid — only 16 of its 64 layers use classic attention (the rest are linear-attention DeltaNet layers with a fixed-size state, no growing cache). That works out to ~64 KB per token, about <em>4× cheaper</em> than a same-size pure transformer:</p>
+
+<table>
+<tr><th>Context (tokens)</th><th>Qwen3.8-27B KV (hybrid)</th><th>Pure transformer, same size</th><th>Feels like</th></tr>
+<tr><td>8K</td><td>0.5 GB</td><td>2.1 GB</td><td>Chat, documents</td></tr>
+<tr><td>32K</td><td>2.1 GB</td><td>8.4 GB</td><td>Long code, big docs</td></tr>
+<tr><td>128K</td><td>8.4 GB</td><td>33.6 GB</td><td>Book-length context</td></tr>
+<tr><td>262K</td><td>16.8 GB</td><td>67 GB</td><td>Native max</td></tr>
+</table>
+
+<p><strong>What this means when choosing:</strong></p>
+<ul>
+<li><strong>Match context to your longest real task</strong> — not the model's maximum. Paying KV for 128K you never use is wasted VRAM that could have bought a higher quant.</li>
+<li><strong>Cap it in your runtime:</strong> set <code>num_ctx</code> in Ollama or <code>-c</code> in llama.cpp to what you actually need — many tools default to 4K-8K context even when the model supports more, which is often exactly right.</li>
+<li><strong>Context is a dial you trade against quant:</strong> same GPU, same model — want 128K context? Drop Q4_K_M to Q4_K_S or an IQ quant to free the 6-8 GB. Want max quality? Trim context instead.</li>
+<li><strong>Thinking mode and agents burn context fast:</strong> reasoning tokens count against the same budget; Qwen recommends a 262K reasoning allowance inside the 1M window for agentic work. Long-horizon tasks are the #1 reason to buy more context.</li>
+<li><strong>Native beats extended:</strong> models can stretch beyond native context via RoPE scaling (YaRN/NTK — the <code>-1M</code> variants), but quality degrades as you stretch. Prefer a model whose <em>native</em> context covers the task.</li>
+<li><strong>KV can be quantized too:</strong> llama.cpp can store the cache at 8-bit or 4-bit (<code>-ctk q8_0 -ctv q4_0</code>), roughly halving or quartering the numbers above for a small quality cost — handy when context is the bottleneck.</li>
+</ul>
+
+<div class="callout">
+<strong>The trade triangle:</strong> for a fixed GPU you pick two of {model size, quant level, context length} — the third is determined by math. Most people should fix model size (biggest that fits), then split the remaining VRAM between quant and context according to what the task actually needs.
+</div>
+
 <h3>Step 3 — Pick the biggest model that fits, then the quant</h3>
 <table>
 <tr><th>Your hardware</th><th>Qwen3.8-27B recommendation</th><th>Or step up/down</th></tr>
@@ -130,6 +157,22 @@
     <button class="quiz-btn" data-opt="d">Blame the tokenizer</button>
   </div>
   <div class="quiz-feedback" data-q="2"></div>
+  <p class="quiz-q">4. The KV cache (context memory) for a 27B hybrid model at 32K context is roughly:</p>
+  <div class="quiz-opts" data-q="3" data-answer="b">
+    <button class="quiz-btn" data-opt="a">0.5 GB</button>
+    <button class="quiz-btn" data-opt="b">2 GB</button>
+    <button class="quiz-btn" data-opt="c">8 GB</button>
+    <button class="quiz-btn" data-opt="d">16 GB</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+  <p class="quiz-q">5. You want 128K context on a 24 GB GPU with a 27B. The smart move:</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Keep Q4_K_M and hope it fits</button>
+    <button class="quiz-btn" data-opt="b">Drop to a lower quant (Q4_K_S / IQ) to free KV room, or trim context</button>
+    <button class="quiz-btn" data-opt="c">Buy 1M context anyway — bigger is always better</button>
+    <button class="quiz-btn" data-opt="d">Use the bf16 weights</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
 </div>
 <h3>Further Reading</h3>
 <ul>
