@@ -1,0 +1,164 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Copilot Studio — Grounding, Guardrails &amp; Analytics in a Low-Code Platform</h2>
+
+<p>Microsoft Copilot Studio is where the same framework meets a managed, low-code platform: you design conversational <span class="glossary-term">topics</span>, point the copilot at knowledge sources, and configure guardrails in settings rather than code. The eval mindset still applies — you just implement it with platform tools: grounded knowledge, built-in moderation, analytics, and environment-based ALM instead of pytest and CI.</p>
+
+<h3>How It Works: Generative Orchestration</h3>
+<p>When a user sends a message, Copilot Studio's <strong>generative orchestration</strong> decides what happens: if the message matches a topic's trigger phrases (with confidence above a threshold), that topic's dialog flow runs; otherwise the copilot falls back to <strong>generative answers</strong> — grounded in your knowledge sources and answered by the underlying model. Topics give you deterministic control (forms, flows, API calls); generative answers give you open-ended coverage. Your job is to define the boundary between them deliberately.</p>
+
+<table>
+  <tr>
+    <th>Mechanism</th>
+    <th>When it fires</th>
+    <th>You control</th>
+  </tr>
+  <tr>
+    <td><strong>Topics</strong></td>
+    <td>Trigger phrases match with sufficient confidence</td>
+    <td>Trigger phrases, conversation flow, variables, connected actions (Power Automate, connectors, custom APIs)</td>
+  </tr>
+  <tr>
+    <td><strong>Generative answers</strong></td>
+    <td>No topic wins; orchestration falls back</td>
+    <td>Which knowledge sources are attached, the "generate answers" settings, whether off-topic is allowed</td>
+  </tr>
+</table>
+
+<h3>Grounding: Knowledge Sources</h3>
+<p>Grounding is the single biggest quality lever in Copilot Studio, because <em>the model can only be as good as what it's allowed to say</em>. Knowledge sources attach at the generative-answers level:</p>
+<ul>
+  <li><strong>SharePoint and OneDrive</strong> — point at specific sites/folders; permissions are respected at runtime (users only get grounded content they can access).</li>
+  <li><strong>Dataverse</strong> — structured rows as grounding data, with table-level security.</li>
+  <li><strong>Public websites</strong> — crawl by URL (use only sites you control or trust).</li>
+  <li><strong>Uploaded files</strong> — PDFs, Word docs, and other documents (great for policy and FAQ content).</li>
+  <li><strong>Azure AI Search</strong> — bring your own vector/index pipeline for large or custom corpora.</li>
+  <li><strong>Connectors</strong> — ServiceNow, Salesforce, and other systems as knowledge or as actions.</li>
+</ul>
+
+<div class="callout">
+  <strong>Grounding rule:</strong> knowledge quality = eval dataset quality in this platform. Before you tune anything else, curate the sources: remove stale docs, fix contradictions (they produce flip-flopping answers), and keep the corpus scoped to what the copilot is allowed to discuss. Then use the "test again" loop in the builder against real questions.
+</div>
+
+<h3>Guardrails in the Platform</h3>
+<p>Copilot Studio ships an unusually complete guardrail stack as configuration — turn it on deliberately:</p>
+<ul>
+  <li><strong>Content moderation (Azure AI Content Safety)</strong> — moderates generative responses for harmful content categories; configurable per copilot.</li>
+  <li><strong>Prompt injection protection</strong> — blocks attempts to override system instructions in user input (your LLM01 defense).</li>
+  <li><strong>Sensitivity / scope settings</strong> — restrict the copilot's topic coverage (allowlists of topics and entities it may discuss; everything else escalates).</li>
+  <li><strong>PII and sensitive-data handling</strong> — settings that control whether personal data is collected/processed and how it's treated in transcripts.</li>
+  <li><strong>Conversation limits</strong> — session timeouts, message caps, and rate limits (your LLM10 defense against runaway consumption).</li>
+  <li><strong>Escalation to human agents</strong> — the ultimate guardrail: handoff topics route to agents (e.g. via Omnichannel), so the copilot fails safely instead of improvising.</li>
+</ul>
+<p>Test these like anything else: your adversarial bucket (Lesson 3) should be run through the Test pane — injections must be blocked, off-topic must escalate, legitimate queries must <em>not</em> be over-moderated (the false-positive rule from Lesson 5).</p>
+
+<h3>Evaluation &amp; Analytics in the Platform</h3>
+<ul>
+  <li><strong>Test pane</strong> — the builder's built-in conversation tester; also where you can rerun and inspect what topic/knowledge was used for each turn. This is your "playground anecdote" tool — fine for iteration, not evidence.</li>
+  <li><strong>Dedicated Evaluation area</strong> — Copilot Studio's agent-evaluation tooling: create a test set (single-response or conversational), choose evaluation methods, run the evaluation, and review per-question quality signals before you publish. Evaluations can even be automated through the Power Platform API — the platform-native version of the CI gate from Lesson 9. This is your dataset → experiment loop, in-platform.</li>
+  <li><strong>Analytics</strong> — the Analytics tab tracks volume, resolution rate, escalation rate, CSAT, session and topic-level stats, and where users drop off. It's your production monitoring.</li>
+  <li><strong>Conversation transcripts</strong> — full transcripts land in Dataverse; export and mine them for failure patterns, exactly like the annotation-queue loop in Lesson 6. Bad real conversations become new test questions.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>Platform eval loop:</strong> mine transcripts for failures → add them to your test question set → run the Evaluation tool → fix knowledge/topics → re-run → publish → watch Analytics for resolution rate and escalation rate. Same loop as everywhere else, different tools.
+</div>
+
+<h3>Shipping: ALM and Environments</h3>
+<p>Production rollout is solution-based: copilots live in Power Platform solutions inside environments. The standard pattern is dev → test → prod environments with the solution promoted through them (export/import or Power Platform pipelines). Publishing is explicit — you choose which version goes live — and channels (Teams, web, phone, etc.) are attached at publish time. This gives you the staging gate that code teams get from CI: nothing touches users until it's been through test, evaluated, and published.</p>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> the most common Copilot Studio failure is a knowledge source going stale or a topic going out of sync with the published version. Treat knowledge updates and topic edits as <em>releases</em>: evaluate, then publish, then watch Analytics. Never "just tweak" in production.
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does generative orchestration do when no topic's trigger phrases match?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">It falls back to generative answers grounded in the configured knowledge sources</button>
+    <button class="quiz-btn" data-opt="b">It errors out and asks the user to rephrase</button>
+    <button class="quiz-btn" data-opt="c">It automatically creates a new topic</button>
+    <button class="quiz-btn" data-opt="d">It switches to a different model</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which platform guardrail maps directly to the OWASP prompt-injection defense (LLM01)?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">CSAT surveys</button>
+    <button class="quiz-btn" data-opt="b">Trigger phrase tuning</button>
+    <button class="quiz-btn" data-opt="c">Prompt injection protection (plus content moderation via Azure AI Content Safety)</button>
+    <button class="quiz-btn" data-opt="d">Solution export/import</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Where does the "production feedback becomes test data" loop happen in Copilot Studio?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Nowhere — the platform can't do that</button>
+    <button class="quiz-btn" data-opt="b">In the Test pane only</button>
+    <button class="quiz-btn" data-opt="c">By copying topics manually</button>
+    <button class="quiz-btn" data-opt="d">Mine conversation transcripts from Dataverse for failures, add them to your test questions, and re-run the Evaluation tool</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/" target="_blank" rel="noopener">Microsoft Copilot Studio documentation</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/knowledge-copilot-studio" target="_blank" rel="noopener">Copilot Studio: knowledge sources overview</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-agent-evaluation-intro" target="_blank" rel="noopener">Copilot Studio: evaluate your agent</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/responsible-ai-overview" target="_blank" rel="noopener">Copilot Studio: Responsible AI overview</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

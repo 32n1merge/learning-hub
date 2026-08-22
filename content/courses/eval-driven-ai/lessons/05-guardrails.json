@@ -1,0 +1,5 @@
+{
+  "title": "Guardrails: The Runtime Safety Layer",
+  "description": "The OWASP LLM threat model, guardrails by pipeline position (input, orchestration, output, action gate), the technology landscape (Azure AI Content Safety, NeMo, Guardrails AI, Llama Guard), and how guardrails and evals work together.",
+  "readingTime": "10 min"
+}

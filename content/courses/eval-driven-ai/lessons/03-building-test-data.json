@@ -1,0 +1,5 @@
+{
+  "title": "Building Test Data: Your Golden Dataset Is Your Source Code",
+  "description": "The four-bucket taxonomy (happy path, edge cases, failure modes, adversarial), sourcing real vs synthetic data, reference answers, dataset hygiene, versioning, and avoiding contamination.",
+  "readingTime": "10 min"
+}

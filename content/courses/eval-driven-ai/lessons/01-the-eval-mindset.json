@@ -1,0 +1,5 @@
+{
+  "title": "The Eval Mindset: Why You Can't Ship Without a Measurement Loop",
+  "description": "Why LLM applications break the traditional testing model, the 'evals are regression tests' mental model, the eval-driven development loop, and the core vocabulary (dataset, run, evaluator, score, gate).",
+  "readingTime": "9 min"
+}

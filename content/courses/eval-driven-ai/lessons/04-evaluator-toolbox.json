@@ -1,0 +1,5 @@
+{
+  "title": "The Evaluator Toolbox: Scoring Techniques",
+  "description": "The instrument hierarchy from exact match to LLM-as-judge, documented judge biases and mitigations, RAGAS pipeline metrics, and how to aggregate per-example scores into a gate.",
+  "readingTime": "10 min"
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Model Selection: Choosing the Right Brain on Evidence",
+  "description": "What public benchmarks actually measure and where they lie, the quality/latency/cost triangle, the hidden axes (structured output, tool calling, injection resistance, portability), and the evaluate-before-you-commit workflow.",
+  "readingTime": "9 min"
+}

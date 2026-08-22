@@ -1,0 +1,199 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: LangGraph — Testing Your Agent, Not Just Your Prompts</h2>
+
+<p>LangGraph is a framework for building stateful, multi-step agents: a graph of nodes (each a function that transforms state) with conditional edges, tool calls, loops, memory via a <span class="glossary-term">checkpointer</span>, and human-in-the-loop interruptions. Testing an agent is harder than testing a chain, because the failure surface is bigger: not just "wrong answer" but wrong tool calls, infinite loops, lost state, and unapproved side effects. This lesson is the testing discipline for graphs — which you then feed straight into the LangSmith eval loop from Lesson 6.</p>
+
+<h3>A Minimal Graph to Talk About</h3>
+<pre><code>from typing import TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
+
+class AgentState(TypedDict):
+    question: str
+    retrieved: list
+    answer: str
+    tool_calls: list
+
+def retrieve(state: AgentState) -&gt; dict:
+    docs = vector_store.search(state["question"], top_k=3)
+    return {"retrieved": docs, "tool_calls": state.get("tool_calls", []) + ["retrieve"]}
+
+def answer(state: AgentState) -&gt; dict:
+    return {"answer": generator.invoke(state["question"], context=state["retrieved"])}
+
+builder = StateGraph(AgentState)
+builder.add_node("retrieve", retrieve)
+builder.add_node("answer", answer)
+builder.add_edge(START, "retrieve")
+builder.add_edge("retrieve", "answer")
+builder.add_edge("answer", END)
+
+app = builder.compile(checkpointer=MemorySaver())</code></pre>
+
+<h3>Level 1 — Unit Tests: Nodes in Isolation</h3>
+<p>Every node is a plain function: state in, state-delta out. Test it directly with a crafted state — no graph, no model cost beyond the node itself:</p>
+<pre><code>def test_retrieve_returns_top_k():
+    result = retrieve({"question": "how to reset password?", "tool_calls": []})
+    assert len(result["retrieved"]) == 3
+    assert result["tool_calls"] == ["retrieve"]
+
+def test_answer_is_grounded():
+    state = {"question": "what is the refund policy?",
+             "retrieved": [fake_policy_doc], "tool_calls": []}
+    result = answer(state)
+    # your rubric check: every claim in result["answer"] appears in fake_policy_doc
+    assert claims_supported_by(result["answer"], fake_policy_doc)</code></pre>
+<p>Node unit tests catch the deterministic bugs (wrong keys, missing fields, bad plumbing) fast, without burning tokens on the whole graph.</p>
+
+<h3>Level 2 — Integration Tests: The Whole Graph</h3>
+<pre><code>def test_happy_path():
+    final = app.invoke({"question": "how to reset password?", "tool_calls": []})
+    assert final["tool_calls"] == ["retrieve"]      # expected tool sequence
+    assert final["answer"]                           # produced an answer
+    assert "settings" in final["answer"].lower()
+
+def test_loops_terminate():
+    # graph with a retry loop: assert max iterations not exceeded
+    final = app.invoke({"question": "search again and again..."}, 
+                       config={"recursion_limit": 10})</code></pre>
+<p>Key integration assertions: final state shape, the <em>sequence</em> of tool calls, no crash, termination within the recursion limit, and for RAG agents, that the answer cites only retrieved context.</p>
+
+<h3>Level 3 — Threads, Replay &amp; Time Travel</h3>
+<p>The checkpointer stores every state transition per <code>thread_id</code>, which unlocks the agent-specific superpowers:</p>
+<pre><code>config = {"configurable": {"thread_id": "user-42"}}
+
+# Threads: multi-turn conversations with memory
+app.invoke({"question": "hi"}, config)
+app.invoke({"question": "what did I just ask?"}, config)   # remembers
+
+# Inspect current state
+snapshot = app.get_state(config)
+
+# Time travel: walk history
+history = [s for s in app.get_state_history(config)]
+
+# Fork: rewind to a checkpoint, patch state, replay forward
+app.update_state(config, {"answer": None})
+final = app.invoke(None, config)   # resumes from the patched checkpoint</code></pre>
+<p>Testing applications: replay a <em>real production thread</em> (fetched from your trace store) against a new graph version and diff the outcomes — the ultimate regression test for memory bugs. Fork+patch lets you test "what would the agent have done if the tool had returned X" without rerunning the world.</p>
+
+<h3>Level 4 — Human-in-the-Loop &amp; Guardrail Nodes</h3>
+<p>High-stakes agents interrupt for approval. Test the interruption contract like any other state machine:</p>
+<pre><code># Graph with interrupt_before=["send_email"] and a Command(resume=...) resume path
+def test_approval_required():
+    result = app.invoke({"question": "send the email"}, config, interrupt_before=["send_email"])
+    assert result is None or "send_email" not in result  # halted before side effect
+
+def test_approval_granted_resumes():
+    app.invoke(None, config, Command(resume="approved"))
+    final = app.get_state(config)
+    assert final.values["email_sent"] is True</code></pre>
+<p>Guardrails are nodes too: a <code>validate_tool_call</code> node between the model and the tools, a <code>check_permissions</code> node before any action, an input-scrub node at the start. They get the same unit/integration treatment — assert the injection input is blocked, the legit input passes, and the permission check rejects out-of-scope tools (Lesson 5's two-layer rule applied to code).</p>
+
+<h3>Level 5 — The LangSmith Loop for Agents</h3>
+<p>The graph is just a callable — it plugs directly into the eval machinery from Lesson 6:</p>
+<pre><code>results = evaluate(
+    target=lambda inputs: app.invoke(
+        {"question": inputs["question"]},
+        config={"configurable": {"thread_id": "eval-fresh"}},
+    ),
+    data="agent-golden-v1",
+    evaluators=[tool_sequence_check, rubric_judge, groundedness],
+)</code></pre>
+<p>Tracing captures every node, tool call, and token along the way, so when a regression appears you click into the exact failing step. Dataset examples for agents should record the <em>expected tool sequence</em> and expected final answer — because the sequence is usually where agents fail first.</p>
+
+<div class="callout">
+  <strong>Testing priority for agents:</strong> (1) tool-call correctness — did it call the right tool with the right args? (2) termination and loop control; (3) state integrity across turns; (4) approval/side-effect gating; (5) answer quality. Fix in that order — a beautiful answer from a graph that emailed the wrong person is a failure, not a success.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Why unit-test nodes in isolation before integration-testing the graph?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Node tests are required by LangGraph's compiler</button>
+    <button class="quiz-btn" data-opt="b">Nodes are plain functions, so deterministic bugs (plumbing, keys, shapes) get caught cheaply without burning tokens on the whole graph</button>
+    <button class="quiz-btn" data-opt="c">Integration tests are impossible for graphs</button>
+    <button class="quiz-btn" data-opt="d">It makes the test suite look more impressive</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What does the checkpointer's time-travel capability enable?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Faster model inference</button>
+    <button class="quiz-btn" data-opt="b">Automatic prompt optimization</button>
+    <button class="quiz-btn" data-opt="c">Rewinding to a past state, patching it, and replaying forward — e.g. testing a real production thread against a new graph version</button>
+    <button class="quiz-btn" data-opt="d">Deleting old conversations</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. For agent applications, what should be tested BEFORE answer quality?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Token cost</button>
+    <button class="quiz-btn" data-opt="b">UI styling</button>
+    <button class="quiz-btn" data-opt="c">The model's MMLU score</button>
+    <button class="quiz-btn" data-opt="d">Tool-call correctness, termination, state integrity, and approval gating</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.langchain.com/langgraph" target="_blank" rel="noopener">LangGraph documentation</a></li>
+  <li><a href="https://docs.langchain.com/oss/python/langgraph/use-time-travel" target="_blank" rel="noopener">LangGraph: time travel (replay, fork, resume)</a></li>
+  <li><a href="https://docs.smith.langchain.com/evaluation" target="_blank" rel="noopener">LangSmith evaluation docs (agents as targets)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

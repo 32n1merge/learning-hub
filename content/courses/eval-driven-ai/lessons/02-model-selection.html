@@ -1,0 +1,195 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: Model Selection — Choosing the Right Brain on Evidence</h2>
+
+<p>Every week a new model drops with a chart showing it winning some leaderboard, and teams rewrite their stack in a panic. Model selection should not be a vibe — it should be a <span class="glossary-term">measured decision</span> driven by the same eval loop from Lesson 1: run candidates against <em>your</em> data, score them with <em>your</em> rubric, and compare on <em>your</em> cost and latency budget. This lesson gives you the framework to do that.</p>
+
+<h3>Benchmarks: What They Measure and Where They Lie</h3>
+<p>Public benchmarks are useful for one thing: a rough, up-to-date sense of model capability order. They are useless for telling you which model is best <em>for your application</em>, because your application is not MMLU. Know what each benchmark actually measures:</p>
+
+<table>
+  <tr>
+    <th>Benchmark</th>
+    <th>What it measures</th>
+    <th>Blind spot</th>
+  </tr>
+  <tr>
+    <td><strong>MMLU / MMLU-Pro</strong></td>
+    <td>Broad knowledge + reasoning across 57 subjects (multiple choice)</td>
+    <td>Multiple-choice format favors models tuned for it; doesn't test free-form generation, tool use, or instruction following under ambiguity</td>
+  </tr>
+  <tr>
+    <td><strong>GPQA</strong></td>
+    <td>Graduate-level science questions (PhD-expert level)</td>
+    <td>Narrow; not representative of most business workloads</td>
+  </tr>
+  <tr>
+    <td><strong>HumanEval / MBPP</strong></td>
+    <td>Code generation from docstrings</td>
+    <td>Short, self-contained functions; misses real-world multi-file engineering and debugging</td>
+  </tr>
+  <tr>
+    <td><strong>SWE-bench</strong></td>
+    <td>Real GitHub issues → patch generation (agentic coding)</td>
+    <td>Tests the whole agent pipeline, not the raw model; setup-heavy</td>
+  </tr>
+  <tr>
+    <td><strong>LMArena (Chatbot Arena)</strong></td>
+    <td>Human preference via blind pairwise votes, Elo-ranked</td>
+    <td>Measures general chat preference, not task correctness; favors style and length</td>
+  </tr>
+  <tr>
+    <td><strong>MT-Bench</strong></td>
+    <td>Multi-turn instruction-following quality, judged by GPT-4</td>
+    <td>Judge-model bias (see Lesson 4); generic tasks</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Rule of thumb:</strong> Use leaderboards to build a <em>shortlist</em> (top 3–5 candidates for your task class), then let your own golden dataset pick the winner. Never let a leaderboard pick the winner directly.
+</div>
+
+<h3>The Selection Triangle: Quality, Latency, Cost</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="500" height="240" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <polygon points="260,60 430,200 90,200" fill="none" stroke="var(--color-accent)" stroke-width="2"/>
+    <circle cx="260" cy="60" r="5" fill="var(--color-accent)"/>
+    <circle cx="430" cy="200" r="5" fill="var(--color-accent)"/>
+    <circle cx="90" cy="200" r="5" fill="var(--color-accent)"/>
+    <text x="260" y="42" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="bold">Quality</text>
+    <text x="452" y="204" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="bold">Latency</text>
+    <text x="55" y="204" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="bold">Cost</text>
+    <text x="260" y="225" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11">Bigger models sit near Quality; smaller models trade down to win Cost/Latency.</text>
+  </svg>
+</div>
+
+<p>Frontier models (GPT-5-class, Claude-opus-class, Gemini-class) win on quality but cost more per token and respond slower. Compact models (fast variants, 7–70B open models, distilled models) are dramatically cheaper and faster, and with the right prompting, retrieval, and guardrails they often clear the quality bar for narrow tasks. The job of your eval harness is to find out <em>where the bar sits</em> and which candidate clears it at the best price.</p>
+
+<h3>Other Axes That Matter as Much as Score</h3>
+<ul>
+  <li><strong>Structured output reliability</strong> — how often the model returns valid JSON/schema you asked for. For agentic systems this can matter more than raw reasoning (malformed tool calls kill automation).</li>
+  <li><strong>Tool calling / function calling</strong> — correctness of argument selection, not just the model's prose.</li>
+  <li><strong>Context window and long-context behavior</strong> — advertised size vs. actual retrieval of facts buried at position 90k ("lost in the middle").</li>
+  <li><strong>Instruction following under system prompts</strong> — obedience to formatting rules and guardrail instructions, and resistance to prompt injection (a small, locked-down model can beat a frontier model on injection resistance).</li>
+  <li><strong>Portability / vendor strategy</strong> — can you swap providers without rewriting? A multi-provider wrapper (LangChain, OpenRouter, Azure OpenAI) makes the model a config value, not a dependency.</li>
+  <li><strong>Multilingual and domain coverage</strong> — benchmarks are English-heavy; if your users aren't, you need your own data to know.</li>
+</ul>
+
+<h3>The Evaluate-Before-You-Commit Workflow</h3>
+<p>Concretely, model selection is just your eval loop applied to candidates:</p>
+<pre><code># Pseudocode — the real thing in Lesson 6 (LangSmith)
+for model in shortlist:
+    score = run_evals(dataset=golden_set, evaluator=rubric, model=model)
+    print(model, score, latency_p50, cost_per_1k_queries)
+# Winner = best score that fits your budget
+# Runner-up = your fallback for failover routing</code></pre>
+
+<ol>
+  <li><strong>Build a small golden set first</strong> (Lesson 3) — even 30–50 representative examples beats zero.</li>
+  <li><strong>Run every candidate</strong> through the same dataset with the same rubric and temperature.</li>
+  <li><strong>Record the full matrix</strong>: score, p50/p95 latency, cost per query, structured-output failure rate.</li>
+  <li><strong>Pick a primary and a fallback</strong> — the fallback matters for failover and for A/B testing later.</li>
+  <li><strong>Re-run the comparison when the shortlist changes</strong> — model releases are a recurring event, so make the comparison script a standing artifact (this is literally a cron job or a CI job).</li>
+</ol>
+
+<div class="callout-success">
+  <strong>Cheap trick:</strong> run your <em>hardest 10 examples</em> first. If a model can't clear your adversarial set, it doesn't matter how good it looks on MMLU — save the tokens and drop it before the full run.
+</div>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> benchmarking at temperature 0 with clean inputs tells you nothing about real-world variance. Sample a few runs per example (e.g. 3–5) so you can measure stability, not just average quality. A model that's great on average but flips between great and terrible is a production hazard.
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the correct role of public leaderboards in model selection?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They rank models for your exact application, so pick the top one</button>
+    <button class="quiz-btn" data-opt="b">They build a shortlist of candidates, which you then evaluate on your own golden dataset</button>
+    <button class="quiz-btn" data-opt="c">They are marketing material and should be ignored entirely</button>
+    <button class="quiz-btn" data-opt="d">They only matter for coding models</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which capability can matter MORE than raw reasoning for agentic applications?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The number of parameters in the model</button>
+    <button class="quiz-btn" data-opt="b">The model's score on GPQA</button>
+    <button class="quiz-btn" data-opt="c">Structured output and tool-calling reliability</button>
+    <button class="quiz-btn" data-opt="d">The color of the model card</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why should you sample multiple runs per eval example instead of a single run?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">LLM outputs are stochastic, so multiple runs reveal stability, not just average quality</button>
+    <button class="quiz-btn" data-opt="b">Because eval tools charge per run and you should maximize spend</button>
+    <button class="quiz-btn" data-opt="c">To give the model more practice at the test set</button>
+    <button class="quiz-btn" data-opt="d">To keep the CI pipeline busy</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://lmarena.ai/" target="_blank" rel="noopener">LMArena (Chatbot Arena) leaderboard</a></li>
+  <li><a href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">MMLU paper (Hendrycks et al.)</a></li>
+  <li><a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</a></li>
+  <li><a href="https://www.swebench.com/" target="_blank" rel="noopener">SWE-bench leaderboard</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

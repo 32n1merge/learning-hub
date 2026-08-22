@@ -1,0 +1,5 @@
+{
+  "title": "The Production Gate: Making Evals a Hard Blocker",
+  "description": "The layered gate stack (quality, safety, operations, security), how to set defensible thresholds from baselines, CI gates as required checks, canary rollout and kill switches, and the maturity ladder from anecdotes to drift gates.",
+  "readingTime": "10 min"
+}

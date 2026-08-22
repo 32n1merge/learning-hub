@@ -1,0 +1,228 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: LangSmith — Datasets, Experiments &amp; Regression Testing</h2>
+
+<p>LangSmith is the closest thing to "CI for LLM apps" that exists today: it traces every run of your application, stores <span class="glossary-term">datasets</span>, runs <span class="glossary-term">experiments</span> (your app against a dataset, scored by evaluators), lets you compare versions side-by-side, and extends into production with online evals and monitoring. This lesson walks the full implementation: from dataset to gated CI job. Everything here works for plain LLM chains, LangChain, and LangGraph apps (Lesson 7) alike.</p>
+
+<h3>The Pieces and How They Fit</h3>
+<table>
+  <tr>
+    <th>Piece</th>
+    <th>What it is</th>
+    <th>Your job</th>
+  </tr>
+  <tr>
+    <td><strong>Tracing</strong></td>
+    <td>Every invocation is recorded: inputs, outputs, latency, tokens, tool calls, model</td>
+    <td>Turn it on (env vars). It's the raw material for everything else.</td>
+  </tr>
+  <tr>
+    <td><strong>Datasets</strong></td>
+    <td>Versioned collections of examples (inputs ± reference outputs) from Lesson 3</td>
+    <td>Create them; keep them versioned and PII-free</td>
+  </tr>
+  <tr>
+    <td><strong>Experiments</strong></td>
+    <td>Running a target (your app/prompt/model) over a dataset with evaluators attached</td>
+    <td>Run one per change; name them so history is readable</td>
+  </tr>
+  <tr>
+    <td><strong>Evaluators</strong></td>
+    <td>Scoring functions from Lesson 4's toolbox</td>
+    <td>Pick cheap-first; write custom ones for domain checks</td>
+  </tr>
+  <tr>
+    <td><strong>Comparison view</strong></td>
+    <td>Side-by-side diff of two experiments on the same dataset</td>
+    <td>The regression test — never skip the baseline</td>
+  </tr>
+  <tr>
+    <td><strong>Online evals / monitoring</strong></td>
+    <td>Evaluators + thresholds attached to production traces</td>
+    <td>Production safety net (Lesson 10)</td>
+  </tr>
+  <tr>
+    <td><strong>Annotation queues</strong></td>
+    <td>Curated queues of traced runs for human review</td>
+    <td>Human loop: turn bad runs into new dataset examples</td>
+  </tr>
+</table>
+
+<h3>Step 1 — Create the Dataset (SDK or UI)</h3>
+<pre><code>from langsmith import Client
+
+client = Client()  # uses LANGCHAIN_API_KEY env var
+
+ds = client.create_dataset(
+    dataset_name="support-golden-v1",
+    description="Support copilot: 40 happy/edge/failure + 10 adversarial"
+)
+client.create_examples(
+    dataset_id=ds.id,
+    inputs=[{"question": "How do I reset my password?"}],
+    outputs=[{"answer": "Go to Settings &gt; Security &gt; Reset password."}],
+    # ... one dict per example; adversarial examples can omit outputs
+)</code></pre>
+<p>You can equally create datasets and paste examples in the UI — the SDK version is what makes it scriptable and CI-friendly.</p>
+
+<h3>Step 2 — Define Evaluators</h3>
+<pre><code>from langsmith.evaluation import evaluate
+from langsmith.schemas import Example, Run
+
+# (a) Deterministic: exact match on a field
+def exact_match(run: Run, example: Example) -&gt; dict:
+    pred = run.outputs.get("answer", "")
+    return {"key": "exact_match", "score": int(pred == example.outputs.get("answer", ""))}
+
+# (b) LLM-as-judge: built-in criteria scorer ("correctness")
+from langsmith.evaluation.evaluators import criteria
+correctness = criteria("correctness")
+
+# (c) Custom judge with your own rubric prompt
+def rubric_judge(run: Run, example: Example) -&gt; dict:
+    # call your judge model with a detailed rubric; return {"key","score","comment"}
+    ...
+
+# (d) Programmatic pipeline check: did the right tool get called?
+def tool_check(run: Run, example: Example) -&gt; dict:
+    called = [c.get("name") for c in run.outputs.get("calls", [])]
+    return {"key": "tool_check", "score": int(example.outputs.get("expected_tool") in called)}</code></pre>
+
+<h3>Step 3 — Run the Experiment</h3>
+<pre><code>results = evaluate(
+    target=my_app,               # any callable: chain.invoke, graph.invoke, plain function
+    data="support-golden-v1",    # dataset name
+    evaluators=[exact_match, correctness, rubric_judge, tool_check],
+    experiment_prefix="prompt-v2",
+)
+summary = results._summary  # aggregate scores</code></pre>
+<p>Each example runs once; every evaluator scores every output; results land in the UI with per-example breakdowns, failure traces, and token/latency stats. Name experiments by change (<code>prompt-v2</code>, <code>model-gpt5-mini</code>) so the history reads like a changelog.</p>
+
+<h3>Step 4 — Regression Testing: Diff Against Baseline</h3>
+<p>In the UI, select two experiments on the same dataset and LangSmith shows a per-example score diff — green/red per row, with the failing traces one click away. Programmatically, fetch both experiments and compute the deltas yourself for CI:</p>
+<pre><code>from langsmith import Client
+client = Client()
+
+def pass_rate(experiment_id: str) -&gt; float:
+    ex = client.read_experiment(experiment_id)
+    scores = [f.get("score") for f in ex.feedback_stats.get("correctness", [])]
+    return sum(1 for s in scores if (s or 0) &gt;= 0.8) / len(scores)
+
+new_rate = pass_rate(new_exp_id)
+base_rate = pass_rate(baseline_exp_id)
+print(f"new={new_rate:.2f} baseline={base_rate:.2f}")
+# CI gate: fail on regression or sub-threshold</code></pre>
+
+<div class="callout-success">
+  <strong>The regression rule:</strong> a change that drops any gated metric below its threshold, or regresses more than a small tolerance vs baseline, is rejected — even if it "feels better" in the playground. This is your hard blocker (full treatment in Lesson 9).
+</div>
+
+<h3>Step 5 — Wire It Into CI</h3>
+<pre><code># ci_eval.yml (GitHub Actions sketch)
+# 1. checkout, pip install langsmith langchain
+# 2. LANGCHAIN_API_KEY=${{ secrets.LANGCHAIN_API_KEY }}
+# 3. python run_evals.py --experiment-prefix "ci-${{ github.sha }}"
+#    (runs steps 2-4, then exits non-zero if gate fails)</code></pre>
+<p>The eval job becomes a required check on every PR touching prompts, models, retrieval config, or guardrails. Slow? Yes — and that's the point: the eval job is your test suite; a 10-minute eval job on a 50-example dataset is cheap insurance against shipping a regression.</p>
+
+<h3>Production: Online Evals, Annotation, Playground</h3>
+<ul>
+  <li><strong>Online evals</strong> — attach evaluators to production traces so every live conversation gets scored (e.g. guardrail-pass, topic-relevance). Use LangSmith monitoring dashboards and thresholds to alert when the live pass rate dips.</li>
+  <li><strong>Annotation queues</strong> — human reviewers mark real conversations; the flagged ones become your next dataset version. This closes the loop: production failures become regression tests.</li>
+  <li><strong>Playground + prompt versioning</strong> — iterate on prompts in the Playground against dataset examples, then promote a winning version and validate it with a full experiment before shipping. The prompt, not just the code, is a versioned artifact.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Pitfall:</strong> running evals without a locked dataset version poisons your regression history — a score change becomes uninterpretable (did the app improve, or did the dataset?). Version datasets when you edit them, and record which version each experiment used.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the LangSmith object that plays the role of "running the app over the test suite"?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Annotation queue</button>
+    <button class="quiz-btn" data-opt="b">Experiment (a target run over a dataset with evaluators)</button>
+    <button class="quiz-btn" data-opt="c">Playground session</button>
+    <button class="quiz-btn" data-opt="d">Feedback stat</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. How do you turn LangSmith into a hard blocker in CI?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Watch the dashboard manually each morning</button>
+    <button class="quiz-btn" data-opt="b">Ask the model politely not to regress</button>
+    <button class="quiz-btn" data-opt="c">Run an experiment on every PR and fail the build when gated metrics drop below threshold or regress vs baseline</button>
+    <button class="quiz-btn" data-opt="d">Disable tracing in production</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which pattern turns production failures into regression tests?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Annotation queues: humans review traced runs, and flagged failures become new dataset examples</button>
+    <button class="quiz-btn" data-opt="b">Deleting the failing traces from the project</button>
+    <button class="quiz-btn" data-opt="c">Increasing the model temperature</button>
+    <button class="quiz-btn" data-opt="d">Ignoring thumbs-down feedback</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.smith.langchain.com/" target="_blank" rel="noopener">LangSmith documentation (home)</a></li>
+  <li><a href="https://docs.smith.langchain.com/evaluation" target="_blank" rel="noopener">LangSmith evaluation docs</a></li>
+  <li><a href="https://docs.smith.langchain.com/evaluation/how_to_guides/datasets" target="_blank" rel="noopener">LangSmith datasets guide</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

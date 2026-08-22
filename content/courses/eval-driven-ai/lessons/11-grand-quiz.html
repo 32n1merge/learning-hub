@@ -1,0 +1,271 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 11: Grand Quiz — Eval-Driven AI</h2>
+
+<p>Twenty questions — two from each lesson — in four sections: Foundations (1–4), Test Data &amp; Scoring (5–8), Guardrails (9–10), LangSmith &amp; LangGraph (11–14), Copilot Studio (15–16), Production &amp; Maintenance (17–20). Answer all of them to see your grade.</p>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Grand Quiz</h3>
+
+  <h3 style="color:var(--color-accent)">Foundations</h3>
+
+  <p class="quiz-q">1. Why does the "Software 2.0" framing make your eval dataset the source of truth for your app?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Because datasets are cheaper to store than code</button>
+    <button class="quiz-btn" data-opt="b">Because you specify goals and data, and the network learns behavior — so editing the dataset is how you change behavior</button>
+    <button class="quiz-btn" data-opt="c">Because regulators demand it</button>
+    <button class="quiz-btn" data-opt="d">Because models are trained on it once</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the difference between a playground check and an eval?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Playgrounds cost tokens, evals don't</button>
+    <button class="quiz-btn" data-opt="b">Evals use bigger models</button>
+    <button class="quiz-btn" data-opt="c">A playground check proves one example worked once; an eval measures a population of behavior with statistics</button>
+    <button class="quiz-btn" data-opt="d">There is no difference</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which benchmark measures resolving real GitHub issues end-to-end?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">SWE-bench</button>
+    <button class="quiz-btn" data-opt="b">MMLU</button>
+    <button class="quiz-btn" data-opt="c">GPQA</button>
+    <button class="quiz-btn" data-opt="d">HumanEval</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. Why record the full comparison matrix (score, latency, cost, structured-output failures) instead of just score?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Score is the only number executives understand</button>
+    <button class="quiz-btn" data-opt="b">Latency and cost are fixed by the platform anyway</button>
+    <button class="quiz-btn" data-opt="c">Structured-output failures don't matter for agents</button>
+    <button class="quiz-btn" data-opt="d">The winner must fit your latency and cost budget, not just maximize quality</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <h3 style="color:var(--color-accent)">Test Data &amp; Scoring</h3>
+
+  <p class="quiz-q">5. What is a good day-one target size for a stratified golden dataset?</p>
+  <div class="quiz-opts" data-q="4" data-answer="c">
+    <button class="quiz-btn" data-opt="a">At least 100,000 examples</button>
+    <button class="quiz-btn" data-opt="b">Exactly 1,000 examples</button>
+    <button class="quiz-btn" data-opt="c">30–50 examples covering happy path, edge cases, failure modes, and adversarial inputs</button>
+    <button class="quiz-btn" data-opt="d">Three examples per intent is enough forever</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. Why must eval datasets be versioned?</p>
+  <div class="quiz-opts" data-q="5" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Versioning is required by LangSmith's license</button>
+    <button class="quiz-btn" data-opt="b">So a score change is interpretable — attributable to the app change, not to the dataset changing underneath it</button>
+    <button class="quiz-btn" data-opt="c">To satisfy ISO 27001</button>
+    <button class="quiz-btn" data-opt="d">Datasets can't be edited after creation anyway</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <p class="quiz-q">7. Which evaluator type is best for scoring open-ended answer quality against written criteria?</p>
+  <div class="quiz-opts" data-q="6" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Rubric-based LLM-as-judge (pointwise)</button>
+    <button class="quiz-btn" data-opt="b">Regex exact match</button>
+    <button class="quiz-btn" data-opt="c">Token overlap</button>
+    <button class="quiz-btn" data-opt="d">Length check</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. What is the name of the documented LLM-judge bias where longer, fancier answers score higher even when worse?</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Position bias</button>
+    <button class="quiz-btn" data-opt="b">Self-preference bias</button>
+    <button class="quiz-btn" data-opt="c">Anchoring bias</button>
+    <button class="quiz-btn" data-opt="d">Verbosity bias</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <h3 style="color:var(--color-accent)">Guardrails</h3>
+
+  <p class="quiz-q">9. Which OWASP LLM risk is about unvalidated model output flowing into SQL, HTML, or shell?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">LLM01 Prompt Injection</button>
+    <button class="quiz-btn" data-opt="b">LLM05 Improper Output Handling</button>
+    <button class="quiz-btn" data-opt="c">LLM06 Excessive Agency</button>
+    <button class="quiz-btn" data-opt="d">LLM09 Misinformation</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. What is the primary defense against LLM07 System Prompt Leakage?</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Longer system prompts</button>
+    <button class="quiz-btn" data-opt="b">Output content-safety filters</button>
+    <button class="quiz-btn" data-opt="c">Prompt hardening plus input-side detection of extraction attempts ("repeat your instructions" attacks)</button>
+    <button class="quiz-btn" data-opt="d">Rate limiting</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <h3 style="color:var(--color-accent)">LangSmith &amp; LangGraph</h3>
+
+  <p class="quiz-q">11. Which LangSmith feature is the human-review loop for traced production runs?</p>
+  <div class="quiz-opts" data-q="10" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Annotation queues</button>
+    <button class="quiz-btn" data-opt="b">Playground</button>
+    <button class="quiz-btn" data-opt="c">Dataset versions</button>
+    <button class="quiz-btn" data-opt="d">Feedback stats</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. In LangSmith, what makes a regression test a regression test?</p>
+  <div class="quiz-opts" data-q="11" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Running the experiment at least twice</button>
+    <button class="quiz-btn" data-opt="b">Using a frontier model as judge</button>
+    <button class="quiz-btn" data-opt="c">A dataset with more than 100 examples</button>
+    <button class="quiz-btn" data-opt="d">Comparing a new experiment against a baseline experiment on the same dataset version</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <p class="quiz-q">13. Which LangGraph capability lets you replay a real production thread against a new graph version?</p>
+  <div class="quiz-opts" data-q="12" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Streaming mode</button>
+    <button class="quiz-btn" data-opt="b">Checkpointed threads with time travel (get_state_history, update_state, replay)</button>
+    <button class="quiz-btn" data-opt="c">Recursion limits</button>
+    <button class="quiz-btn" data-opt="d">State schema validation</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. What should agent eval examples record beyond the expected final answer?</p>
+  <div class="quiz-opts" data-q="13" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The exact token counts</button>
+    <button class="quiz-btn" data-opt="b">The model's confidence score</button>
+    <button class="quiz-btn" data-opt="c">The expected tool-call sequence</button>
+    <button class="quiz-btn" data-opt="d">The user's browser</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <h3 style="color:var(--color-accent)">Copilot Studio</h3>
+
+  <p class="quiz-q">15. What does "grounding" mean in Copilot Studio?</p>
+  <div class="quiz-opts" data-q="14" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Answers are generated only from configured knowledge sources (SharePoint, files, websites, Dataverse, Azure AI Search)</button>
+    <button class="quiz-btn" data-opt="b">The model is fine-tuned on your data</button>
+    <button class="quiz-btn" data-opt="c">The copilot is pinned to the latest model version</button>
+    <button class="quiz-btn" data-opt="d">Users must authenticate before chatting</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. What gives Copilot Studio a staging gate analogous to CI?</p>
+  <div class="quiz-opts" data-q="15" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The Test pane's auto-complete</button>
+    <button class="quiz-btn" data-opt="b">Solution-based ALM: promote the copilot through dev → test → prod environments with explicit publish</button>
+    <button class="quiz-btn" data-opt="c">Teams channel approval workflows</button>
+    <button class="quiz-btn" data-opt="d">The analytics dashboard refresh</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <h3 style="color:var(--color-accent)">Production &amp; Maintenance</h3>
+
+  <p class="quiz-q">17. What is the correct response when a production gate fails?</p>
+  <div class="quiz-opts" data-q="16" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Merge anyway and monitor closely</button>
+    <button class="quiz-btn" data-opt="b">Raise the threshold so it passes</button>
+    <button class="quiz-btn" data-opt="c">Ask the model to self-certify</button>
+    <button class="quiz-btn" data-opt="d">Read the regression report, fix the smallest lever, re-run the experiment, and merge only when green</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. What does a canary rollout do?</p>
+  <div class="quiz-opts" data-q="17" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Ships to all users at once to get it over with</button>
+    <button class="quiz-btn" data-opt="b">Runs the eval only after release</button>
+    <button class="quiz-btn" data-opt="c">Ships a change to a small percentage of traffic first, verifies live signals, then ramps up</button>
+    <button class="quiz-btn" data-opt="d">Deploys only on weekends</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <p class="quiz-q">19. Which of the following is NOT one of the four drift types to monitor?</p>
+  <div class="quiz-opts" data-q="18" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Gradient drift</button>
+    <button class="quiz-btn" data-opt="b">Input drift</button>
+    <button class="quiz-btn" data-opt="c">Output drift</button>
+    <button class="quiz-btn" data-opt="d">Cost/latency drift</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. What does the dataset refresh rhythm look like once you're in production?</p>
+  <div class="quiz-opts" data-q="19" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Never touch the dataset after launch — it's the baseline</button>
+    <button class="quiz-btn" data-opt="b">Continuous additions from feedback loops, plus a quarterly refresh (~20% new real data), threshold re-validation, and model re-selection</button>
+    <button class="quiz-btn" data-opt="c">Rebuild from scratch every week</button>
+    <button class="quiz-btn" data-opt="d">Only expand when a customer complains</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <div class="score-panel" id="quiz-11-score" style="display:none">
+    <div class="progress" id="quiz-11-progress">Answered 0 of 20</div>
+    <div id="quiz-11-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  var TOTAL = 20;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-11-score');
+  var progressEl = document.getElementById('quiz-11-progress');
+  var resultEl = document.getElementById('quiz-11-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 17) { grade = 'A'; msg = 'You have a working eval-driven framework in your head — go build the gates.'; }
+      else if (correct >= 13) { grade = 'B'; msg = 'Strong grasp. Review the lessons where you missed questions, then wire up your first gate.'; }
+      else if (correct >= 9) { grade = 'C'; msg = 'Solid foundation. Re-read the lessons you missed and practice the LangSmith dataset → experiment loop.'; }
+      else { grade = 'D'; msg = 'Time to go back through the lessons — start with the eval mindset and the dataset taxonomy, then the tools.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

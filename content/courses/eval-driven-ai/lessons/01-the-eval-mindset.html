@@ -1,0 +1,190 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: The Eval Mindset — Why You Can't Ship Without a Measurement Loop</h2>
+
+<p>Imagine shipping a REST API with no tests, no CI, and no staging environment — and discovering at 2 a.m. that version 2 returns different data for the same request than version 1 did, with no warning and no way to reproduce why. That is exactly how most teams ship LLM applications today. The model is non-deterministic, the prompt is a piece of code nobody versioned, and the "test suite" is whatever the developer happened to try in the playground. This course exists to fix that. The fix is called <span class="glossary-term">eval-driven development</span>, and it starts with a mindset shift.</p>
+
+<div class="callout">
+  <strong>Core thesis:</strong> Evaluation is the CI/CD of AI. A test harness of representative inputs, scored against a rubric, gating every change — that is what turns prompt tweaking from folklore into engineering.
+</div>
+
+<h3>Why LLM Apps Are Different</h3>
+<p>Traditional software is <em>deterministic</em>: the same input produces the same output, and the compiler catches type errors. LLM applications are probabilistic — the same prompt can produce wildly different outputs across runs, models, and even temperature settings. Worse, the "logic" lives in natural language, which has no type checker and no compiler. When something breaks, there is no stack trace; there is a plausible-sounding wrong answer.</p>
+
+<p>In 2017, Andrej Karpathy published <em>Software 2.0</em>, arguing that neural networks are a new kind of programming: instead of writing code that specifies behavior, you specify <em>goals and data</em>, and the network learns the behavior. The consequence he drew, and which the industry has spent years internalizing, is that <strong>the dataset is the code</strong>. Your golden evaluation set is your source of truth — it is what you edit, version, and review when you want to change behavior. If you don't have one, you are programming blind.</p>
+
+<h3>Evals Are Regression Tests</h3>
+<p>Here is the mental model that makes everything else click:</p>
+
+<table>
+  <tr>
+    <th>Traditional software</th>
+    <th>LLM application</th>
+  </tr>
+  <tr>
+    <td>Unit tests</td>
+    <td>Golden eval dataset (representative inputs + expected behavior)</td>
+  </tr>
+  <tr>
+    <td>Assertions</td>
+    <td>Evaluators (exact match, rubric, LLM-as-judge, tool checks)</td>
+  </tr>
+  <tr>
+    <td>CI pipeline</td>
+    <td>Eval experiment run on every change (LangSmith, CI jobs)</td>
+  </tr>
+  <tr>
+    <td>Test coverage</td>
+    <td>Dataset coverage of intents, edge cases, and failure modes</td>
+  </tr>
+  <tr>
+    <td>Code review</td>
+    <td>Diffing eval scores between prompt/model versions</td>
+  </tr>
+  <tr>
+    <td>Production monitoring</td>
+    <td>Online evals, tracing, drift detection</td>
+  </tr>
+</table>
+
+<p>Once you see it this way, every question about "how many evals do I need" and "which model should I pick" becomes answerable with the same tooling you already use for software quality — just adapted for probability.</p>
+
+<h3>The Eval-Driven Development Loop</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 190" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="540" height="170" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <rect x="35" y="45" width="110" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="90" y="69" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="bold">1. Define</text>
+    <text x="90" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">golden dataset</text>
+    <rect x="185" y="45" width="110" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="240" y="69" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="bold">2. Evaluate</text>
+    <text x="240" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">run + score</text>
+    <rect x="335" y="45" width="110" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="390" y="69" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="bold">3. Diff</text>
+    <text x="390" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">vs baseline</text>
+    <rect x="480" y="45" width="55" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-danger)"/>
+    <text x="507" y="69" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="bold">GATE</text>
+    <text x="507" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">pass/fail</text>
+    <path d="M 145 71 L 183 71" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#arrow1)"/>
+    <path d="M 295 71 L 333 71" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#arrow1)"/>
+    <path d="M 445 71 L 478 71" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#arrow1)"/>
+    <path d="M 507 110 C 507 135, 300 140, 140 120" stroke="var(--color-text-secondary)" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+    <text x="330" y="145" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">fail → fix prompt/model/data → re-run</text>
+    <defs>
+      <marker id="arrow1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--color-accent)"/></marker>
+      <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--color-text-secondary)"/></marker>
+    </defs>
+  </svg>
+</div>
+
+<p>The loop is deliberately boring. Define a dataset that represents what users actually ask and what "good" means. Run your system against it and score it. Compare against the last version. If scores dropped or a threshold failed, fix and re-run. Every change — a prompt edit, a model swap, a new retriever, a guardrail — goes through the same loop. That boring loop is what makes the difference between teams that can iterate quickly and teams that are afraid to touch the prompt.</p>
+
+<div class="callout-success">
+  <strong>What you'll build in this course:</strong> By the end you'll have the vocabulary, the test-data methodology, the scoring techniques, the guardrails taxonomy, and concrete walkthroughs for implementing the loop in LangSmith, LangGraph, and Copilot Studio — plus the production gate that makes evals a hard blocker, and the monitoring that measures change over time.
+</div>
+
+<h3>Vocabulary You'll Need</h3>
+<p>Five terms carry the whole discipline:</p>
+<ul>
+  <li><strong>Dataset</strong> — a versioned collection of input examples, optionally with expected outputs or reference answers. Your unit tests.</li>
+  <li><strong>Run / Experiment</strong> — one execution of your app against the dataset, producing outputs for every example.</li>
+  <li><strong>Evaluator</strong> — a function that scores an output: exact match, rubric, LLM-as-judge, or a programmatic check.</li>
+  <li><strong>Score</strong> — the per-example and aggregate result, e.g. correctness 0.93.</li>
+  <li><strong>Threshold / Gate</strong> — the pass/fail line that decides whether a change ships (e.g. no correctness regression allowed, zero adversarial-set failures).</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Warning:</strong> The biggest mistake beginners make is treating "it worked in the playground" as evidence. Playground checks are anecdotes — they prove a single example works once, not that a population of behavior works reliably. Evals convert anecdotes into statistics.
+</div>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the strongest reason LLM applications need a dedicated evaluation discipline?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">LLMs are slow and expensive, so we must measure token usage</button>
+    <button class="quiz-btn" data-opt="b">Regulators require a written evaluation report</button>
+    <button class="quiz-btn" data-opt="c">Outputs are probabilistic, so identical inputs can produce different behavior and no compiler catches the errors</button>
+    <button class="quiz-btn" data-opt="d">Prompt engineering is an art and artists need critique</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. In the "evals are regression tests" mental model, what plays the role of a CI pipeline?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The model's tokenizer</button>
+    <button class="quiz-btn" data-opt="b">An eval experiment run automatically on every change to prompts, models, or code</button>
+    <button class="quiz-btn" data-opt="c">A Slack channel for reporting outages</button>
+    <button class="quiz-btn" data-opt="d">The annotation queue in LangSmith</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which of the following is the correct eval-driven development loop order?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Ship → collect complaints → roll back → complain about the model</button>
+    <button class="quiz-btn" data-opt="b">Pick a model → write prompts → deploy → measure later</button>
+    <button class="quiz-btn" data-opt="c">Train a model → benchmark it on MMLU → deploy it</button>
+    <button class="quiz-btn" data-opt="d">Define a golden dataset → run and score → diff against baseline → gate → fix and re-run</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://karpathy.medium.com/software-2-0-a64152b37c35" target="_blank" rel="noopener">Software 2.0 — Andrej Karpathy (2017)</a></li>
+  <li><a href="https://www.youtube.com/watch?v=6dNwfdlDLhk" target="_blank" rel="noopener">Karpathy: State of AI talk (the "evals are the most important thing" argument)</a></li>
+  <li><a href="https://platform.openai.com/docs/guides/evaluation-best-practices" target="_blank" rel="noopener">OpenAI: Evaluation best practices</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

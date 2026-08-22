@@ -1,0 +1,166 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Measuring Change — From One-Off Evals to a Living Loop</h2>
+
+<p>A single eval run is a photograph; a system needs a movie. Models get updated under you, providers deprecate endpoints, your knowledge base drifts, and user behavior changes — all of which silently degrade quality while your one-time eval set collects dust. This lesson is the final layer: <span class="glossary-term">measuring change over time</span>, so quality is a trend you watch, not a certificate you once earned.</p>
+
+<h3>The Three Time Scales of Measurement</h3>
+<table>
+  <tr>
+    <th>Scale</th>
+    <th>Question</th>
+    <th>Tooling</th>
+  </tr>
+  <tr>
+    <td><strong>Per-change</strong> (minutes)</td>
+    <td>Did THIS change regress anything?</td>
+    <td>Experiments + baseline diff in CI (Lesson 6/9)</td>
+  </tr>
+  <tr>
+    <td><strong>Per-release</strong> (days)</td>
+    <td>Is the shipped version still scoring where it did?</td>
+    <td>Re-run the golden set on the published configuration; canary cohort comparisons</td>
+  </tr>
+  <tr>
+    <td><strong>Continuous</strong> (weeks)</td>
+    <td>Is production drifting?</td>
+    <td>Online evals on live traces, thresholds, alerting, dashboards</td>
+  </tr>
+</table>
+
+<h3>Online Evals: Scoring Every Live Conversation</h3>
+<p>In LangSmith, attach evaluators to production traces so every conversation gets a live score (correctness, groundedness, guardrail-pass, tool-appropriateness). In Copilot Studio, the Analytics tab gives you resolution rate, escalation rate, and CSAT as continuous signals. Either way the pattern is the same: <em>score live traffic, aggregate, alert on the aggregate</em>.</p>
+
+<pre><code># Monitoring pseudocode — run on a schedule, alert on regression
+today   = online_eval_scores(window="24h")
+weekly  = online_eval_scores(window="7d")
+
+if today.pass_rate &lt; weekly.pass_rate - 0.05:
+    alert("LIVE PASS RATE DIPPED 5+ pts vs weekly baseline")
+    suggest_rollback()   # flip the feature flag back</code></pre>
+
+<h3>Feedback Loops That Grow the Dataset</h3>
+<p>Your dataset is a living artifact. Three loops keep it fed:</p>
+<ul>
+  <li><strong>Thumbs up/down and CSAT</strong> — the cheapest signal. A thumbs-down is a candidate test case; sample and confirm it's a real failure before adding it.</li>
+  <li><strong>Annotation queues (LangSmith) / transcript mining (Copilot Studio)</strong> — humans review traced conversations; confirmed failures become new dataset examples. This is how your golden set learns about problems you didn't anticipate.</li>
+  <li><strong>Escalations and tickets</strong> — every time a user gives up and talks to a human, that's a failure mode report. Route it into the taxonomy.</li>
+</ul>
+
+<div class="callout">
+  <strong>Dataset refresh rhythm:</strong> add new examples continuously (from the loops above), but validate the <em>gates</em> quarterly: refresh ~20% of the set with recent real data, re-check your thresholds against the baseline distribution, and re-run model selection (Lesson 2) on the refreshed set. Models improve; the model that won three months ago may no longer be the winner.
+</div>
+
+<h3>Drift: The Silent Quality Killer</h3>
+<p>Four kinds of drift to monitor, each with a different detector:</p>
+<ul>
+  <li><strong>Input drift</strong> — users start asking different things (new product, new slang). Detect with embedding-distribution comparison of live inputs vs training/eval inputs; respond by adding coverage to the dataset.</li>
+  <li><strong>Output drift</strong> — same inputs, different behavior. Detect by re-running a fixed sample of the golden set regularly and watching scores/length/style shift; often caused by silent model or provider updates.</li>
+  <li><strong>Score drift</strong> — online eval pass rate trending down. Your alerting threshold fires; investigate (it's usually input or knowledge drift underneath).</li>
+  <li><strong>Cost/latency drift</strong> — tokens per conversation creeping up, p95 latency climbing. Watch the operational side; unbounded consumption (LLM10) often shows up here first.</li>
+</ul>
+
+<h3>The Dashboard You Actually Need</h3>
+<p>Keep it small enough to read in ten seconds:</p>
+<ul>
+  <li>Golden-set pass rate over time, by bucket (happy / edge / adversarial), with the baseline band</li>
+  <li>Latest experiment delta vs baseline (the "did the last PR help?" number)</li>
+  <li>Online eval pass rate (24h vs 7d) and guardrail-fail rate</li>
+  <li>Cost per query and p95 latency, trended</li>
+  <li>Dataset size and coverage by bucket (is it still representative?)</li>
+</ul>
+
+<div class="callout-success">
+  <strong>The loop, complete:</strong> production feedback grows the dataset → refreshed datasets re-validate thresholds → gates catch regressions → online evals catch drift → alerts trigger fixes → new changes go through the gates. That's not a process you maintain; it's a system that maintains quality. This is what "eval-driven AI" means in practice — and it's now fully implemented in your stack, whether your stack is LangSmith/LangGraph or Copilot Studio.
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does "output drift" mean and what detects it?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Users typing in a new language; detected by translation services</button>
+    <button class="quiz-btn" data-opt="b">The model getting faster; detected by load tests</button>
+    <button class="quiz-btn" data-opt="c">Same inputs producing changed behavior (often from silent model/provider updates); detected by re-running a fixed sample of the golden set regularly</button>
+    <button class="quiz-btn" data-opt="d">Outputs getting longer; detected by token counters</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which loops keep the eval dataset fed with real-world failures?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Random prompt generation every night</button>
+    <button class="quiz-btn" data-opt="b">Thumbs-down sampling, human annotation of traced conversations, and escalation/ticket mining — confirmed failures become new examples</button>
+    <button class="quiz-btn" data-opt="c">Copying competitors' datasets</button>
+    <button class="quiz-btn" data-opt="d">Deleting old examples to keep the set small</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why re-run model selection quarterly on a refreshed dataset?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Models improve and providers change; the model that won three months ago may no longer be the best on current data</button>
+    <button class="quiz-btn" data-opt="b">Because quarterly reports are required by auditors</button>
+    <button class="quiz-btn" data-opt="c">To give the eval team something to do</button>
+    <button class="quiz-btn" data-opt="d">Token prices only change quarterly</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.smith.langchain.com/monitoring" target="_blank" rel="noopener">LangSmith monitoring and online evals</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/analytics-summary" target="_blank" rel="noopener">Copilot Studio: analytics summary</a></li>
+  <li><a href="https://www.evidentlyai.com/ml-system-design" target="_blank" rel="noopener">Evidently AI: ML monitoring concepts (drift, data quality)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

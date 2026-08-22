@@ -1,0 +1,191 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: The Evaluator Toolbox — Scoring Techniques</h2>
+
+<p>You have the data (Lesson 3). Now you need the scoring instruments. An <span class="glossary-term">evaluator</span> is any function that takes an output (and optionally the input, reference answer, and context) and returns a score. The toolbox ranges from dead-simple deterministic checks to LLM judges — and the skill is knowing which instrument fits which question. Use the cheapest instrument that answers the question reliably.</p>
+
+<h3>The Instrument Hierarchy (Cheapest First)</h3>
+
+<table>
+  <tr>
+    <th>Instrument</th>
+    <th>How it works</th>
+    <th>Best for</th>
+    <th>Weakness</th>
+  </tr>
+  <tr>
+    <td><strong>Exact / fuzzy match</strong></td>
+    <td>Output equals (or contains / matches regex of) the expected string</td>
+    <td>Classification, entity extraction, IDs, one-word answers, formatting compliance</td>
+    <td>Brittle for anything generative</td>
+  </tr>
+  <tr>
+    <td><strong>Structured checks</strong></td>
+    <td>Validate JSON schema, required fields, enum values, tool-call arguments, code compiles/executes</td>
+    <td>Agent tool calls, structured output, pipelines</td>
+    <td>Only validates shape, not meaning</td>
+  </tr>
+  <tr>
+    <td><strong>Reference similarity</strong></td>
+    <td>Embedding or token-overlap similarity between output and a golden answer</td>
+    <td>Summarization, paraphrase tasks with a reference</td>
+    <td>Similarity ≠ correctness; misses subtle factual errors</td>
+  </tr>
+  <tr>
+    <td><strong>Rubric / LLM-as-judge (pointwise)</strong></td>
+    <td>Judge model scores output 1–5 against a written rubric with criteria and examples</td>
+    <td>Open-ended quality, helpfulness, tone, safety, faithfulness to given context</td>
+    <td>Judge bias; needs a good rubric; costs tokens</td>
+  </tr>
+  <tr>
+    <td><strong>Pairwise comparison</strong></td>
+    <td>Judge model (or human) picks the better of two outputs (A/B)</td>
+    <td>Model selection, prompt A/B tests, tuning</td>
+    <td>Gives ordering, not absolute quality; position bias</td>
+  </tr>
+  <tr>
+    <td><strong>Custom programmatic</strong></td>
+    <td>Assertions about behavior: did the agent call the right tool? Did the retriever return the right doc? Is the number within tolerance?</td>
+    <td>Anything measurable in code — the most underrated evaluator</td>
+    <td>You have to write it</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Rule:</strong> If a regex can check it, don't pay for a judge. Reserve LLM judges for the semantics that only language models can grade — and always pair a deterministic gate with a judge, not a judge alone.
+</div>
+
+<h3>LLM-as-Judge: Powerful, Biased, and Controllable</h3>
+<p>The "LLM-as-a-Judge" paradigm (popularized by the MT-Bench and Chatbot Arena work at UC Berkeley and LMSYS) uses a strong model to grade outputs. It scales to hundreds of examples, is surprisingly correlated with human judgment, and is the workhorse of modern eval frameworks. But it has documented biases you must engineer around:</p>
+
+<ul>
+  <li><strong>Position bias</strong> — judges favor the first (or last) answer shown in comparisons. Mitigation: swap order and average, or randomize.</li>
+  <li><strong>Verbosity bias</strong> — longer, fancier answers score higher even when worse. Mitigation: rubrics that penalize fluff, length caps in the judge prompt.</li>
+  <li><strong>Self-preference bias</strong> — judges favor their own family of models. Mitigation: use a judge from a different model family than the candidate, or use the strongest model you can afford as judge.</li>
+  <li><strong>Reasoning limitation</strong> — weak judges make reasoning errors. Mitigation: use a strong judge; some frameworks let the judge "think" (chain-of-thought) before scoring, which improves agreement with humans.</li>
+</ul>
+
+<pre><code># Rubric quality is the #1 lever on judge reliability.
+# Bad:  "Is this answer good? Rate 1-5."
+# Good: "Score 1-5 on: (1) factual accuracy vs the reference,
+#        (2) does it answer the user's exact question,
+#        (3) is it grounded in the provided context.
+#        A 5 requires ALL criteria met. Penalize unsupported claims.
+#        Example of a 5: ...  Example of a 1: ..."</code></pre>
+
+<p>The rubric turns the judge from a vibes meter into an instrument. Concrete criteria plus anchor examples (what a 5 looks like, what a 1 looks like) are worth more than any judge-model upgrade.</p>
+
+<h3>RAG-Specific Metrics: Score the Pipeline, Not Just the Answer</h3>
+<p>If you're building retrieval-augmented generation, answer quality is downstream of retrieval quality. The RAGAS framework popularized a metric family that scores each link in the chain:</p>
+<ul>
+  <li><strong>Faithfulness</strong> — is every claim in the answer supported by the retrieved context? (Hallucination detector.)</li>
+  <li><strong>Answer relevancy</strong> — does the answer actually address the question?</li>
+  <li><strong>Context precision</strong> — of the retrieved chunks, how many were relevant? (Noise in = bad answers out.)</li>
+  <li><strong>Context recall</strong> — did retrieval bring back everything needed to answer? (Misses here are silent quality killers.)</li>
+</ul>
+<p>Debugging pattern: if faithfulness is high but answer relevancy is low, the generator is fine and the retriever/query is the problem. If context recall is low, your chunks or embeddings are missing content. Score the pipeline, and you'll know where to fix it.</p>
+
+<h3>Aggregating: From Per-Example Scores to a Gate</h3>
+<p>Per-example scores become decisions through aggregation. The standard toolkit:</p>
+<ul>
+  <li><strong>Pass rate</strong> — % of examples above a per-example threshold (e.g. judge score ≥ 4). Robust and interpretable.</li>
+  <li><strong>Mean / median score</strong> — sensitive but hides tail failures; always report with pass rate.</li>
+  <li><strong>Worst-k / p5</strong> — the worst 5% of examples. In safety-critical apps this matters more than the mean.</li>
+  <li><strong>Category breakdown</strong> — score per taxonomy bucket (happy path vs adversarial vs edge). A flat mean can hide an adversarial-bucket collapse.</li>
+  <li><strong>Delta vs baseline</strong> — the regression signal. Lesson 9 turns this into a gate; Lesson 10 makes it a trend.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Warning:</strong> An aggregate mean is a lie when the tail is dangerous. Always gate on the buckets that matter (zero failures on adversarial, pass rate on happy path) and only then look at the mean.
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which evaluator should you prefer when a regex can check the property?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Always an LLM judge, because it's more accurate</button>
+    <button class="quiz-btn" data-opt="b">A pairwise comparison between two models</button>
+    <button class="quiz-btn" data-opt="c">The deterministic check — use the cheapest instrument that reliably answers the question</button>
+    <button class="quiz-btn" data-opt="d">Embedding similarity to the reference</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which is a documented bias of LLM-as-judge?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Judges always prefer shorter answers</button>
+    <button class="quiz-btn" data-opt="b">Verbosity bias — longer, fancier answers tend to score higher even when worse</button>
+    <button class="quiz-btn" data-opt="c">Judges prefer answers written by humans</button>
+    <button class="quiz-btn" data-opt="d">Judges can't follow rubrics</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. In RAGAS-style metrics, which metric specifically detects hallucination (claims not supported by retrieved context)?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Faithfulness</button>
+    <button class="quiz-btn" data-opt="b">Context precision</button>
+    <button class="quiz-btn" data-opt="c">Answer relevancy</button>
+    <button class="quiz-btn" data-opt="d">Token overlap</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener">Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena (Zheng et al.)</a></li>
+  <li><a href="https://docs.ragas.io/" target="_blank" rel="noopener">RAGAS documentation (RAG evaluation metrics)</a></li>
+  <li><a href="https://docs.smith.langchain.com/evaluation" target="_blank" rel="noopener">LangSmith evaluation docs (evaluator catalog)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

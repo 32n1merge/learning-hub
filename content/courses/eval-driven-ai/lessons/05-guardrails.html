@@ -1,0 +1,242 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Guardrails — The Runtime Safety Layer</h2>
+
+<p>Evals catch problems <em>before</em> you ship. Guardrails stop problems <em>at runtime</em>. They are the enforcement layer that sits between users, your model, and the world — filtering inputs before they reach the model, constraining what the model can do, and screening outputs before they reach the user. A production AI system without guardrails is a production system with an unauthenticated admin endpoint. This lesson gives you the threat model and the guardrail taxonomy; the tool-specific implementations come in Lessons 6–8.</p>
+
+<h3>The Threat Model: OWASP Top 10 for LLM Applications</h3>
+<p>The reference taxonomy of LLM application risks is the OWASP Top 10 for LLM Applications (2025 edition). It is the starting point for deciding <em>what</em> your guardrails must defend against:</p>
+
+<table>
+  <tr>
+    <th>#</th>
+    <th>Risk</th>
+    <th>What it means</th>
+  </tr>
+  <tr>
+    <td>LLM01</td>
+    <td><strong>Prompt Injection</strong></td>
+    <td>Attacker instructions smuggled into user input override the system prompt</td>
+  </tr>
+  <tr>
+    <td>LLM02</td>
+    <td><strong>Sensitive Information Disclosure</strong></td>
+    <td>Model leaks PII, secrets, or other users' data from context or training</td>
+  </tr>
+  <tr>
+    <td>LLM03</td>
+    <td><strong>Supply Chain</strong></td>
+    <td>Compromised models, plugins, or datasets enter your stack</td>
+  </tr>
+  <tr>
+    <td>LLM04</td>
+    <td><strong>Data and Model Poisoning</strong></td>
+    <td>Tampered training/fine-tuning data or retrieval sources corrupt behavior</td>
+  </tr>
+  <tr>
+    <td>LLM05</td>
+    <td><strong>Improper Output Handling</strong></td>
+    <td>Unvalidated model output flows into SQL, HTML, or shell — classic injection</td>
+  </tr>
+  <tr>
+    <td>LLM06</td>
+    <td><strong>Excessive Agency</strong></td>
+    <td>Model has too much tool/action permission and does damage autonomously</td>
+  </tr>
+  <tr>
+    <td>LLM07</td>
+    <td><strong>System Prompt Leakage</strong></td>
+    <td>Users extract the system prompt via "repeat your instructions" attacks</td>
+  </tr>
+  <tr>
+    <td>LLM08</td>
+    <td><strong>Vector and Embedding Weaknesses</strong></td>
+    <td>Poisoned or manipulable RAG content (LLM04 applied to your knowledge base)</td>
+  </tr>
+  <tr>
+    <td>LLM09</td>
+    <td><strong>Misinformation</strong></td>
+    <td>Confidently wrong outputs (hallucination) as a systemic failure</td>
+  </tr>
+  <tr>
+    <td>LLM10</td>
+    <td><strong>Unbounded Consumption</strong></td>
+    <td>Runaway token/API costs from malicious or pathological inputs</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Design implication:</strong> You don't build one guardrail; you build a stack, because the risks live at different layers. Input filtering handles LLM01/02/10; output validation handles LLM05/09; permission design handles LLM06; content-safety filtering handles harmful output; rate limits and budgets handle LLM10.
+</div>
+
+<h3>Guardrails by Position in the Pipeline</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="540" height="100" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <rect x="30" y="35" width="100" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="80" y="55" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="bold">Input guard</text>
+    <text x="80" y="71" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">injection, PII, topic</text>
+    <rect x="160" y="35" width="90" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="205" y="55" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="bold">Orchestr.</text>
+    <text x="205" y="71" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">scope, agency</text>
+    <rect x="280" y="35" width="80" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-text-secondary)"/>
+    <text x="320" y="60" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="bold">Model</text>
+    <rect x="390" y="35" width="90" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="435" y="55" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="bold">Output guard</text>
+    <text x="435" y="71" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">safety, PII, schema</text>
+    <rect x="500" y="35" width="40" height="50" rx="8" fill="var(--color-elevated)" stroke="var(--color-danger)"/>
+    <text x="520" y="55" text-anchor="middle" fill="var(--color-text)" font-size="9" font-weight="bold">Action</text>
+    <text x="520" y="69" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">gate</text>
+    <path d="M 130 60 L 158 60" stroke="var(--color-warning)" stroke-width="2" marker-end="url(#g1)"/>
+    <path d="M 250 60 L 278 60" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#g1)"/>
+    <path d="M 360 60 L 388 60" stroke="var(--color-text-secondary)" stroke-width="2" marker-end="url(#g1)"/>
+    <path d="M 480 60 L 498 60" stroke="var(--color-warning)" stroke-width="2" marker-end="url(#g1)"/>
+    <defs>
+      <marker id="g1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--color-accent)"/></marker>
+    </defs>
+  </svg>
+</div>
+
+<ul>
+  <li><strong>Input guardrails</strong> — prompt-injection/jailbreak detection (e.g. Azure AI Content Safety Prompt Shields), PII detection before data reaches the model, topic/scope allowlists ("this copilot only answers HR questions — everything else routes to a human"), length and rate limits (LLM10).</li>
+  <li><strong>Orchestration guardrails</strong> — least-privilege tool access (the model can only call what the user could), scoped retrieval (row/tenant-level filtering so one user can't pull another user's data), no "run arbitrary SQL" for agents, human approval for high-impact actions.</li>
+  <li><strong>Output guardrails</strong> — content-safety classifiers on generated text (hate, violence, sexual, self-harm categories), PII/sensitive-data redaction, schema validation of structured output, policy compliance checks ("refuse anything not grounded in the knowledge base" — the LLM09 defense).</li>
+  <li><strong>Action gate</strong> — the final control on anything with side effects: confirmations, budgets, sandboxes, audit logs (LLM06 defense).</li>
+</ul>
+
+<h3>Guardrail Technology: The Landscape</h3>
+<table>
+  <tr>
+    <th>Technology</th>
+    <th>What it does</th>
+    <th>Notes</th>
+  </tr>
+  <tr>
+    <td><strong>Azure AI Content Safety</strong></td>
+    <td>Harm-category moderation + Prompt Shields (injection/jailbreak detection) + PII detection</td>
+    <td>Deeply integrated with Copilot Studio (Lesson 8); also available as an API for any stack</td>
+  </tr>
+  <tr>
+    <td><strong>NVIDIA NeMo Guardrails</strong></td>
+    <td>Programmable rails (topical, safety, fact-checking, jailbreak) defined in Colang</td>
+    <td>Open-source, framework-agnostic; adds a dialogue-management layer around your app</td>
+  </tr>
+  <tr>
+    <td><strong>Guardrails AI</strong></td>
+    <td>Validators that run on input/output (regex, PII, toxicity, groundedness)</td>
+    <td>Python library with a validator registry; good for custom pipelines</td>
+  </tr>
+  <tr>
+    <td><strong>Llama Guard (Meta)</strong></td>
+    <td>Instruction-tuned classifier model for content safety</td>
+    <td>Runs locally; common in self-hosted stacks</td>
+  </tr>
+  <tr>
+    <td><strong>Moderation APIs</strong> (OpenAI, etc.)</td>
+    <td>Classification of harmful content categories</td>
+    <td>Simple to call, cloud-hosted</td>
+  </tr>
+  <tr>
+    <td><strong>Your own code</strong></td>
+    <td>Schema validation, allowlists, rate limits, permission checks</td>
+    <td>Often the most important layer and the cheapest</td>
+  </tr>
+</table>
+
+<h3>Guardrails vs Evals: Prevention and Detection</h3>
+<div class="callout-success">
+  <strong>The two-layer rule:</strong> Guardrails are <em>prevention</em> (runtime, blocking); evals are <em>detection</em> (development-time, regression). You need both, and you need to test the guardrails themselves: your adversarial dataset must pass the guardrail stack (does it catch the injections?), AND you must track false positives (does it block legitimate users?). A guardrail that blocks 10% of real traffic is a product bug you're shipping in production.
+</div>
+<p>In practice this means guardrails are subject to the same eval loop as the model: they get examples, thresholds, and regression tests. When you add a new jailbreak technique to your adversarial set, you're upgrading both the guardrail's training signal and your test coverage.</p>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Which OWASP LLM risk is mitigated by limiting tool permissions and requiring human approval for high-impact actions?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">LLM01 Prompt Injection</button>
+    <button class="quiz-btn" data-opt="b">LLM05 Improper Output Handling</button>
+    <button class="quiz-btn" data-opt="c">LLM06 Excessive Agency</button>
+    <button class="quiz-btn" data-opt="d">LLM10 Unbounded Consumption</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the relationship between guardrails and evals?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Guardrails replace evals once you go to production</button>
+    <button class="quiz-btn" data-opt="b">Evals are only for development, guardrails only for testing</button>
+    <button class="quiz-btn" data-opt="c">They are two names for the same thing</button>
+    <button class="quiz-btn" data-opt="d">Guardrails prevent at runtime while evals detect regressions at development time — and guardrails need evals too</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why is false-positive rate a critical metric for any input guardrail?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Because false positives cost tokens</button>
+    <button class="quiz-btn" data-opt="b">A guardrail that blocks legitimate users is a product bug in production</button>
+    <button class="quiz-btn" data-opt="c">Because regulators require it</button>
+    <button class="quiz-btn" data-opt="d">It isn't — only false negatives matter</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications (2025)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview" target="_blank" rel="noopener">Azure AI Content Safety overview</a></li>
+  <li><a href="https://github.com/NVIDIA/NeMo-Guardrails" target="_blank" rel="noopener">NVIDIA NeMo Guardrails (GitHub)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,13 @@
+{
+  "title": "Eval-Driven AI: Evaluation, Model Selection, Testing & Guardrails",
+  "description": "Build a proper framework around LLM evaluation: why evals are the regression tests for AI systems, how to select models on evidence instead of hype, how to build golden test data, the evaluator toolbox (exact match, rubrics, LLM-as-judge, RAG metrics), the guardrails layer, and concrete implementation walks through LangSmith, LangGraph, and Microsoft Copilot Studio — ending with hard production gates and measuring change over time.",
+  "difficulty": "intermediate",
+  "estimatedDuration": "120 min",
+  "tags": [
+    "llm",
+    "ai",
+    "agents"
+  ],
+  "lastUpdated": "2026-08-21",
+  "icon": "🧪"
+}

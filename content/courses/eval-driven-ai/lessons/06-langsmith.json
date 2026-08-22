@@ -1,0 +1,5 @@
+{
+  "title": "LangSmith: Datasets, Experiments & Regression Testing",
+  "description": "Full implementation walkthrough: creating datasets, defining evaluators, running experiments, diffing against baselines, wiring evals into CI as a hard gate, and production online evals + annotation queues.",
+  "readingTime": "11 min"
+}

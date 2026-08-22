@@ -1,0 +1,169 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: The Production Gate — Making Evals a Hard Blocker</h2>
+
+<p>Everything so far is infrastructure. This lesson is where it becomes policy: the <span class="glossary-term">production gate</span>. A gate is a rule that a change cannot reach users unless it passes. Without gates, your evals are a report people can ignore; with gates, they are the floor beneath every release. The goal is boring: bad changes become <em>mechanically impossible</em>, not merely discouraged.</p>
+
+<h3>The Gate Stack</h3>
+<p>Real production systems gate on more than eval scores. Layered:</p>
+<table>
+  <tr>
+    <th>Layer</th>
+    <th>Gate</th>
+    <th>Example rule</th>
+  </tr>
+  <tr>
+    <td><strong>Quality</strong></td>
+    <td>Eval thresholds on the golden set</td>
+    <td>Pass rate ≥ 90% on happy path; no bucket drops more than 2 points vs baseline</td>
+  </tr>
+  <tr>
+    <td><strong>Safety</strong></td>
+    <td>Guardrail/adversarial set, zero-tolerance</td>
+    <td>100% of adversarial examples blocked; zero PII leaks; zero successful injections</td>
+  </tr>
+  <tr>
+    <td><strong>Operations</strong></td>
+    <td>Latency and cost budgets</td>
+    <td>p95 latency ≤ 2s; cost per query ≤ $0.02; token budget per run capped</td>
+  </tr>
+  <tr>
+    <td><strong>Security</strong></td>
+    <td>Code-level checks (the boring ones)</td>
+    <td>Dependency scan, secret scan, prompt files linted, schema-validated output</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Why zero-tolerance for safety:</strong> quality gates use percentages because mediocre answers are a smooth spectrum. Safety gates use zero because a single leaked PII record or one successful injection is a binary, reportable failure. Different failure classes, different math.
+</div>
+
+<h3>Setting Thresholds You Can Defend</h3>
+<ol>
+  <li><strong>Baseline first.</strong> Run the current production configuration through the dataset several times. Record the distribution, not just the mean — you need to know how noisy your metrics are (Lesson 2's multi-sample point again).</li>
+  <li><strong>Set the gate at baseline minus a small margin</strong> (e.g. pass rate −3 points), and tighten it as the system improves. A gate at exactly baseline will fail randomly on noise; a gate far below baseline admits regressions.</li>
+  <li><strong>Gate per bucket, not just overall.</strong> "Overall 90%" hides "adversarial 40%". Require pass rates per taxonomy bucket.</li>
+  <li><strong>Pin the dataset version</strong> in the gate definition. If the dataset changes, the threshold conversation restarts — otherwise you're moving the goalposts and the gate is meaningless.</li>
+</ol>
+
+<h3>Where Gates Live: CI and Runtime</h3>
+<pre><code># CI gate (pseudocode — the required check on every PR)
+results = run_experiment(data="support-golden-v2", evaluators=[...])
+checks = {
+  "happy_pass_rate":   results.pass_rate("happy")   &gt;= 0.90,
+  "edge_pass_rate":    results.pass_rate("edge")    &gt;= 0.75,
+  "adversarial_zero":  results.failures("adversarial") == 0,
+  "p95_latency":       results.p95_latency          &lt;= 2.0,
+  "cost_per_query":    results.avg_cost             &lt;= 0.02,
+  "no_regression":     results.delta_vs_baseline("overall") &gt;= -0.03,
+}
+if not all(checks.values()):
+    print(f"GATE FAILED: {[k for k,v in checks.items() if not v]}")
+    sys.exit(1)   # PR blocked, merge impossible</code></pre>
+<p>That <code>sys.exit(1)</code> is the whole point of this lesson. It converts "we should probably evaluate this" into "this cannot ship, mechanically."</p>
+
+<p>CI gates protect deploys <em>before</em> they happen. Runtime gates protect users <em>while</em> they happen:</p>
+<ul>
+  <li><strong>Canary / percentage rollout</strong> — ship the new configuration to 5% of traffic, verify online-eval scores and error rates hold, then ramp to 25% → 100%. No change ever hits 100% of users on day one.</li>
+  <li><strong>Feature flags with a kill switch</strong> — every model/prompt/guardrail change is behind a flag; flipping back is a config change, not an emergency deploy.</li>
+  <li><strong>Online eval thresholds with alerting</strong> — production traces get scored live (Lesson 6/10); if the live pass rate or guardrail-fail rate crosses its threshold, page the on-call and prepare to roll back.</li>
+  <li><strong>Rollback plan in writing</strong> — know which version/flags restore the previous behavior, and practice it. A gate you can't retreat through is a trap.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>The maturity ladder:</strong> Level 0 — playground anecdotes. Level 1 — a dataset, run manually. Level 2 — evals in CI as a blocking check. Level 3 — gates + canary rollout. Level 4 — online evals and drift gates in production. Most teams die between Level 1 and 2 — they build the dataset and never make it a blocker. This lesson is the jump from 1 to 2, and Lessons 10 makes 3–4 real.
+</div>
+
+<h3>When the Gate Fails</h3>
+<p>The gate failing is not a crisis — it's the system working. The workflow: read the regression report (which examples failed, which evaluators dropped), fix the smallest thing that moves the needle (a knowledge doc, a prompt clause, a retrieval parameter, a guardrail rule), re-run the experiment, and only merge when green. Treat gate failures as free debugging information, not punishment. If a gate fails so often it's ignored, the threshold is wrong — fix the threshold, never ignore the gate.</p>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Why is the adversarial bucket gated at zero failures while the happy path is gated at a percentage?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Because adversarial examples are easier to pass</button>
+    <button class="quiz-btn" data-opt="b">Safety failures are binary and reportable (a leak or injection), unlike mediocre answers which are a smooth quality spectrum</button>
+    <button class="quiz-btn" data-opt="c">Because percentages are only for non-technical stakeholders</button>
+    <button class="quiz-btn" data-opt="d">Because the model is better at happy paths</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the correct first step in setting eval thresholds?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Ask the vendor for recommended thresholds</button>
+    <button class="quiz-btn" data-opt="b">Pick 95% because it sounds rigorous</button>
+    <button class="quiz-btn" data-opt="c">Measure the current production configuration's score distribution across several runs, then gate at baseline minus a small margin</button>
+    <button class="quiz-btn" data-opt="d">Set them to zero until launch</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which mechanism makes a gate actually hard (unenforceable to skip)?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">A CI job that exits non-zero on failure and is a required check for merge, plus runtime canary/rollback paths</button>
+    <button class="quiz-btn" data-opt="b">A strongly worded policy document</button>
+    <button class="quiz-btn" data-opt="c">Asking the team to self-report eval scores in standup</button>
+    <button class="quiz-btn" data-opt="d">Hiring a dedicated evaluator</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.smith.langchain.com/evaluation/how_to_guides/ci" target="_blank" rel="noopener">LangSmith: running evals in CI</a></li>
+  <li><a href="https://martinfowler.com/articles/feature-toggles.html" target="_blank" rel="noopener">Martin Fowler: Feature Toggles (kill-switch pattern)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/well-architected/" target="_blank" rel="noopener">Azure Well-Architected Framework (reliability and release practices)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
