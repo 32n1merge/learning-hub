@@ -1,0 +1,5 @@
+{
+  "title": "Real Data: Talking to SharePoint with SPHttpClient",
+  "description": "How a web part reads actual list data — the REST endpoint pattern, SPHttpClient usage with real async/await code, loading and error states, and when to reach for PnPJS.",
+  "readingTime": "10 min"
+}

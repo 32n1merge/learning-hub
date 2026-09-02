@@ -1,0 +1,173 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Real Data — Talking to SharePoint with SPHttpClient</h2>
+
+<p>A web part that prints "Hello" is a demo; a web part that reads the <em>Announcements</em> list is a tool. Reading data is where your component earns its place on the page — and it's remarkably direct: every web part gets a context with a pre-authenticated HTTP client pointed at SharePoint's REST API.</p>
+
+<h3>The data access pattern</h3>
+<ol>
+  <li><strong>Build an endpoint URL</strong> against the REST API (<code>/_api/...</code>) rooted at the current site's absolute URL.</li>
+  <li><strong>Call <code>this.context.spHttpClient.get(...)</code></strong> with the v1 configuration — SharePoint injects the caller's authentication for you.</li>
+  <li><strong>Parse JSON</strong>: list-item queries return <code>{ "value": [ ...items ] }</code>.</li>
+  <li><strong>Render</strong> into the DOM you created in <code>render()</code> — and handle the failure case.</li>
+</ol>
+
+<p>Here's a complete, minimal web part that fetches the ten newest items from a list called <em>Announcements</em>:</p>
+<pre><code>import { Version } from '@microsoft/sp-core-library';
+import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
+import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import { escape } from '@microsoft/sp-lodash-subset';
+
+interface IAnnouncement { Id: number; Title: string; }
+
+export default class AnnouncementsWebPart
+  extends BaseClientSideWebPart&lt;{}&gt; {
+
+  public render(): void {
+    this.domElement.innerHTML = `
+      &lt;div class="awp"&gt;
+        &lt;h2&gt;Announcements&lt;/h2&gt;
+        &lt;div id="items"&gt;Loading…&lt;/div&gt;
+      &lt;/div&gt;`;
+    this._loadAnnouncements();          // fire the request, don't await in render
+  }
+
+  private _loadAnnouncements(): void {
+    const endpoint: string =
+      `${this.context.pageContext.web.absoluteUrl}` +
+      `/_api/web/lists/getbytitle('Announcements')/items` +
+      `?$select=Id,Title&amp;$orderby=Created desc&amp;$top=10`;
+
+    this.context.spHttpClient
+      .get(endpoint, SPHttpClient.configurations.v1)
+      .then((response: SPHttpClientResponse) =&gt; {
+        if (!response.ok) { throw new Error('HTTP ' + response.status); }
+        return response.json();
+      })
+      .then((data: { value: IAnnouncement[] }) =&gt; {
+        const html = data.value
+          .map((it: IAnnouncement) =&gt; `&lt;li&gt;${escape(it.Title)}&lt;/li&gt;`)
+          .join('');
+        const host = this.domElement.querySelector('#items');
+        if (host) { host.innerHTML = `&lt;ul&gt;${html}&lt;/ul&gt;`; }
+      })
+      .catch((err: Error) =&gt; {
+        console.error('Announcements failed to load', err);
+        const host = this.domElement.querySelector('#items');
+        if (host) { host.textContent = 'Could not load announcements.'; }
+      });
+  }
+
+  protected get dataVersion(): Version { return Version.parse('1.0'); }
+}</code></pre>
+
+<h3>Why it's shaped this way</h3>
+<ul>
+  <li><strong>REST endpoint:</strong> <code>lists/getbytitle('Announcements')/items</code> targets a list by display name; <code>$select</code>, <code>$orderby</code>, <code>$top</code> are OData query options. Shape the query server-side — don't pull 5,000 rows and filter in the browser.</li>
+  <li><strong>Async discipline:</strong> <code>render()</code> must return immediately, so the fetch fires and the DOM updates when the promise resolves. (In a React web part you'd use state + <code>useEffect</code> instead of querying <code>#items</code>.)</li>
+  <li><strong>Identity:</strong> the request runs <em>as the signed-in user</em> — list permissions apply. A user who can't read the list gets an error, which your <code>catch</code> surfaces gracefully.</li>
+  <li><strong>Loading + error states:</strong> the placeholder text and the catch block are not polish; they're what your users see on slow networks and broken configs. Always ship both.</li>
+</ul>
+
+<div class="callout">
+  <strong>Escape everything user-controlled:</strong> <code>escape()</code> around <code>Title</code> above is non-negotiable — list items are content created by other people, and unescaped content in <code>innerHTML</code> is an XSS hole in your web part.
+</div>
+
+<h3>When you outgrow raw REST: PnPJS</h3>
+<p>Hand-written REST URLs get tedious fast (paging, batching, CRUD, error typing). The community-standard library <strong>PnPJS</strong> wraps the same APIs in a fluent, typed client:</p>
+<pre><code>import { spfi, SPFx } from '@pnp/sp';
+import '@pnp/sp/webs';
+import '@pnp/sp/lists';
+
+const sp = spfi().using(SPFx(this.context));
+const items = await sp.web.lists
+  .getByTitle('Announcements')
+  .items.select('Id', 'Title')
+  .orderBy('Created', false)
+  .top(10)();
+// items: array of typed records — same data, less stringly-typed URL surgery</code></pre>
+<p>It's an npm dependency you add per-project (<code>@pnp/sp</code> + peer packages) and it's what most production samples in the wild use — you'll see it constantly in the example galleries from Lesson 9. Learning raw <code>SPHttpClient</code> first is still the right move: it makes what PnPJS does for you legible.</p>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. What does the REST call <code>/_api/web/lists/getbytitle('Announcements')/items?$top=10</code> return?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A single JSON object with the list's metadata</button>
+    <button class="quiz-btn" data-opt="b">An HTML table of the ten newest items</button>
+    <button class="quiz-btn" data-opt="c">A JSON object with a <code>value</code> array containing up to ten list items</button>
+    <button class="quiz-btn" data-opt="d">A CSV attachment file</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Whose permissions apply when a web part calls SPHttpClient?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">A dedicated service account with full control</button>
+    <button class="quiz-btn" data-opt="b">The signed-in user viewing the page</button>
+    <button class="quiz-btn" data-opt="c">The site collection administrator only</button>
+    <button class="quiz-btn" data-opt="d">No permissions — the API is anonymous</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Why shouldn't <code>render()</code> await the data fetch synchronously?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Because SharePoint blocks synchronous HTTP in web parts</button>
+    <button class="quiz-btn" data-opt="b">Because render() only runs once anyway</button>
+    <button class="quiz-btn" data-opt="c">Because TypeScript requires promises in strict mode</button>
+    <button class="quiz-btn" data-opt="d">Because render() must return immediately — fetch in the background and update the DOM when data arrives</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/web-parts/get-started/connect-to-sharepoint" target="_blank" rel="noopener">Connect your web part to SharePoint (Microsoft Learn)</a></li>
+  <li><a href="https://pnp.github.io/pnpjs/" target="_blank" rel="noopener">PnPJS documentation</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,172 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: The App Catalog &amp; Package Lifecycle</h2>
+
+<p>Everything you build finally becomes a <strong><code>.sppkg</code></strong> — a zip-like SharePoint package holding your bundled code, manifests, and assets. That single file is what moves through the deployment lifecycle, and the <strong>app catalog</strong> is the staging ground where it lives. Understanding these states is what makes CI/CD (next lesson) feel obvious instead of magical.</p>
+
+<h3>Where packages live: the app catalog</h3>
+<ul>
+  <li><strong>Tenant app catalog</strong> — a special "Apps for SharePoint" site for the whole tenant. The default destination for SPFx solutions; apps here can be deployed tenant-wide. Enabled once in the SharePoint admin center (or via CLI/PowerShell — it's just a site with a flag).</li>
+  <li><strong>Site collection app catalog</strong> — an optional catalog scoped to one site collection, for when a solution must not be visible tenant-wide (e.g. a customer-specific customization in a multi-tenant-style setup).</li>
+</ul>
+
+<h3>The lifecycle states</h3>
+<div class="payoff-diagram">
+  <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="35" width="110" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="65" y="68" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600">add</text>
+    <text x="65" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">upload .sppkg</text>
+    <text x="65" y="99" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">to catalog</text>
+    <path d="M120 75 L160 75" stroke="var(--color-border)" stroke-width="2"/>
+    <rect x="160" y="35" width="120" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="220" y="68" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600">deploy</text>
+    <text x="220" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">make available</text>
+    <text x="220" y="99" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">(catalog-wide)</text>
+    <path d="M280 75 L320 75" stroke="var(--color-border)" stroke-width="2"/>
+    <rect x="320" y="35" width="120" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="380" y="68" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600">install</text>
+    <text x="380" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">add app to a</text>
+    <text x="380" y="99" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">specific site</text>
+    <path d="M440 75 L480 75" stroke="var(--color-border)" stroke-width="2"/>
+    <rect x="480" y="35" width="120" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="540" y="68" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600">upgrade</text>
+    <text x="540" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">new version →</text>
+    <text x="540" y="99" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">re-deploy + update</text>
+    <path d="M600 75 L640 75" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/>
+    <rect x="640" y="35" width="70" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-danger)"/>
+    <text x="675" y="68" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600">retract</text>
+    <text x="675" y="99" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">/ remove</text>
+  </svg>
+</div>
+<table>
+  <tr><th>Verb</th><th>Meaning</th><th>When you need it</th></tr>
+  <tr><td><strong>Add</strong></td><td>Upload the <code>.sppkg</code> file into the catalog</td><td>First deployment, and every new version</td></tr>
+  <tr><td><strong>Deploy</strong></td><td>Make the app available (tenant-wide or catalog-wide)</td><td>After add — it won't appear anywhere until deployed</td></tr>
+  <tr><td><strong>Install</strong></td><td>Add the app to a specific site (enables its site-scoped features)</td><td>Per site that should use the web parts/extensions</td></tr>
+  <tr><td><strong>Upgrade</strong></td><td>Move installed sites to a newer deployed version</td><td>Every release after the first</td></tr>
+  <tr><td><strong>Retract</strong></td><td>Undeploy — app stays in catalog but is no longer available</td><td>Rollbacks / end of life</td></tr>
+  <tr><td><strong>Remove</strong></td><td>Delete the app from the catalog entirely</td><td>Cleanup</td></tr>
+</table>
+
+<h3>The package-solution.json flags that matter</h3>
+<p>Your deployable identity lives in <code>config/package-solution.json</code>. The scaffolded file with the interesting bits:</p>
+<pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "my-company-announcements-client-side-solution",
+    "id": "b1c3f2a4-0000-4a1e-9c9d-1234567890ab",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "isDomainIsolated": false,
+    "skipFeatureDeployment": true,
+    "developer": {
+      "name": "Your Company",
+      "websiteUrl": "https://github.com/your-org/your-repo",
+      "privacyUrl": "https://contoso.com/privacy",
+      "termsOfUseUrl": "https://contoso.com/terms",
+      "mpnId": ""
+    }
+  },
+  "paths": { "zippedPackage": "solution/my-company-announcements.sppkg" }
+}</code></pre>
+<ul>
+  <li><strong><code>id</code></strong> — the solution's identity (separate from each component's manifest id). Fixed for life.</li>
+  <li><strong><code>version</code></strong> — bump this on every release. It's what the catalog and <code>upgrade</code> use to detect "newer."</li>
+  <li><strong><code>includeClientSideAssets: true</code></strong> — your JS bundles get hosted by SharePoint itself (inside the app), so you don't need a separate CDN. Keep it true unless you deliberately use your own host.</li>
+  <li><strong><code>skipFeatureDeployment: true</code></strong> — "deploy tenant-wide, no per-site install needed for availability." Perfect for pure web-part libraries and global extensions. When false (default), the app must be installed per site to light up its features.</li>
+  <li><strong><code>developer</code></strong> — surfaces in the catalog UI; nice place to point back at your GitHub repo. 😉</li>
+</ul>
+
+<div class="callout">
+  <strong>Where the magic "install" step lives:</strong> whether an app needs per-site install depends on <code>skipFeatureDeployment</code> and on the components inside. Web parts typically work tenant-wide once deployed; application customizers run per site collection after the app is installed there. Your deployment script (next lesson) must encode that choice deliberately.
+</div>
+
+<div class="callout-warn">
+  <strong>Version discipline:</strong> uploading a changed <code>.sppkg</code> with the <em>same</em> solution version overwrites the package but sites that already installed the old one won't reliably pick it up — that's what an <code>upgrade</code> (triggered by a version bump) is for. Never ship twice on one version number.
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which action makes a just-uploaded app actually available to sites?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Add</button>
+    <button class="quiz-btn" data-opt="b">Install</button>
+    <button class="quiz-btn" data-opt="c">Deploy</button>
+    <button class="quiz-btn" data-opt="d">Upgrade</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What does <code>skipFeatureDeployment: true</code> mean in package-solution.json?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The app can be deployed tenant-wide without installing it on each site for its features to be available</button>
+    <button class="quiz-btn" data-opt="b">The solution skips the build step and ships uncompiled</button>
+    <button class="quiz-btn" data-opt="c">The .sppkg is never uploaded to the app catalog</button>
+    <button class="quiz-btn" data-opt="d">Only admins can see the app in the catalog</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Your users report an old version still loads after you re-uploaded a fixed .sppkg with the same solution version. What's the likely cause?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Browser cache — hard refresh fixes it for everyone permanently</button>
+    <button class="quiz-btn" data-opt="b">The app catalog requires a tenant restart</button>
+    <button class="quiz-btn" data-opt="c">You need to delete and recreate the site</button>
+    <button class="quiz-btn" data-opt="d">Installed sites don't reliably pick up same-version overwrites — bump the version and run an upgrade</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/web-parts/basics/notes-on-solution-packaging" target="_blank" rel="noopener">Notes on SPFx solution packaging (Microsoft Learn)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/use-app-catalog" target="_blank" rel="noopener">Use the app catalog (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

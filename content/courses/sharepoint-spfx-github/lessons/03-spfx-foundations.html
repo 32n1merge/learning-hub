@@ -1,0 +1,144 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: SPFx Foundations — Scaffold, Project Anatomy &amp; the Dev Loop</h2>
+
+<p><span class="glossary-term">SharePoint Framework (SPFx)</span> is the modern model for building SharePoint customizations: your components are ordinary web assets (TypeScript compiled to JS bundles) that SharePoint's client-side runtime loads inside modern pages. No server code, no farm installs — just a package your app catalog serves. SPFx also lets one codebase target SharePoint, Microsoft Teams tabs/personal apps, and Outlook add-ins, because the components are host-agnostic web parts underneath.</p>
+
+<h3>What you can build with SPFx</h3>
+<table>
+  <tr><th>Component</th><th>What it does</th></tr>
+  <tr><td><strong>Client-side web part</strong></td><td>A self-contained widget authors drag onto any page. The bread-and-butter of this course.</td></tr>
+  <tr><td><strong>Application customizer</strong></td><td>Code that runs on every page of a site — injects headers/footers/scripts.</td></tr>
+  <tr><td><strong>Field customizer</strong></td><td>Custom rendering for a list column's cells.</td></tr>
+  <tr><td><strong>List view command set</strong></td><td>Custom buttons in a list's toolbar / item context menu.</td></tr>
+  <tr><td><strong>Library component</strong></td><td>Shared code (e.g. a common data layer) other solutions consume.</td></tr>
+</table>
+
+<h3>The toolchain</h3>
+<p>SPFx development runs on Node.js with a Microsoft-maintained build toolchain (webpack underneath). One important version note: <strong>SPFx v1.22+ moved from the classic Gulp-based toolchain to a Heft-based one</strong> (Rushstack). New scaffolds use Heft; older projects (v1.0–v1.21.1) and most legacy samples still use Gulp. Commands differ slightly, and this course shows the current Heft form with the Gulp equivalent alongside.</p>
+<pre><code># install the global scaffolding tool (once)
+npm install -g yo @microsoft/generator-sharepoint
+
+# scaffold a new solution in a fresh folder
+yo @microsoft/sharepoint</code></pre>
+<p>The generator asks a few questions: your solution name, which SharePoint environment (Online, or an on-premises version if relevant), the framework you want (<strong>React</strong> or <strong>no JavaScript framework</strong> — both are first-class; start with "no framework" to learn the mechanics), and which component type to scaffold (a web part is the default). It then produces a complete, runnable project.</p>
+
+<div class="callout">
+  <strong>Node version discipline:</strong> SPFx pins each release to a specific Node.js LTS line (the support table in the docs tells you which). If you work on several SPFx projects, manage Node versions with <code>nvm</code> (macOS/Linux) or <code>nvm-windows</code> so each repo's <code>.nvmrc</code>/<code>engines</code> gets the right runtime. Wrong Node is the #1 cause of mysterious <code>gulp</code> failures.
+</div>
+
+<h3>Anatomy of a generated project</h3>
+<table>
+  <tr><th>Path</th><th>Purpose</th></tr>
+  <tr><td><code>config/package-solution.json</code></td><td>The identity of your deployable solution: name, GUID, version, tenant-wide flags. This becomes the <code>.sppkg</code>.</td></tr>
+  <tr><td><code>config/serve.json</code></td><td>Dev-server settings — which workbench to open, port (default 4321).</td></tr>
+  <tr><td><code>config/write-manifests.json</code>, <code>copy-assets.json</code>, etc.</td><td>Build plumbing: asset copying and manifest emission.</td></tr>
+  <tr><td><code>src/index.ts</code></td><td>Entry point that registers every component in the bundle.</td></tr>
+  <tr><td><code>src/webparts/&lt;name&gt;/&lt;Name&gt;WebPart.ts</code></td><td>The web part class — where you render.</td></tr>
+  <tr><td><code>src/webparts/&lt;name&gt;/&lt;Name&gt;WebPart.manifest.json</code></td><td>Component manifest: id, title, icon, default properties, supported hosts.</td></tr>
+  <tr><td><code>src/webparts/&lt;name&gt;/loc/*.js</code></td><td>Localized UI strings (en-us by default).</td></tr>
+  <tr><td><code>src/webparts/&lt;name&gt;/&lt;Name&gt;WebPart.module.scss</code></td><td>CSS module styles scoped to your component.</td></tr>
+  <tr><td><code>gulpfile.js</code> (legacy) / Heft config, <code>package.json</code>, <code>tsconfig.json</code></td><td>Build orchestration, dependencies, TypeScript config.</td></tr>
+</table>
+
+<h3>The dev loop: heft start + the workbench</h3>
+<p>During development you never upload anything. You run a local build server and preview against SharePoint's <em>workbench</em>:</p>
+<pre><code>heft start          # legacy gulp-based projects (SPFx v1.0-1.21.1): gulp serve</code></pre>
+<ul>
+  <li><strong>Local workbench</strong> (default): opens the workbench on <code>https://localhost:4321</code> — your component runs isolated from a real site. The first run handles the local HTTPS certificate setup for you.</li>
+  <li><strong>Hosted workbench</strong>: better for real data. Open <code>https://&lt;your-tenant&gt;.sharepoint.com/_layouts/15/workbench.aspx</code> and add <code>?debugManifestsFile=https://localhost:4321/temp/manifests.js</code> so the page loads your locally-served component. Your web part then renders against the real site, with real lists and permissions.</li>
+</ul>
+<p>Save a file → the dev server recompiles → refresh the workbench. When you're happy, stop and produce the shippable package (Lesson 7):</p>
+<pre><code>heft build --clean --production
+heft package-solution --production
+# legacy gulp-based projects instead run:
+#   gulp clean &amp;&amp; gulp bundle --ship &amp;&amp; gulp package-solution --ship</code></pre>
+<p>That last command emits <code>sharepoint/solution/&lt;name&gt;.sppkg</code> — the file everything downstream deploys. (Both toolsets expose these through <code>package.json</code> scripts too, so <code>npm run bundle -- --ship</code>-style invocations appear in many repos and CI files.)</p>
+
+<div class="callout-success">
+  <strong>Pro tip:</strong> keep DevTools open during workbench sessions. SPFx logs component load/errors to the console, and a failed web part almost always explains itself there before you ever touch the package.
+</div>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which command scaffolds a new SPFx solution?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">npm create sharepoint</button>
+    <button class="quiz-btn" data-opt="b">dotnet new spfx</button>
+    <button class="quiz-btn" data-opt="c">yo @microsoft/sharepoint</button>
+    <button class="quiz-btn" data-opt="d">spfx init</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What does <code>heft start</code> do in a current SPFx project?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Uploads your web part to the app catalog</button>
+    <button class="quiz-btn" data-opt="b">Starts a local dev server so you can preview your component in the SharePoint workbench</button>
+    <button class="quiz-btn" data-opt="c">Creates a production .sppkg file</button>
+    <button class="quiz-btn" data-opt="d">Deploys your solution to all site collections</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Where does the hosted workbench live, and what extra query parameter makes it load your local component?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">/_layouts/15/workbench.aspx on your tenant, with ?debugManifestsFile=https://localhost:4321/temp/manifests.js</button>
+    <button class="quiz-btn" data-opt="b">/_api/web/workbench with ?devmode=true</button>
+    <button class="quiz-btn" data-opt="c">/sites/dev/workbench.aspx with ?manifest=local</button>
+    <button class="quiz-btn" data-opt="d">There is no hosted workbench — you must deploy to test</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/set-up-your-development-environment" target="_blank" rel="noopener">Set up your SPFx development environment (Microsoft Learn)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/web-parts/get-started/build-a-hello-world-web-part" target="_blank" rel="noopener">Build your first web part (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

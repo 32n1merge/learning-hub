@@ -1,0 +1,139 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Great Examples to Study &amp; the Best Resources</h2>
+
+<p>The fastest way to get good at SharePoint customization is to read code that ships. The PnP (Patterns and Practices) community — Microsoft-supported and fiercely active — maintains the canonical sample libraries, and almost every pattern you'll ever need already exists in one of them. Everything in this lesson was HTTP-verified while writing the course.</p>
+
+<h3>The sample repositories (start here)</h3>
+<table>
+  <tr><th>Repository</th><th>What's inside</th></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-webparts" target="_blank" rel="noopener">pnp/sp-dev-fx-webparts</a></td><td>300+ web part samples across React, no-framework, Angular, Vue, jQuery — each with its own README, screenshots, and setup instructions. Actively maintained (commits daily).</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-extensions" target="_blank" rel="noopener">pnp/sp-dev-fx-extensions</a></td><td>Application customizer, field customizer, list view command set, and form customizer samples — the extension patterns from Lesson 6, production-tested.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-controls-react" target="_blank" rel="noopener">pnp/sp-dev-fx-controls-react</a></td><td>100+ reusable React controls for SPFx (people picker, date time picker, file picker, accordion…). Check this <em>before</em> building any common UI yourself.</td></tr>
+</table>
+
+<h3>The searchable gallery</h3>
+<p>Browsing GitHub folders is fine; searching beats it. The <a href="https://pnp.github.io/sp-dev-fx-webparts/" target="_blank" rel="noopener">SPFx Samples Gallery</a> renders the whole web-parts collection as a filterable site — filter by SPFx version, framework, and component type to find "the sample for exactly what I'm building." The React controls also have full docs at <a href="https://pnp.github.io/sp-dev-fx-controls-react/" target="_blank" rel="noopener">pnp.github.io/sp-dev-fx-controls-react</a>.</p>
+
+<h3>Six standout samples worth studying</h3>
+<table>
+  <tr><th>Sample</th><th>Why study it</th></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-webparts/tree/main/samples/react-hooks" target="_blank" rel="noopener">react-hooks</a></td><td>Modern React Hooks in an SPFx context — <code>useState</code>/<code>useEffect</code> driving SharePoint data. The pattern template for any new React web part.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-extensions/tree/main/samples/js-command-clone" target="_blank" rel="noopener">js-command-clone</a></td><td>A production-shaped list view command set: dialog handling, form processing, REST calls. Study it before writing your own toolbar buttons.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-extensions/tree/main/samples/js-application-appinsights" target="_blank" rel="noopener">js-application-appinsights</a></td><td>Application Insights wired into an application customizer — init, custom events, error reporting. The blueprint for observability on every site.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-extensions/tree/main/samples/js-application-header-toggler" target="_blank" rel="noopener">js-application-header-toggler</a></td><td>DOM manipulation and CSS injection against the SharePoint header via an application customizer — shows how far you can push the top placeholder.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-extensions/tree/main/samples/js-application-analytics" target="_blank" rel="noopener">js-application-analytics</a></td><td>Injects Google Analytics / Adobe Analytics across all pages. The canonical "load a script site-wide" customizer, with configuration options documented.</td></tr>
+  <tr><td><a href="https://github.com/pnp/sp-dev-fx-webparts/tree/main/samples/angular-migration" target="_blank" rel="noopener">angular-migration</a></td><td>Migrating an AngularJS-era web part forward. Read it when you inherit legacy SPFx code.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>How to read a sample:</strong> (1) the README tells you the SPFx version, framework, and any tenant setup; (2) the <code>.manifest.json</code> reveals the component contract; (3) the web part / extension entry file shows the wiring; (4) then follow the data flow — context → service → render. Clone the repo, scaffold the matching SPFx version, and run the sample locally before you change a line.
+</div>
+
+<h3>Official docs &amp; learning paths</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/" target="_blank" rel="noopener">SharePoint developer documentation</a> — the root hub; everything hangs off it.</li>
+  <li><a href="https://learn.microsoft.com/en-us/training/paths/m365-sharepoint-associate/" target="_blank" rel="noopener">Extend SharePoint — Associate learning path</a> (≈11 hours, certification-aligned). Shortcut: <a href="https://aka.ms/spfx-training" target="_blank" rel="noopener">aka.ms/spfx-training</a>.</li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview" target="_blank" rel="noopener">SPFx overview</a> — the current-vision reference.</li>
+</ul>
+
+<h3>Tooling docs &amp; community</h3>
+<ul>
+  <li><a href="https://pnp.github.io/cli-microsoft365/" target="_blank" rel="noopener">CLI for Microsoft 365 docs</a> · <a href="https://github.com/pnp/cli-microsoft365" target="_blank" rel="noopener">repo</a> — 500+ commands, cross-platform.</li>
+  <li><a href="https://pnp.github.io/powershell/" target="_blank" rel="noopener">PnP PowerShell docs</a> · <a href="https://github.com/pnp/powershell" target="_blank" rel="noopener">repo</a> — 700+ cmdlets, updated almost daily.</li>
+  <li><a href="https://pnp.github.io/" target="_blank" rel="noopener">Microsoft 365 &amp; Power Platform community hub</a> (aka.ms/m365pnp) — blog, weekly community calls, guidance.</li>
+  <li><a href="https://veronicageek.com/" target="_blank" rel="noopener">Veronique Lengelle's blog</a> — MVP writing on SharePoint, PowerShell, and Power Platform.</li>
+  <li><a href="https://sharepointmaven.com/" target="_blank" rel="noopener">SharePoint Maven</a> — practical, out-of-the-box-first guidance.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Two expired links to ignore:</strong> the old <em>Voitanos</em> SPFx course site announced it closes October 1, 2026, and Elio Struyf's old blog domain no longer resolves — use the Microsoft Learn path above instead of paid third-party courses.
+</div>
+
+<div class="callout-success">
+  <strong>The habit that matters:</strong> before you scaffold anything, search the gallery. Someone in the PnP community has almost certainly built 80% of it — borrowing a vetted pattern beats inventing a buggy one.
+</div>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Where do you find hundreds of community SPFx web part samples with READMEs and screenshots?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The Microsoft Store for SharePoint</button>
+    <button class="quiz-btn" data-opt="b">github.com/pnp/sp-dev-fx-webparts (and its searchable gallery)</button>
+    <button class="quiz-btn" data-opt="c">The SharePoint admin center samples library</button>
+    <button class="quiz-btn" data-opt="d">npm's official SPFx registry</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Which library should you check before building a people picker or date picker from scratch?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Fluent UI vanilla</button>
+    <button class="quiz-btn" data-opt="b">sp-dev-fx-extensions</button>
+    <button class="quiz-btn" data-opt="c">pnp/sp-dev-fx-controls-react (100+ reusable SPFx React controls)</button>
+    <button class="quiz-btn" data-opt="d">The SharePoint REST toolkit</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What is the official, certification-aligned way to learn SPFx end to end?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Reading random blog posts from 2019</button>
+    <button class="quiz-btn" data-opt="b">The Voitanos paid academy (closing soon)</button>
+    <button class="quiz-btn" data-opt="c">Watching the weekly PnP community call recording archive</button>
+    <button class="quiz-btn" data-opt="d">The "Extend SharePoint" Microsoft Learn learning path (aka.ms/spfx-training)</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pnp.github.io/sp-dev-fx-webparts/" target="_blank" rel="noopener">SPFx Samples Gallery (searchable)</a></li>
+  <li><a href="https://aka.ms/lookbook" target="_blank" rel="noopener">SharePoint Look Book — official page design gallery</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

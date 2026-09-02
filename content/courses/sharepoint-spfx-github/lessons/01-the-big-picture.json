@@ -1,0 +1,5 @@
+{
+  "title": "The Big Picture: Why Customize SharePoint from a GitHub Repo",
+  "description": "The modern SharePoint customization model — client-side code, no farm solutions — and the source-controlled ALM loop: repo → CI/CD → app catalog → sites.",
+  "readingTime": "8 min"
+}

@@ -1,0 +1,196 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Ship It — Deploying SPFx from GitHub Actions</h2>
+
+<p>This is the payoff lesson: the full path from <code>git push</code> to a web part live on a SharePoint site. Three moving pieces — <strong>build</strong> (make the <code>.sppkg</code>), <strong>auth</strong> (a service principal your runner can use), and <strong>deployment actions</strong> (the steps that talk to the app catalog). Everything below was verified against current documentation and working action repositories.</p>
+
+<h3>The deployment actions available</h3>
+<p>You don't need to hand-roll SharePoint deployment. There are three credible routes, each with real, maintained tooling:</p>
+<table>
+  <tr><th>Route</th><th>Actions / tools</th><th>Best for</th></tr>
+  <tr><td><strong>Official CLI for Microsoft 365 actions</strong> (recommended)</td><td><code>pnp/action-cli-login@v3.0.1</code> — installs the CLI and logs in; <code>pnp/action-cli-deploy@v5.0.0</code> — adds + deploys an SPFx package to the app catalog; <code>pnp/action-cli-runscript@v3.0.0</code> — runs any CLI command or script</td><td>Clean, minimal YAML, cross-platform, tenant or site-collection catalogs</td></tr>
+  <tr><td><strong>Direct CLI in a step</strong></td><td><code>npm install -g @pnp/cli-microsoft365</code>, then <code>m365 login --authType certificate …</code> and <code>m365 spo app add / deploy / install …</code></td><td>Full control, no third-party action dependency; great when you already script with CLI M365</td></tr>
+  <tr><td><strong>PnP PowerShell</strong></td><td><code>Add-PnPApp</code>, <code>Publish-PnPApp</code>, <code>Install-PnPApp</code>, <code>Update-PnPApp</code>, <code>Remove-PnPApp</code>; community action <code>anoopt/action-pnp-powershell-with-oidc</code> for OIDC auth</td><td>Teams already living in PnP PowerShell; Windows-centric admin scripts</td></tr>
+</table>
+
+<div class="callout-warn">
+  <strong>Avoid generic "upload to SharePoint" marketplace actions</strong> for package deployment: they upload files but don't understand the app catalog lifecycle (deploy vs install vs upgrade), so they silently produce half-deployed apps. Use lifecycle-aware tooling.
+</div>
+
+<h3>Setting up auth (once per repo)</h3>
+<ol>
+  <li><strong>Register an app in Microsoft Entra ID</strong> (App registrations → New registration). Note the application (client) ID and tenant ID.</li>
+  <li><strong>Upload a certificate</strong> to that app registration (Certificates &amp; secrets → Certificates). Keep the private key (<code>.pfx</code>) locally — it's what your runner will present.</li>
+  <li><strong>Grant the SharePoint permission</strong>: API permissions → add <code>Microsoft Graph</code> or <code>SharePoint</code> → application permission <code>Sites.FullControl.All</code> → Grant admin consent. (For catalog-only work, scoping the principal to App Catalog admin also works.)</li>
+  <li><strong>Store GitHub secrets</strong> in the repo: <code>APP_ID</code>, <code>TENANT_ID</code>, <code>CERTIFICATE_ENCODED</code> (the certificate base64-encoded, e.g. <code>openssl base64 -in app-cert.pfx | tr -d '\n'</code>), and optionally <code>CERTIFICATE_PASSWORD</code>.</li>
+</ol>
+<div class="callout">
+  <strong>Even better: OIDC federated credentials.</strong> Instead of a long-lived certificate secret, you can configure the Entra app with a <em>federated credential</em> that trusts GitHub's OIDC token (scoped to a repo/branch/environment). The workflow requests <code>permissions: id-token: write</code> and no certificate secret ever touches the repo. The PnP PowerShell OIDC action is built around this pattern; it's the state of the art for M365 CI/CD.
+</div>
+
+<h3>The canonical workflow</h3>
+<p>Save this as <code>.github/workflows/deploy-spfx.yml</code> in your SPFx repo. It builds the current (Heft-based, SPFx v1.22+) way and deploys with the official actions:</p>
+<pre><code>name: Deploy SPFx to SharePoint
+
+on:
+  push:
+    branches: [ main ]      # or: workflow_dispatch for manual runs
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'       # match the LTS your SPFx version requires
+  SPPKG_FILE: my-solution.sppkg   # set to your package name
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and bundle (production)
+        run: npx heft build --clean --production
+
+      - name: Package solution (.sppkg)
+        run: npx heft package-solution --production
+        # Legacy gulp-based projects (SPFx v1.0-1.21.1) instead run:
+        #   npx gulp bundle --ship
+        #   npx gulp package-solution --ship
+
+      - name: Log in to Microsoft 365
+        uses: pnp/action-cli-login@v3.0.1
+        with:
+          APP_ID: ${{ secrets.APP_ID }}
+          CERTIFICATE_ENCODED: ${{ secrets.CERTIFICATE_ENCODED }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          TENANT: ${{ secrets.TENANT_ID }}
+
+      - name: Deploy app to the tenant app catalog
+        id: deploy
+        uses: pnp/action-cli-deploy@v5.0.0
+        with:
+          APP_FILE_PATH: sharepoint/solution/${{ env.SPPKG_FILE }}
+          SKIP_FEATURE_DEPLOYMENT: true   # tenant-wide, no per-site feature activation
+          OVERWRITE: true                 # re-upload newer builds of the same version
+
+      - name: Install on a site (only when the app needs per-site install)
+        uses: pnp/action-cli-runscript@v3.0.0
+        with:
+          M365_CLI_SCRIPT: m365 spo app install --id ${{ steps.deploy.outputs.APP_ID }} --siteUrl https://contoso.sharepoint.com/sites/intranet</code></pre>
+
+<h3>Reading the pipeline</h3>
+<ul>
+  <li><strong>Build steps are ordinary Node CI</strong> — checkout, pin Node, <code>npm ci</code> from the lockfile, then Heft's production build and package commands emit <code>sharepoint/solution/&lt;name&gt;.sppkg</code>.</li>
+  <li><strong><code>action-cli-login</code></strong> installs CLI for Microsoft 365 into the runner and authenticates with your service principal — every later CLI action reuses that session. The action accepts delegated admin credentials or, as here, an app ID + base64-encoded certificate.</li>
+  <li><strong><code>action-cli-deploy</code></strong> wraps add + deploy. <code>OVERWRITE: true</code> lets repeat runs of the same solution version replace the package; <code>SKIP_FEATURE_DEPLOYMENT: true</code> makes it available tenant-wide. Its <code>APP_ID</code> output feeds later steps.</li>
+  <li><strong>The optional install step</strong> is only needed when the app targets specific sites (e.g. an application customizer for one site collection). Pure tenant-wide web parts don't need it.</li>
+</ul>
+
+<h3>Environments, upgrades, rollback</h3>
+<ul>
+  <li><strong>Dev → prod:</strong> keep a dev app catalog (site-collection catalog or a dev tenant) and point a <em>dev</em> workflow at it. Promote by running the same workflow against the prod catalog — that's the whole point of the repo being the single source of truth.</li>
+  <li><strong>Releases:</strong> bump <code>solution.version</code> in <code>config/package-solution.json</code> per release, then re-run add/deploy and <code>m365 spo app upgrade --id …</code> (or <code>Update-PnPApp</code>) against installed sites so they move to the new version.</li>
+  <li><strong>Rollback:</strong> redeploy the previous <code>.sppkg</code> version, or <code>m365 spo app retract --id …</code> to pull the app from availability (keeps it in the catalog), then <code>spo app remove</code> once nobody uses it.</li>
+</ul>
+
+<div class="callout-success">
+  <strong>You now own the whole loop</strong> — Lesson 1's diagram is real: push → Actions builds → login + deploy actions publish to the catalog → sites pick it up. Every subsequent change is a pull request and a green pipeline, exactly like any other software you ship.
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which pair of official GitHub Actions logs in and then deploys an SPFx package?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">actions/checkout then actions/setup-node</button>
+    <button class="quiz-btn" data-opt="b">pnp/action-cli-deploy then pnp/action-cli-login (in that order)</button>
+    <button class="quiz-btn" data-opt="c">pnp/action-cli-login then pnp/action-cli-deploy</button>
+    <button class="quiz-btn" data-opt="d">azure/login then pnp/action-cli-deploy</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What goes into the <code>CERTIFICATE_ENCODED</code> GitHub secret for the login action?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The certificate's public thumbprint as plain text</button>
+    <button class="quiz-btn" data-opt="b">The base64-encoded certificate (private key) file the service principal will present</button>
+    <button class="quiz-btn" data-opt="c">The tenant admin's username and password</button>
+    <button class="quiz-btn" data-opt="d">The app catalog site URL</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What does <code>SKIP_FEATURE_DEPLOYMENT: true</code> do on the deploy action?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Skips the build entirely and uploads whatever .sppkg exists</button>
+    <button class="quiz-btn" data-opt="b">Deploys only to the first site it finds</button>
+    <button class="quiz-btn" data-opt="c">Prevents overwriting an existing package of the same version</button>
+    <button class="quiz-btn" data-opt="d">Deploys the app tenant-wide without requiring per-site feature activation</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pnp.github.io/cli-microsoft365/user-guide/github-actions/" target="_blank" rel="noopener">CLI for Microsoft 365 + GitHub Actions guide</a></li>
+  <li><a href="https://pnp.github.io/cli-microsoft365/cmd/spo/app/app-add/" target="_blank" rel="noopener">CLI reference: spo app add (and sibling app-* commands)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/toolchain/implement-ci-cd-with-azure-pipelines" target="_blank" rel="noopener">Implement CI/CD for SPFx (Microsoft Learn — the same shape applies to GitHub Actions)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

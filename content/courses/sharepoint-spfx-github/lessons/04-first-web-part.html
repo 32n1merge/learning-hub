@@ -1,0 +1,175 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: Your First Web Part — Real Code, Dissected</h2>
+
+<p>Scaffolding gives you a working web part in seconds; understanding it takes one careful read. We'll walk the two files that matter most — the <strong>manifest</strong> (how SharePoint knows your component) and the <strong>web part class</strong> (what it renders) — from a no-framework ("vanilla" TypeScript) scaffold.</p>
+
+<h3>The manifest: your component's ID card</h3>
+<p>Every SPFx component has a <code>.manifest.json</code>. The GUID in it is sacred: it's how the app catalog, the site, and the runtime all refer to this specific web part. Change it and you've created a different component. The scaffolded manifest looks like this:</p>
+<pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "a12b3456-78c9-4def-a012-3456789abcde",
+  "alias": "AnnouncementsWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "supportsThemeVariants": true,
+  "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
+  "preconfiguredEntries": [{
+    "groupId": "5c31a052-22c4-4f9a-b1d1-1c3f2c4b8e11",
+    "group": { "default": "Other" },
+    "title": { "default": "Announcements" },
+    "description": { "default": "Shows recent announcements from a list" },
+    "officeFabricIconFontName": "Megaphone",
+    "properties": { "title": "Announcements" }
+  }]
+}</code></pre>
+<ul>
+  <li><code>id</code> — unique component identity (generate once, never reuse across components).</li>
+  <li><code>supportedHosts</code> — where authors can add it (SharePoint pages, Teams, full-page).</li>
+  <li><code>preconfiguredEntries</code> — the picker entry: toolbox group, title, icon, and the <em>default properties</em> a new instance starts with.</li>
+</ul>
+
+<h3>The web part class</h3>
+<p>A no-framework web part is one TypeScript class extending <code>BaseClientSideWebPart</code>, typed with your properties interface. The scaffolded version (trimmed to the essentials):</p>
+<pre><code>import { Version } from '@microsoft/sp-core-library';
+import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
+import {
+  IPropertyPaneConfiguration,
+  PropertyPaneTextField
+} from '@microsoft/sp-property-pane';
+import { escape } from '@microsoft/sp-lodash-subset';
+
+export interface IAnnouncementsWebPartProps {
+  title: string;          // configurable via the property pane
+}
+
+export default class AnnouncementsWebPart
+  extends BaseClientSideWebPart&lt;IAnnouncementsWebPartProps&gt; {
+
+  public render(): void {
+    // this.domElement is the empty div SharePoint gave this web part
+    this.domElement.innerHTML = `
+      &lt;div class="awp"&gt;
+        &lt;h2&gt;${escape(this.properties.title)}&lt;/h2&gt;
+        &lt;p&gt;Hello from my first web part!&lt;/p&gt;
+      &lt;/div&gt;`;
+  }
+
+  protected get dataVersion(): Version {
+    return Version.parse('1.0');
+  }
+
+  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
+    return {
+      pages: [{
+        header: { description: 'Announcements settings' },
+        groups: [{
+          groupName: 'Display',
+          groupFields: [
+            PropertyPaneTextField('title', { label: 'Heading' })
+          ]
+        }]
+      }]
+    };
+  }
+}</code></pre>
+
+<h3>Reading the important lines</h3>
+<ul>
+  <li><strong><code>render()</code></strong> is the contract: whenever the web part must (re)draw, SPFx calls it — on load, after a property-pane change, on canvas resize. It's your job to write the DOM (or hand off to a framework like React).</li>
+  <li><strong><code>this.domElement</code></strong> — the container the page gave you. Reassigning <code>innerHTML</code> on each render is fine at this scale; more complex web parts build a tree and diff it.</li>
+  <li><strong><code>escape()</code></strong> — always escape user-supplied strings before injecting HTML. Property values are content, not code — treat them as hostile.</li>
+  <li><strong>Property pane</strong> — <code>getPropertyPaneConfiguration()</code> describes the edit panel on the right. <code>PropertyPaneTextField('title', ...)</code> binds the <em>Title</em> field to the <code>title</code> property; type a new value and <code>render()</code> runs again automatically.</li>
+</ul>
+
+<div class="callout">
+  <strong>Real project structure:</strong> as a web part grows, split it — one file for the web part shell (properties + pane + wiring), separate modules for rendering/data. The React scaffold does this for you with a <code>components/</code> folder. The "no framework" option keeps you close to the metal while you learn; nothing stops you adding React to the same project later.
+</div>
+
+<div class="callout-warn">
+  <strong>Common rookie bug:</strong> forgetting that <code>render()</code> re-fires. If you attach event listeners or start background work in <code>render()</code> unconditionally, you'll stack duplicates on every property change. Guard with a flag, or better, use lifecycle hooks like <code>onInit()</code> for one-time setup.
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. What happens if you change the <code>id</code> GUID in a web part's manifest after publishing?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Nothing — it's cosmetic metadata</button>
+    <button class="quiz-btn" data-opt="b">You've created a different component in SharePoint's eyes — instances on pages no longer map to your code</button>
+    <button class="quiz-btn" data-opt="c">The web part stops loading on Teams only</button>
+    <button class="quiz-btn" data-opt="d">It resets all property pane settings to defaults automatically</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. When does SharePoint call your web part's <code>render()</code> method?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Only once, when the page first loads</button>
+    <button class="quiz-btn" data-opt="b">Only when the web part is first added to a page</button>
+    <button class="quiz-btn" data-opt="c">Never — it's called by your own code</button>
+    <button class="quiz-btn" data-opt="d">On load, and again after property-pane changes or canvas events — treat it as repeatable</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Why should property values be passed through <code>escape()</code> (or rendered as text) before going into innerHTML?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Because they're user content — unescaped HTML injection is a security hole and a rendering bug</button>
+    <button class="quiz-btn" data-opt="b">Because TypeScript forbids template literals otherwise</button>
+    <button class="quiz-btn" data-opt="c">Because escape() is required to trigger a property pane refresh</button>
+    <button class="quiz-btn" data-opt="d">Because SharePoint stores properties as JSON and needs valid escapes</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/web-parts/basics/design-considerations-for-web-parts" target="_blank" rel="noopener">Design considerations for web parts (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

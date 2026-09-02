@@ -1,0 +1,5 @@
+{
+  "title": "Extensions: Code That Wraps the Whole Site",
+  "description": "The three SPFx extension types — application customizer, field customizer, list view command set — with a real application customizer that injects a banner on every page.",
+  "readingTime": "8 min"
+}

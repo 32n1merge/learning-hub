@@ -1,0 +1,116 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Toolbox — SPFx, CLI for Microsoft 365 &amp; PnP PowerShell</h2>
+
+<p>Three tools dominate modern SharePoint work. They overlap just enough to confuse beginners, so here's the honest split before we go deep on any one of them.</p>
+
+<h3>The three tools</h3>
+<table>
+  <tr><th>Tool</th><th>What it is</th><th>Best for</th><th>Runs on</th></tr>
+  <tr><td><strong>SPFx</strong> (SharePoint Framework)</td><td>A build framework + runtime for custom components that render inside SharePoint pages (and Teams/Outlook).</td><td>Web parts and extensions — the actual UI you build.</td><td>Node.js + Gulp + TypeScript, bundled by webpack.</td></tr>
+  <tr><td><strong>CLI for Microsoft 365</strong></td><td>An open-source, cross-platform command-line tool (Node) for managing Microsoft 365 and SharePoint.</td><td>Scripting and automation: deploy apps to the catalog, create sites, run site scripts, in CI/CD and dev boxes alike.</td><td>Node.js — Windows/macOS/Linux. Perfect for GitHub Actions.</td></tr>
+  <tr><td><strong>PnP PowerShell</strong></td><td>The classic PowerShell module (community + Microsoft-supported) for SharePoint administration.</td><td>Heavy admin and provisioning work, especially in Windows-only automation and existing PS tooling.</td><td>Windows PowerShell (also works on PowerShell 7 / other OSes for most cmdlets).</td></tr>
+</table>
+
+<div class="callout">
+  <strong>One-line rule of thumb:</strong> SPFx <em>builds</em> your custom UI; CLI for Microsoft 365 or PnP PowerShell <em>ship and manage</em> it (and everything else in the tenant). You'll use SPFx in your dev loop and a CLI/PowerShell tool in your deployment pipeline.
+</div>
+
+<h3>Where they overlap (and how to choose)</h3>
+<ul>
+  <li><strong>Deploying an SPFx package:</strong> both CLI for Microsoft 365 (<code>m365 spo app add / deploy / install</code>) and PnP PowerShell (<code>Add-PnPApp / Publish-PnPApp / Install-PnPApp</code>) can upload and activate your <code>.sppkg</code>. In a GitHub Actions world, the cross-platform CLI is usually the smoother fit.</li>
+  <li><strong>Provisioning sites & lists:</strong> both can create sites, lists, content types, and apply <em>site scripts</em>. If you already live in PowerShell, stay there; if your automation is node-based or repo-driven, use the CLI.</li>
+  <li><strong>Anything else in M365</strong> (Teams, Entra ID apps, SharePoint search, etc.): CLI for Microsoft 365 is the broadest single tool.</li>
+</ul>
+
+<h3>One more: PnP Provisioning Templates</h3>
+<p>For whole-site structure, look at <span class="glossary-term">PnP Provisioning Templates</span> — an XML/JSON description of a site (lists, fields, content types, navigation, files). You can extract a template from a site you designed by hand (<code>m365 spo site template save</code> / <code>Get-PnPSiteTemplate</code>), check it into GitHub, and re-apply it anywhere. That's the closest SharePoint gets to "infrastructure as code," and it composes perfectly with SPFx packages in the same repo.</p>
+
+<div class="callout-warn">
+  <strong>Don't fall into this trap:</strong> using PowerShell/cmdlets to do UI work (like building HTML inside script steps) — that's what SPFx is for. And don't hand-provision lists in the browser when you're already shipping site templates from a repo. Pick the lane per job, not per habit.
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which tool is used to BUILD custom web parts that render inside SharePoint pages?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">PnP PowerShell</button>
+    <button class="quiz-btn" data-opt="b">SPFx (SharePoint Framework)</button>
+    <button class="quiz-btn" data-opt="c">CLI for Microsoft 365</button>
+    <button class="quiz-btn" data-opt="d">Microsoft Graph Explorer</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. In a GitHub Actions pipeline, which deployment tool is usually the smoothest fit and why?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">CLI for Microsoft 365 — cross-platform Node.js tool that runs on Linux runners</button>
+    <button class="quiz-btn" data-opt="b">PnP PowerShell — because Windows is required for everything</button>
+    <button class="quiz-btn" data-opt="c">The SharePoint web UI — Actions can open a browser</button>
+    <button class="quiz-btn" data-opt="d">Azure DevOps only — GitHub cannot deploy to SharePoint</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What is a PnP Provisioning Template?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A Visual Studio project template for web parts</button>
+    <button class="quiz-btn" data-opt="b">A CSS theme file for modern pages</button>
+    <button class="quiz-btn" data-opt="c">A portable XML/JSON description of a site's structure that can be checked into a repo and re-applied</button>
+    <button class="quiz-btn" data-opt="d">A PowerPoint template for SharePoint branding decks</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pnp.github.io/cli-microsoft365/" target="_blank" rel="noopener">CLI for Microsoft 365 documentation</a></li>
+  <li><a href="https://pnp.github.io/powershell/" target="_blank" rel="noopener">PnP PowerShell documentation</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/declarative-customization/site-design-overview" target="_blank" rel="noopener">SharePoint site scripts & site designs (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

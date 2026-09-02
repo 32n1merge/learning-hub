@@ -1,0 +1,151 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Extensions — Code That Wraps the Whole Site</h2>
+
+<p>Web parts live <em>inside</em> pages. <span class="glossary-term">SPFx extensions</span> live <em>around</em> them: code that runs on every page of a site, or that changes how lists behave. If you need a global banner, a custom column, or a toolbar button, an extension is the tool — and it ships in the exact same <code>.sppkg</code> pipeline as web parts.</p>
+
+<h3>The three extension types</h3>
+<table>
+  <tr><th>Type</th><th>Use case</th><th>Scope once installed</th></tr>
+  <tr><td><strong>Application customizer</strong></td><td>Inject HTML/scripts into the header or footer placeholders of every modern page — banners, navigation tweaks, analytics tags.</td><td>Runs automatically across the site collection where the app is installed.</td></tr>
+  <tr><td><strong>Field customizer</strong></td><td>Render a column's cells with custom UI (progress bars, status pills, images) instead of plain text.</td><td>Wired to specific list columns via the column's client-side component settings / provisioning.</td></tr>
+  <tr><td><strong>List view command set</strong></td><td>Add custom buttons to the list toolbar and row context menu — "Approve", "Export", custom workflows.</td><td>Attached to specific list views when you configure the command set.</td></tr>
+</table>
+
+<p>In other words: application customizers are <em>site-wide by nature</em>; field customizers and command sets are <em>opt-in per list</em> and are usually attached during provisioning (which is why Lesson 2's tools earn their keep).</p>
+
+<h3>A real application customizer</h3>
+<p>Scaffold one with the generator (<code>yo @microsoft/sharepoint</code> → Application Customizer) and you get a class like this — here extended to show a dismissible notice bar in the top placeholder:</p>
+<pre><code>import { Log } from '@microsoft/sp-core-library';
+import {
+  BaseApplicationCustomizer,
+  PlaceholderName
+} from '@microsoft/sp-application-base';
+
+export interface INoticeBarApplicationCustomizerProperties {
+  message: string;   // configurable: set when you register the extension
+}
+
+export default class NoticeBarApplicationCustomizer
+  extends BaseApplicationCustomizer&lt;INoticeBarApplicationCustomizerProperties&gt; {
+
+  public onInit(): Promise&lt;void&gt; {
+    Log.info('NoticeBar', 'initialized');
+    // Placeholders appear async — render when the top region is ready
+    this.context.placeholderProvider.changedEvent.add(this, this._render);
+    this._render();
+    return Promise.resolve();
+  }
+
+  private _render(): void {
+    const placeholder = this.context.placeholderProvider
+      .tryCreateContent(PlaceholderName.Top, { onDispose: null });
+
+    if (!placeholder) { return; }   // top slot already taken by another extension
+
+    const message = this.properties.message || 'Default notice';
+    placeholder.domElement.innerHTML = `
+      &lt;div style="background:#fde7e9;color:#a4262c;padding:8px 16px;
+                  font-family:Segoe UI,sans-serif;font-size:14px;text-align:center"&gt;
+        ${message}
+      &lt;/div&gt;`;
+  }
+}</code></pre>
+
+<h3>What to notice</h3>
+<ul>
+  <li><strong><code>onInit()</code></strong> is the extension lifecycle hook — the right place to subscribe and render once.</li>
+  <li><strong><code>placeholderProvider</code></strong> exposes the page's injection slots (<code>PlaceholderName.Top</code> / <code>.Bottom</code>). Only one extension can own a slot; <code>tryCreateContent</code> returns <code>undefined</code> if it's taken — always handle that.</li>
+  <li><strong>Properties travel with registration:</strong> unlike web parts, an app customizer's <code>message</code> isn't set by a property pane — you provide it when registering/installing the extension (via the component's properties during provisioning). The code must default gracefully.</li>
+</ul>
+
+<div class="callout-warn">
+  <strong>Restraint is a feature:</strong> an application customizer runs on <em>every</em> page load in scope. A heavy script or a slow call there taxes the whole site, not one page. Keep customizer code lean, and prefer web parts for anything page-specific.
+</div>
+
+<div class="callout-success">
+  <strong>Classic pattern:</strong> use an application customizer to inject a single config point (e.g. a custom header or a status banner driven by a list), and let web parts stay dumb. Site-wide "chrome" belongs in the customizer; content belongs in web parts.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which extension type runs automatically across a site collection once its app is installed?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Application customizer</button>
+    <button class="quiz-btn" data-opt="b">Field customizer</button>
+    <button class="quiz-btn" data-opt="c">List view command set</button>
+    <button class="quiz-btn" data-opt="d">Web part</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What does <code>tryCreateContent(PlaceholderName.Top)</code> return if another extension already owns the top placeholder?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The other extension's DOM element</button>
+    <button class="quiz-btn" data-opt="b">A fresh placeholder anyway — they stack</button>
+    <button class="quiz-btn" data-opt="c">undefined — you must check and skip gracefully</button>
+    <button class="quiz-btn" data-opt="d">It throws an exception you catch in onInit</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. A field customizer and a command set both need what after the app is installed?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Nothing — they activate everywhere automatically</button>
+    <button class="quiz-btn" data-opt="b">A web part added to the page to host them</button>
+    <button class="quiz-btn" data-opt="c">A separate .sppkg upload per list</button>
+    <button class="quiz-btn" data-opt="d">Wiring to specific columns/views — usually done during provisioning</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/extensions/overview-extensions" target="_blank" rel="noopener">Overview of SPFx extensions (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

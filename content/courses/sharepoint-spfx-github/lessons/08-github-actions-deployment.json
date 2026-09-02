@@ -1,0 +1,5 @@
+{
+  "title": "Ship It: Deploying SPFx from GitHub Actions",
+  "description": "The end-to-end deployment pipeline: service-principal auth, the official CLI for Microsoft 365 GitHub Actions (login, deploy, runscript), a complete verified workflow YAML, environment strategy, and rollback.",
+  "readingTime": "12 min"
+}

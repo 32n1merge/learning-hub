@@ -1,0 +1,135 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: The Big Picture — Why Customize SharePoint from a GitHub Repo</h2>
+
+<p>There was a time when "customizing SharePoint" meant deploying farm solutions (<code>.wsp</code> packages) that ran server-side, needed full-trust access, and could take a farm down. That era is over. Modern SharePoint Online customization is <span class="glossary-term">client-side code</span>: TypeScript/JavaScript packages that run in the browser, are versioned in git, and are delivered through an app-catalog pipeline you control. If the code isn't in a repo and deployable by a machine, it isn't really "yours" — it's a manual process someone will eventually get wrong.</p>
+
+<div class="callout">
+  <strong>The mental model:</strong> a GitHub repo is the single source of truth for everything you build on SharePoint. A CI/CD pipeline (GitHub Actions) turns that source into a package, pushes it to SharePoint's <em>app catalog</em>, and installs it on sites. Review, rollback, repeat — same muscle memory as shipping any other software.
+</div>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+    <rect x="10" y="55" width="150" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="85" y="88" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="600">GitHub repo</text>
+    <text x="85" y="106" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">SPFx source code</text>
+    <path d="M160 95 L210 95" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="185" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">push</text>
+    <rect x="210" y="55" width="150" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="285" y="88" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="600">GitHub Actions</text>
+    <text x="285" y="106" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">build + package (.sppkg)</text>
+    <path d="M360 95 L410 95" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="385" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">deploy</text>
+    <rect x="410" y="55" width="150" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="485" y="88" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="600">App catalog</text>
+    <text x="485" y="106" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">add + deploy + install</text>
+    <path d="M560 95 L610 95" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="585" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">available</text>
+    <rect x="610" y="55" width="100" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="660" y="88" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="600">Sites</text>
+    <text x="660" y="106" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">web parts,</text>
+    <text x="660" y="118" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">extensions</text>
+  </svg>
+</div>
+
+<h3>What you can customize (and what you shouldn't)</h3>
+<p>Modern customization splits into two lanes, and knowing which is which saves you from building the wrong thing:</p>
+<table>
+  <tr><th>Lane</th><th>Tools</th><th>What it changes</th></tr>
+  <tr><td><strong>Code</strong> — reusable UI & behavior</td><td>SharePoint Framework (SPFx)</td><td>Web parts you drop onto pages, and extensions: banners/scripts across a site, custom list columns, list toolbar buttons.</td></tr>
+  <tr><td><strong>Configuration</strong> — sites & structure</td><td>CLI for Microsoft 365, PnP PowerShell, site scripts</td><td>Creating sites, lists, content types, navigation, permissions — "infrastructure as code" for SharePoint.</td></tr>
+</table>
+<p>Most real projects do both: SPFx for the components people see, plus a provisioning script that creates the lists those components read from. This course centers on the code lane (SPFx), then shows you the deployment machinery — including the provisioning tools — that makes it all reproducible from GitHub.</p>
+
+<div class="callout-warn">
+  <strong>What to avoid:</strong> editing pages by hand and hoping, "customizing" via embedded script editor web parts in production, and any recipe that tells you to modify files on a server. None of it survives the next change, and none of it can be reviewed in a pull request.
+</div>
+
+<h3>Why a repo (and not the browser)</h3>
+<p>Putting customizations in GitHub buys you the same guarantees as any codebase: code review before change, an audit trail, a rollback point, and an environment story (dev catalog → production catalog) that's impossible when someone pastes markup into a page. You also get <em>free documentation</em>: the repo is the living spec of what your SharePoint looks like.</p>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. What does the modern SharePoint customization model run on?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Server-side farm solutions (.wsp) with full-trust access</button>
+    <button class="quiz-btn" data-opt="b">Client-side code packaged as .sppkg solutions and delivered via an app catalog</button>
+    <button class="quiz-btn" data-opt="c">Database scripts run directly against the content database</button>
+    <button class="quiz-btn" data-opt="d">Custom master pages and themes only</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Which of these is the "configuration" lane of SharePoint customization?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Provisioning sites, lists, and permissions via CLI for Microsoft 365 or PnP PowerShell</button>
+    <button class="quiz-btn" data-opt="b">Writing a React web part for the home page</button>
+    <button class="quiz-btn" data-opt="c">Creating a Teams tab with SPFx</button>
+    <button class="quiz-btn" data-opt="d">Styling a page with the built-in theme picker</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What is the primary benefit of keeping SharePoint customizations in a GitHub repo?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Faster page load times in the browser</button>
+    <button class="quiz-btn" data-opt="b">Automatic licensing discounts from Microsoft</button>
+    <button class="quiz-btn" data-opt="c">Code review, audit trail, rollback, and environment promotion via CI/CD</button>
+    <button class="quiz-btn" data-opt="d">It lets you skip SharePoint admin approval for deployments</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview" target="_blank" rel="noopener">SharePoint Framework overview (Microsoft Learn)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/spfx/tenant-scoped-deployment" target="_blank" rel="noopener">Tenant-scoped deployment of SPFx solutions (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

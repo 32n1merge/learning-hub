@@ -1,0 +1,5 @@
+{
+  "title": "SPFx Foundations: Scaffold, Project Anatomy & the Dev Loop",
+  "description": "What SPFx actually is, the toolchain you need (Node, Yeoman, Gulp), how to scaffold a solution, what every generated file does, and the gulp serve + workbench development loop.",
+  "readingTime": "10 min"
+}

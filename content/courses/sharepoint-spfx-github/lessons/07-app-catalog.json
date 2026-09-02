@@ -1,0 +1,5 @@
+{
+  "title": "The App Catalog & Package Lifecycle",
+  "description": "What the .sppkg actually is, tenant vs site-collection app catalogs, the add → deploy → install → upgrade lifecycle, and the package-solution.json flags that control it.",
+  "readingTime": "9 min"
+}
