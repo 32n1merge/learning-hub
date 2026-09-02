@@ -1,0 +1,5 @@
+{
+  "title": "Documents & Static Content: The Repo → SharePoint Pipeline",
+  "description": "Publishing document-library files with metadata from a repo, the GitHub Actions pipelines that do it, SharePoint CDN and static-asset options, and where documents should really live.",
+  "readingTime": "11 min"
+}

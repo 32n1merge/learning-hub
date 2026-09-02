@@ -19,9 +19,9 @@
 
 <h2>Grand Quiz — SharePoint Customization with SPFx &amp; GitHub</h2>
 
-<p>Eighteen questions, two from each lesson, in nine sections: the mental model (1–2), the toolbox (3–4), SPFx foundations (5–6), your first web part (7–8), real data (9–10), extensions (11–12), the app catalog lifecycle (13–14), GitHub Actions deployment (15–16), and resources (17–18). Answer all eighteen to reveal your grade.</p>
+<p>Twenty-two questions, two from each of the eleven lessons, in sections that follow the course: the mental model (1–2), the toolbox (3–4), SPFx foundations (5–6), your first web part (7–8), real data (9–10), extensions (11–12), the app catalog lifecycle (13–14), GitHub Actions deployment (15–16), content as code (17–18), documents &amp; static content (19–20), and resources (21–22). Answer all twenty-two to reveal your grade.</p>
 
-<div class="quiz-block" id="quiz-10">
+<div class="quiz-block" id="quiz-12">
   <h3>🧠 Grand Quiz</h3>
 
   <p class="quiz-q">1. What artifact does an SPFx pipeline produce and deploy to the app catalog?</p>
@@ -168,41 +168,77 @@
   </div>
   <div class="quiz-feedback" data-q="15"></div>
 
-  <p class="quiz-q">17. Where is the largest collection of production-ready SPFx web part samples?</p>
+  <p class="quiz-q">17. Which statement about PnP Provisioning Templates is true?</p>
   <div class="quiz-opts" data-q="16" data-answer="b">
+    <button class="quiz-btn" data-opt="a">They capture full modern page content, including web part configuration</button>
+    <button class="quiz-btn" data-opt="b">They reliably capture lists, fields, content types, navigation, and files — but not modern page content</button>
+    <button class="quiz-btn" data-opt="c">They only exist in the SharePoint web UI and can't be stored in a repo</button>
+    <button class="quiz-btn" data-opt="d">They've been deprecated in favor of site scripts</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. Why doesn't modern page content round-trip through git?</p>
+  <div class="quiz-opts" data-q="17" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Pages are .aspx files with opaque embedded client-side JSON, no export API, and web part schema drift</button>
+    <button class="quiz-btn" data-opt="b">GitHub rejects files over 100 KB and pages exceed it</button>
+    <button class="quiz-btn" data-opt="c">SharePoint encrypts page content so git can't diff it</button>
+    <button class="quiz-btn" data-opt="d">Pages are stored in a database, not as files at all</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <p class="quiz-q">19. Which approach uploads a file to a SharePoint library and sets its metadata in the same step?</p>
+  <div class="quiz-opts" data-q="18" data-answer="d">
+    <button class="quiz-btn" data-opt="a">m365 spo file add, then m365 spo file touch</button>
+    <button class="quiz-btn" data-opt="b">Upload-PnPItem with a -MetaData flag</button>
+    <button class="quiz-btn" data-opt="c">Copy the file in the browser, then edit the properties panel</button>
+    <button class="quiz-btn" data-opt="d">Add-PnPFile with a -Values hashtable of field values</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. For final, governed organizational documents, where is the system of record?</p>
+  <div class="quiz-opts" data-q="19" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Always the git repo — SharePoint only holds copies</button>
+    <button class="quiz-btn" data-opt="b">Both, kept identical by bidirectional sync</button>
+    <button class="quiz-btn" data-opt="c">The SharePoint library, fed by one-way CI/CD publishing from repo sources</button>
+    <button class="quiz-btn" data-opt="d">Email — with a master copy on a shared drive</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <p class="quiz-q">21. Where is the largest collection of production-ready SPFx web part samples?</p>
+  <div class="quiz-opts" data-q="20" data-answer="b">
     <button class="quiz-btn" data-opt="a">The Microsoft app catalog sample store</button>
     <button class="quiz-btn" data-opt="b">github.com/pnp/sp-dev-fx-webparts, browsable via its searchable gallery</button>
     <button class="quiz-btn" data-opt="c">The SharePoint admin center</button>
     <button class="quiz-btn" data-opt="d">The npm SPFx registry</button>
   </div>
-  <div class="quiz-feedback" data-q="16"></div>
+  <div class="quiz-feedback" data-q="20"></div>
 
-  <p class="quiz-q">18. Before building a people picker or file picker yourself, check first:</p>
-  <div class="quiz-opts" data-q="17" data-answer="c">
+  <p class="quiz-q">22. Before building a people picker or file picker yourself, check first:</p>
+  <div class="quiz-opts" data-q="21" data-answer="c">
     <button class="quiz-btn" data-opt="a">sp-dev-fx-extensions</button>
     <button class="quiz-btn" data-opt="b">The look book</button>
     <button class="quiz-btn" data-opt="c">pnp/sp-dev-fx-controls-react for a ready-made control</button>
     <button class="quiz-btn" data-opt="d">Whether Fluent UI ships one natively</button>
   </div>
-  <div class="quiz-feedback" data-q="17"></div>
+  <div class="quiz-feedback" data-q="21"></div>
 
-  <div class="score-panel" id="quiz-10-score" style="display:none">
-    <div class="progress" id="quiz-10-progress">Answered 0 of 18</div>
-    <div id="quiz-10-result"></div>
+  <div class="score-panel" id="quiz-12-score" style="display:none">
+    <div class="progress" id="quiz-12-progress">Answered 0 of 22</div>
+    <div id="quiz-12-result"></div>
   </div>
 </div>
 
 <script>
 (function() {
-  var qb = document.getElementById('quiz-10');
+  var qb = document.getElementById('quiz-12');
   if (!qb) return;
-  var TOTAL = 18;
+  var TOTAL = 22;
   var correct = 0;
   var answered = {};
   var answeredCount = 0;
-  var scorePanel = document.getElementById('quiz-10-score');
-  var progressEl = document.getElementById('quiz-10-progress');
-  var resultEl = document.getElementById('quiz-10-result');
+  var scorePanel = document.getElementById('quiz-12-score');
+  var progressEl = document.getElementById('quiz-12-progress');
+  var resultEl = document.getElementById('quiz-12-result');
 
   qb.addEventListener('click', function(e) {
     var btn = e.target.closest('.quiz-btn');
@@ -228,9 +264,9 @@
     progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
     if (answeredCount === TOTAL) {
       var grade, msg;
-      if (correct >= 16) { grade = 'A'; msg = 'Outstanding — you could ship a real SPFx solution to a tenant app catalog today.'; }
-      else if (correct >= 13) { grade = 'B'; msg = 'Strong grasp. Revisit the app catalog lifecycle and deployment lessons to close the gaps.'; }
-      else if (correct >= 9) { grade = 'C'; msg = 'Solid foundation. Work back through the code and deployment lessons — the pipeline pieces are the ones to nail.'; }
+      if (correct >= 19) { grade = 'A'; msg = 'Outstanding — you could ship a real SPFx solution to a tenant app catalog today, and provision the sites and content around it.'; }
+      else if (correct >= 15) { grade = 'B'; msg = 'Strong grasp. Revisit the app catalog lifecycle, deployment, and content-provisioning lessons to close the gaps.'; }
+      else if (correct >= 11) { grade = 'C'; msg = 'Solid foundation. Work back through the code, deployment, and content lessons — the pipeline pieces are the ones to nail.'; }
       else { grade = 'D'; msg = 'Time to go back through the lessons — the repo-to-catalog mental model takes a second pass to stick.'; }
       resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
         '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';

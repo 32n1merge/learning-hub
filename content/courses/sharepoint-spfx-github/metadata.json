@@ -1,8 +1,8 @@
 {
   "title": "SharePoint Customization with SPFx & GitHub",
-  "description": "How to customize SharePoint the modern way: source-controlled SPFx web parts and extensions in a GitHub repo, packaged into .sppkg solutions, deployed through GitHub Actions to the app catalog, and installed on real sites. Includes real copy-pasteable code (manifest, web part, SPHttpClient data fetch, app customizer), the full package lifecycle (add → deploy → install → upgrade), verified deployment actions for CI/CD, and a curated map of the best example galleries and resources to study.",
+  "description": "How to customize SharePoint the modern way: source-controlled SPFx web parts and extensions in a GitHub repo, packaged into .sppkg solutions, deployed through GitHub Actions to the app catalog, and installed on real sites. Includes real copy-pasteable code (manifest, web part, SPHttpClient data fetch, app customizer), the full package lifecycle (add → deploy → install → upgrade), verified deployment actions for CI/CD, plus how to extend the same repo-driven pipeline to site structure (PnP provisioning templates, site scripts), scripted page creation, and publishing documents and static content into SharePoint libraries — and a curated map of the best example galleries and resources to study.",
   "difficulty": "intermediate",
-  "estimatedDuration": "90 min",
+  "estimatedDuration": "120 min",
   "tags": [
     "devops",
     "javascript",

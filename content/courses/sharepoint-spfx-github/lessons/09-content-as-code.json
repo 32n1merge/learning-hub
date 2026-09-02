@@ -1,0 +1,5 @@
+{
+  "title": "Site Structure & Pages as Code: What Git Can (and Can't) Own",
+  "description": "PnP Provisioning Templates and site scripts for structure, why modern page content won't round-trip to git, and the accepted scripted-provisioning pattern for pages — with real, verified commands.",
+  "readingTime": "11 min"
+}

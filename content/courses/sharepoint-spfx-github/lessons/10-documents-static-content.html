@@ -1,0 +1,188 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Documents &amp; Static Content — The Repo → SharePoint Pipeline</h2>
+
+<p>You asked the sharpest question of the course: can a GitHub repo act as the <em>document repository</em> that feeds SharePoint? Yes — with one crucial framing decision that determines whether your life is easy or miserable: <strong>decide the system of record per artifact type, then publish one way.</strong></p>
+
+<h3>Where documents should live (the consensus)</h3>
+<div class="callout">
+  <strong>Author in git, distribute from SharePoint.</strong> Markdown/HTML sources that change <em>with your code</em> (SOPs, runbooks, release notes, config docs) get written in the repo with PR review — then CI publishes the finished files into a SharePoint document library. The library is the system of record for <em>published</em> content: version history, metadata, compliance, sharing, and day-to-day collaborative editing all happen there. Treat the publish as <strong>one-way</strong>; don't try to sync edits made in SharePoint back into git (that's a different product, and it's called a sync tool you don't want).
+</div>
+<p>Concretely: PDFs, Word/Excel finals, and official materials belong in SharePoint libraries. Code, templates, scripts, and the markdown <em>source</em> of documents belong in git. Binaries that only exist for distribution (release artifacts) can be pushed from CI and forgotten.</p>
+
+<h3>The mechanisms: verified commands</h3>
+<p>Uploading a file into a library with metadata is a solved problem in both tools. The essential set:</p>
+<table>
+  <tr><th>Operation</th><th>CLI for Microsoft 365</th><th>PnP PowerShell</th></tr>
+  <tr><td>Create folder</td><td><code>m365 spo folder add --webUrl &lt;site&gt; --folder "/Shared Documents" --name "Policies"</code></td><td><code>Add-PnPFolder -Name "Policies" -Folder "Shared Documents"</code></td></tr>
+  <tr><td>Upload file</td><td><code>m365 spo file add --webUrl &lt;site&gt; --folder "/Shared Documents/Policies" --path ./policy.pdf --name policy.pdf</code></td><td><code>Add-PnPFile -Path ./policy.pdf -Folder "Shared Documents/Policies"</code></td></tr>
+  <tr><td>Set metadata</td><td><code>m365 spo listitem set --webUrl &lt;site&gt; --listId &lt;guid&gt; --id &lt;item&gt; --values "Category='Policy';Owner='Legal'"</code></td><td><code>Add-PnPFile … -Values @{ Category = "Policy" }</code> (or <code>Set-PnPListItem</code> after upload)</td></tr>
+  <tr><td>Check in (required-checkout libraries)</td><td>—</td><td><code>Set-PnPFileCheckedIn -Url "/sites/x/Shared Documents/policy.pdf" -CheckInType Major</code></td></tr>
+</table>
+
+<div class="callout">
+  <strong>Metadata on upload beats metadata after upload.</strong> If your library has managed metadata or required columns, set values in the same step (<code>Add-PnPFile -Values</code> / content-type-aware upload) so nothing lands as a broken, incomplete item. If you're publishing a docs folder, keep the repo's folder structure mirrored 1:1 into the library — it makes the mapping trivial and reviewable.
+</div>
+
+<h3>An end-to-end "docs folder → library" pipeline</h3>
+<p>Triggered only when <code>docs/</code> changes, this workflow walks every file in the folder and publishes it to <code>Shared Documents/&lt;repo-folder&gt;</code> using the PnP PowerShell OIDC action from Lesson 8 (no certificate secret needed):</p>
+<pre><code>name: Publish docs to SharePoint
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'docs/**' ]        # runs only when the docs folder changes
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish docs via PnP PowerShell
+        uses: anoopt/action-pnp-powershell-with-oidc@v1.3.0
+        with:
+          TENANT_ID: ${{ secrets.TENANT_ID }}
+          TENANT_NAME: ${{ secrets.TENANT_NAME }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          SITE_URL: "https://contoso.sharepoint.com/sites/intranet"
+          PNP_POWERSHELL_SCRIPT: |
+            $root = "Shared Documents/Published Docs"
+            $files = Get-ChildItem -Path "./docs" -Recurse -File
+            foreach ($file in $files) {
+              # mirror the repo subfolder structure inside the library
+              $rel = $file.FullName.Substring((Get-Location).Path.Length + 1)
+              $target = Join-Path $root (Split-Path $rel -Parent)
+              Resolve-PnPFolder -SiteRelativeFolder $target | Out-Null
+              Add-PnPFile -Path $file.FullName -Folder $target `
+                -FileName $file.Name -Values @{ Source = "github" }
+            }</code></pre>
+<p>Same shape with CLI for Microsoft 365: run <code>m365 login --authType certificate …</code> (Lesson 8's flags), then loop <code>m365 spo folder add</code> + <code>m365 spo file add</code> per file. Prefer the scripted route when you need metadata, content types, or exact behavior; it's fully under your control and uses the same auth you already set up.</p>
+
+<h3>Marketplace actions for repo → library sync</h3>
+<table>
+  <tr><th>Action</th><th>What it does</th><th>Caveats</th></tr>
+  <tr><td><a href="https://github.com/marketplace/actions/sharepoint-mirror-sync" target="_blank" rel="noopener">SharePoint Mirror Sync</a> (MarkusMcNugen)</td><td>Smart folder sync with hash-based change detection, glob patterns, markdown → HTML conversion</td><td>Least-active maintenance; verify it against your tenant before trusting it in prod</td></tr>
+  <tr><td><a href="https://github.com/marketplace/actions/upload-file-to-sharepoint" target="_blank" rel="noopener">Upload File to Sharepoint</a> (cringdahl)</td><td>Glob-pattern file uploads, client ID/secret auth, sovereign clouds</td><td>Simple uploads only; simple auth story</td></tr>
+  <tr><td>Publish to Sharepoint (obrassard + forks)</td><td>Zips repo and uploads archive</td><td>⚠️ Original used ACS auth, retired April 2026 — only use the OIDC fork (UASI)</td></tr>
+  <tr><td>PnP PowerShell with OIDC (anoopt)</td><td>Runs any PnP PowerShell against a site — the general-purpose escape hatch</td><td>Needs Entra federated credential setup</td></tr>
+</table>
+<p>Rule of thumb: <strong>scripted CLI/PnP for control, Mirror Sync for "keep this folder in sync,"</strong> and treat any action with deprecated auth as radioactive.</p>
+
+<h3>Static content for pages — and the "is SharePoint a website host?" question</h3>
+<p>"Static content" for SharePoint usually means images, CSS, JS, or HTML that pages and web parts reference. Your options, in order of fit:</p>
+<ul>
+  <li><strong>Bundled with SPFx</strong> (Lesson 3–5): assets travel inside the <code>.sppkg</code>. Best for component assets — no external hosting at all.</li>
+  <li><strong>Document library + SharePoint CDN</strong> (intranet): enable the library as a CDN origin (<code>m365 spo cdn origin add --originUrl "&lt;site&gt;/Shared Documents/cdn" --type Private</code>; also a Public type) and reference assets by CDN URL. Private is right for internal content; <code>m365 spo cdn get / policy</code> manage it.</li>
+  <li><strong>External host</strong> (public): GitHub Pages, Azure Static Web Apps, or blob storage + CDN. Use these when the content must be reachable outside your tenant.</li>
+</ul>
+<div class="callout-warn">
+  <strong>The blunt truth:</strong> SharePoint is a document and collaboration platform, not a static-site host. If the deliverable is a public documentation website built from a repo, deploy it to GitHub Pages / Azure Static Web Apps — and let SharePoint hold the internal, governed copies. Trying to serve a public site from SharePoint fights the platform.
+</div>
+
+<h3>Deciding what goes where</h3>
+<table>
+  <tr><th>Artifact</th><th>System of record</th><th>How it reaches SharePoint</th></tr>
+  <tr><td>SPFx code, templates, site scripts, page recipes, workflow YAML</td><td>GitHub repo</td><td>GitHub Actions (Lessons 8–9)</td></tr>
+  <tr><td>Markdown/HTML doc sources that change with code</td><td>GitHub repo</td><td>CI renders/publishes to a library (this lesson)</td></tr>
+  <tr><td>Final documents &amp; official files (PDF, Office)</td><td>SharePoint library</td><td>Authored there, or one-way CI publish from repo sources</td></tr>
+  <tr><td>Images/static assets for pages</td><td>Library + CDN origin (intranet) or external CDN (public)</td><td>Upload via the same file commands</td></tr>
+  <tr><td>Public static website</td><td>GitHub Pages / Azure SWA</td><td>Not SharePoint — deploy to the static host</td></tr>
+</table>
+
+<div class="callout-success">
+  <strong>You now have the complete repo → SharePoint playbook:</strong> components (<code>.sppkg</code>), structure (PnP templates/site scripts), pages (recipes), and content (published files). Every piece is versioned, reviewed, and machine-deployed — and every piece respects the line between what git owns and what SharePoint owns.
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. Which command pair uploads a file to a document library with PnP PowerShell and sets its metadata in the same step?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Move-PnPFile then Update-PnPFile</button>
+    <button class="quiz-btn" data-opt="b">Add-PnPFile with a -Values hashtable</button>
+    <button class="quiz-btn" data-opt="c">Import-PnPDocument with -MetaData</button>
+    <button class="quiz-btn" data-opt="d">Upload-PnPItem -Properties</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. What is the recommended direction of a repo → SharePoint content publish?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Bidirectional sync so both stay identical</button>
+    <button class="quiz-btn" data-opt="b">SharePoint edits push back into git automatically</button>
+    <button class="quiz-btn" data-opt="c">Publish manually via the browser each release</button>
+    <button class="quiz-btn" data-opt="d">One-way: author in git, CI publishes to the SharePoint library as the distribution system of record</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. Your team needs a public documentation website generated from a repo. Best call?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Upload the HTML into a SharePoint library and enable the Public CDN</button>
+    <button class="quiz-btn" data-opt="b">Publish each doc as a modern page in a communication site</button>
+    <button class="quiz-btn" data-opt="c">Deploy to GitHub Pages or Azure Static Web Apps; keep governed internal copies in SharePoint</button>
+    <button class="quiz-btn" data-opt="d">Email the HTML files to everyone quarterly</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pnp.github.io/cli-microsoft365/cmd/spo/file/file-add/" target="_blank" rel="noopener">m365 spo file add (CLI for Microsoft 365)</a></li>
+  <li><a href="https://pnp.github.io/powershell/cmdlets/Add-PnPFile.html" target="_blank" rel="noopener">Add-PnPFile (PnP PowerShell reference)</a></li>
+  <li><a href="https://pnp.github.io/cli-microsoft365/cmd/spo/cdn/cdn-origin-add/" target="_blank" rel="noopener">m365 spo cdn origin add — enable a library as a CDN origin</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/" target="_blank" rel="noopener">SharePoint developer documentation (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

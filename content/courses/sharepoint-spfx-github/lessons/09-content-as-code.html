@@ -1,0 +1,154 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Site Structure &amp; Pages as Code — What Git Can (and Can't) Own</h2>
+
+<p>Lesson 8 shipped your <em>components</em>. This lesson is about shipping the <em>site itself</em>: lists, navigation, and the modern pages people land on. The good news: site structure is beautifully scriptable from a repo. The honest news, up front: full <em>page content</em> round-tripping to git is not a real thing — and the community consensus is that it shouldn't be.</p>
+
+<div class="callout">
+  <strong>The one-paragraph consensus</strong> (from PnP community and Microsoft guidance): <em>structure = code</em> ✅ — lists, fields, content types, navigation, and branding belong in your repo as PnP templates or site scripts. <em>page content = not code</em> ❌ — modern page text and web parts are stored as opaque client-side JSON inside <code>.aspx</code> files, are edited constantly by content editors, and break on git round-trip. The bridge between the two is <strong>scripted page provisioning</strong>: you keep page <em>recipes</em> in the repo, a pipeline builds the pages, and editors take over from there.
+</div>
+
+<h3>Why page content won't round-trip</h3>
+<p>Every modern page lives in the <strong>SitePages</strong> library as an <code>.aspx</code> file, but the actual content (text, web part instances, layout) is embedded as a serialized client-side data model — not human-editable markup. SharePoint has no export API for it as portable content, and the schema shifts as Microsoft updates web parts. Export → edit → import reliably corrupts or loses things. So nobody sane stores page content in git; they store the <em>instructions to create it</em>.</p>
+
+<h3>Mechanism 1: PnP Provisioning Templates (structure)</h3>
+<p>A PnP template is a portable XML/JSON description of a site that the provisioning engine can apply anywhere. Capture it from a well-built "golden" site, commit it, and replay it on every new site — in a pipeline, at scale.</p>
+<table>
+  <tr><th>Captured by templates</th><th>Not captured</th></tr>
+  <tr><td>Lists &amp; libraries (schema, views, content types), fields with validation, navigation, files bundled as assets, site settings, branding, page <em>metadata</em> (name, layout, publish state)</td><td>Modern page <em>content</em> — web part configuration and text. Those must be scripted separately (Mechanism 3).</td></tr>
+</table>
+<pre><code># Extract a template from a golden site (PnP PowerShell)
+Get-PnPSiteTemplate -Out "./provisioning/team-site.xml" `
+  -Handlers Lists,Fields,ContentTypes,Navigation,Files,SiteSettings,Branding
+
+# Apply it to a new site
+Invoke-PnPSiteTemplate -Path "./provisioning/team-site.xml" -ClearNavigation</code></pre>
+<div class="callout-warn">
+  <strong>Note for CLI users:</strong> unlike almost everything else in this course, applying PnP templates is a <em>PnP PowerShell / .NET provisioning-engine</em> capability — CLI for Microsoft 365 currently has <strong>no</strong> <code>site template</code> command (older blog posts claiming one are stale). Run template apply steps with <code>pwsh</code> + <code>PnP.PowerShell</code> in your pipeline, e.g. through the PnP PowerShell OIDC action from Lesson 8.
+</div>
+
+<h3>Mechanism 2: Site scripts + site designs (lightweight, Microsoft-native)</h3>
+<p>Site scripts are JSON "verb recipes" (create a list, add a field, set the theme, add navigation) registered with the tenant and bundled into a <em>site design</em> that appears in the SharePoint "Create site" UI. They're perfect for lightweight, repeatable provisioning with zero PowerShell, and they can't touch page content either — configuration only.</p>
+<pre><code>// site-scripts/project-site.json
+{
+  "$schema": "schema.json",
+  "actions": [
+    { "verb": "createSPList", "listName": "Projects", "templateType": 100 },
+    { "verb": "addSPField", "listName": "Projects", "fieldType": "Text", "displayName": "Owner" },
+    { "verb": "setSiteTheme", "themeName": "Contoso" }
+  ]
+}</code></pre>
+<pre><code># Register and wire it up with CLI for Microsoft 365
+m365 spo sitescript add --title "Project site" --content "./site-scripts/project-site.json"
+m365 spo sitedesign add --title "Project design" --webTemplate 64 `
+  --siteScripts "&lt;script-guid-from-previous-command&gt;"</code></pre>
+<p><strong>Choosing:</strong> site scripts win when the goal is "anyone can create a consistent site from the UI" and the scope is small. PnP templates win when you need real depth (views, files, complex content types, repeat application in CI/CD). Many shops use both: a site design for creation, then a template apply for the full structure.</p>
+
+<h3>Mechanism 3: Page recipes — scripted page provisioning</h3>
+<p>For pages that must exist with a known structure (home page, department landing pages, documentation hubs), the accepted pattern is a <strong>page recipe</strong> checked into the repo: a small script that creates the page, adds text and web parts into defined sections, and publishes it.</p>
+<pre><code># pages/home.ps1 — a "recipe" your pipeline runs
+$page = Add-PnPPage -Name "Home" -LayoutType Article
+Add-PnPPageTextPart -Page $page -Section 1 -Column 1 `
+  -Text "&lt;h1&gt;Welcome to Engineering&lt;/h1&gt;&lt;p&gt;Start here for team resources.&lt;/p&gt;"
+Add-PnPPageWebPart -Page $page -Section 1 -Column 2 `
+  -ComponentId "490d5c76-18ea-4d9d-812a-254b51748115" `   # text web part
+  -Properties @{ Title = "Announcements" }
+Set-PnPPage -Identity $page -Published $true</code></pre>
+<p>The CLI equivalent covers the same ground: <code>m365 spo page add --name Home.aspx --layoutType Article</code>, then <code>m365 spo page text add</code>, <code>m365 spo page clientsidewebpart add</code>, and <code>m365 spo page publish --id …</code> (plus <code>page list</code>, <code>page set</code>, <code>page copy</code> for management).</p>
+
+<div class="callout-warn">
+  <strong>Guard your idempotence:</strong> page recipes should be safe to re-run. Check existence first (<code>Get-PnPClientSidePage -Identity Home</code> / <code>m365 spo page list</code>), skip or update deliberately, and never let a pipeline blindly recreate a page that editors may have customized since provisioning. A common rule: <em>recipe owns the page until the first human edit</em> — then SharePoint owns it.
+</div>
+
+<div class="callout-success">
+  <strong>The full picture now:</strong> SPFx packages (code) + PnP templates &amp; site scripts (structure) + page recipes (known pages) all ride the same repo → Actions → tenant pipeline from Lesson 8. What stays in SharePoint: the living content editors produce every day. That split is the industry pattern, not a compromise.
+</div>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+  <p class="quiz-q">1. What does a PnP Provisioning Template reliably capture from a site?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Full modern page content, including web part configuration</button>
+    <button class="quiz-btn" data-opt="b">Every user's personal views and permissions</button>
+    <button class="quiz-btn" data-opt="c">Lists, fields, content types, navigation, files, and site settings</button>
+    <button class="quiz-btn" data-opt="d">A complete backup of the site database</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+  <p class="quiz-q">2. Why isn't modern page content stored in git as a rule?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">SharePoint forbids exporting pages to files</button>
+    <button class="quiz-btn" data-opt="b">Pages are .aspx files with opaque embedded client-side JSON that breaks on round-trip; editors own the content</button>
+    <button class="quiz-btn" data-opt="c">GitHub only supports markdown, not HTML</button>
+    <button class="quiz-btn" data-opt="d">Pages are too large for git's file size limits</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+  <p class="quiz-q">3. What is a "page recipe" in the scripted-provisioning pattern?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A screenshot checklist for manual page building</button>
+    <button class="quiz-btn" data-opt="b">A JSON export of an existing page's exact content</button>
+    <button class="quiz-btn" data-opt="c">A marketing template stored in the SitePages library</button>
+    <button class="quiz-btn" data-opt="d">A versioned script (Add-PnPPage / Add-PnPPageTextPart / Add-PnPPageWebPart) that creates and publishes a known page</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://pnp.github.io/powershell/cmdlets/Get-PnPSiteTemplate.html" target="_blank" rel="noopener">Get-PnPSiteTemplate (PnP PowerShell reference)</a></li>
+  <li><a href="https://pnp.github.io/powershell/cmdlets/Add-PnPPage.html" target="_blank" rel="noopener">Add-PnPPage (PnP PowerShell reference)</a></li>
+  <li><a href="https://pnp.github.io/cli-microsoft365/cmd/spo/page/page-add/" target="_blank" rel="noopener">m365 spo page add (CLI for Microsoft 365)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/declarative-customization/site-design-overview" target="_blank" rel="noopener">SharePoint site designs &amp; site scripts overview (Microsoft Learn)</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/sharepoint/dev/declarative-customization/site-design-json-schema" target="_blank" rel="noopener">Site script JSON schema (Microsoft Learn)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
