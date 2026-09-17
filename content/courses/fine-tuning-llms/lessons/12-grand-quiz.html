@@ -1,0 +1,285 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 12: Grand Quiz — Fine-Tuning LLMs</h2>
+
+<p>Twenty-two questions, two from each of the eleven lessons. They run in order: Foundations (1–4), Self-Hosted Track (5–6), Managed Track (7–8), then Quality and Delivery (9–10), and finally Strategy (11). Answer all of them to see your grade.</p>
+
+<div class="quiz-block" id="quiz-12">
+  <h3>🧠 Grand Quiz</h3>
+
+  <p class="quiz-q">1. Your model keeps inventing product prices that changed last week. What is the correct fix?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Fine-tune on the new price list with extra epochs</button>
+    <button class="quiz-btn" data-opt="b">Lower the temperature to zero</button>
+    <button class="quiz-btn" data-opt="c">Retrieve the current prices into the prompt at request time (RAG)</button>
+    <button class="quiz-btn" data-opt="d">Raise the LoRA rank so it memorizes harder</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which of these is the strongest genuine justification for fine-tuning?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The model needs to know about a document written yesterday</button>
+    <button class="quiz-btn" data-opt="b">You need a small open model to reproduce a specific behavioural pattern reliably at a fraction of the inference cost</button>
+    <button class="quiz-btn" data-opt="c">The model gave two wrong answers this morning</button>
+    <button class="quiz-btn" data-opt="d">You want a general-purpose model to become smarter</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. "We trained with QLoRA and then ran DPO." Which two independent axes do those terms describe?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Parameter efficiency (how much changes) and objective (what it's optimised toward)</button>
+    <button class="quiz-btn" data-opt="b">Hardware tier and dataset size</button>
+    <button class="quiz-btn" data-opt="c">Inference and serving modes</button>
+    <button class="quiz-btn" data-opt="d">Both describe the objective, just at different stages</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. What is the practical difference between shipping a LoRA adapter and shipping a merged model?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Merging loses quality because the learning is discarded</button>
+    <button class="quiz-btn" data-opt="b">An adapter is a 4-bit copy of the whole model</button>
+    <button class="quiz-btn" data-opt="c">They are identical artefacts with different file extensions</button>
+    <button class="quiz-btn" data-opt="d">The adapter is a small swappable file loaded beside the base weights; merging precomputes it into the base for one self-contained deployment</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <p class="quiz-q">5. Why is a full fine-tune of a 7B model so much more memory-hungry than QLoRA, even before activations?</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Full fine-tuning stores activations in fp32</button>
+    <button class="quiz-btn" data-opt="b">Gradients and Adam optimiser state scale with trainable parameters — and LoRA makes only roughly 0.6% of them trainable</button>
+    <button class="quiz-btn" data-opt="c">Full fine-tuning duplicates the vocabulary</button>
+    <button class="quiz-btn" data-opt="d">LoRA removes most of the model's layers</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. In <code>W = W₀ + (α/r)·B·A</code>, you raise rank from 16 to 64 but leave alpha at 16. What happens to the effective update scale?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It quadruples</button>
+    <button class="quiz-btn" data-opt="b">It is unchanged in all cases</button>
+    <button class="quiz-btn" data-opt="c">It falls to a quarter, because the scale is alpha/r — which is why alpha is usually moved with rank</button>
+    <button class="quiz-btn" data-opt="d">It becomes zero</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <p class="quiz-q">7. You have 300 real inputs and no labels. What is the standard highest-ROI way to build a training set?</p>
+  <div class="quiz-opts" data-q="6" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Have a strong teacher model generate ideal outputs, human-review a sample, then SFT a small model on the pairs</button>
+    <button class="quiz-btn" data-opt="b">Train on the raw unlabelled inputs as-is</button>
+    <button class="quiz-btn" data-opt="c">Wait until you have 50,000 labelled examples</button>
+    <button class="quiz-btn" data-opt="d">Increase rank until 300 examples are enough to learn facts</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. Your fine-tune shows excellent training loss, but the deployed model ignores instructions and produces odd turn structure. Most likely cause?</p>
+  <div class="quiz-opts" data-q="7" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Rank was too low</button>
+    <button class="quiz-btn" data-opt="b">Learning rate was too low</button>
+    <button class="quiz-btn" data-opt="c">Not enough epochs</button>
+    <button class="quiz-btn" data-opt="d">A chat-template mismatch between training and inference</button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <p class="quiz-q">9. What does <code>load_in_4bit = True</code> buy you in Unsloth, and at what cost?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Double the training speed, with no downside</button>
+    <button class="quiz-btn" data-opt="b">Roughly 4x less memory use for about a 1–2% accuracy degradation — the reason a free 16 GB T4 can train an 8B model</button>
+    <button class="quiz-btn" data-opt="c">A smaller tokenizer vocabulary</button>
+    <button class="quiz-btn" data-opt="d">Automatic GGUF export</button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. Unsloth's docs tell you to adapt all seven linear modules rather than attention only. Why?</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Attention layers cannot accept LoRA adapters</button>
+    <button class="quiz-btn" data-opt="b">It reduces VRAM substantially</button>
+    <button class="quiz-btn" data-opt="c">All-layer adaptation is what allows LoRA to match full fine-tuning, and dropping modules saves very little memory</button>
+    <button class="quiz-btn" data-opt="d">The MLP layers hold the chat template</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <p class="quiz-q">11. You have a free 16 GB T4 and want to fine-tune an 8B model. Which method, and why?</p>
+  <div class="quiz-opts" data-q="10" data-answer="a">
+    <button class="quiz-btn" data-opt="a">QLoRA — 8B in 4-bit needs roughly 6 GB minimum, leaving headroom for activations</button>
+    <button class="quiz-btn" data-opt="b">16-bit LoRA — it needs about 22 GB, so it just fits</button>
+    <button class="quiz-btn" data-opt="c">Full fine-tuning — highest accuracy, so worth the memory</button>
+    <button class="quiz-btn" data-opt="d">None — a 16 GB GPU cannot fine-tune any LLM</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. With <code>per_device_train_batch_size=2</code> and <code>gradient_accumulation_steps=8</code>, what is the effective batch size, and which single change saves VRAM?</p>
+  <div class="quiz-opts" data-q="11" data-answer="b">
+    <button class="quiz-btn" data-opt="a">16 — raise the batch size</button>
+    <button class="quiz-btn" data-opt="b">16 — lower the per-device batch size (the primary VRAM driver) and raise gradient accumulation to compensate</button>
+    <button class="quiz-btn" data-opt="c">10 — raise the learning rate</button>
+    <button class="quiz-btn" data-opt="d">8 — lower the LoRA rank</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <p class="quiz-q">13. Which file requirement is unique to the Azure AI Foundry path and commonly causes validation failures?</p>
+  <div class="quiz-opts" data-q="12" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Files must be CSV</button>
+    <button class="quiz-btn" data-opt="b">One JSON array per line</button>
+    <button class="quiz-btn" data-opt="c">Maximum file size of 10 MB</button>
+    <button class="quiz-btn" data-opt="d">UTF-8 encoding <em>with a byte-order mark (BOM)</em></button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. You specifically want to fine-tune o4-mini on Azure. Which method must you use?</p>
+  <div class="quiz-opts" data-q="13" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Supervised fine-tuning (SFT)</button>
+    <button class="quiz-btn" data-opt="b">Reinforcement fine-tuning (RFT) with graders — o4-mini offers no SFT option</button>
+    <button class="quiz-btn" data-opt="c">Direct preference optimization (DPO)</button>
+    <button class="quiz-btn" data-opt="d">Continued pretraining</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <p class="quiz-q">15. A fine-tuned Azure chatbot costs $1,422/month for 10,000 conversations. What is the largest component?</p>
+  <div class="quiz-opts" data-q="14" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Output tokens</button>
+    <button class="quiz-btn" data-opt="b">The one-time training run</button>
+    <button class="quiz-btn" data-opt="c">Hourly hosting (~$1,224, about 86%) — charged whether or not the model is called</button>
+    <button class="quiz-btn" data-opt="d">Data storage and checkpoints</button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. Which single change cuts monthly hosting cost the most on Azure?</p>
+  <div class="quiz-opts" data-q="15" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Moving to an open-weight model — hosting falls from about $1.70/hour to about $0.30/hour</button>
+    <button class="quiz-btn" data-opt="b">Switching gpt-4.1 for gpt-4.1-nano</button>
+    <button class="quiz-btn" data-opt="c">Training for 1 epoch instead of 3</button>
+    <button class="quiz-btn" data-opt="d">Using global instead of regional training</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <p class="quiz-q">17. What is the one thing you must record <em>before</em> you start training?</p>
+  <div class="quiz-opts" data-q="16" data-answer="b">
+    <button class="quiz-btn" data-opt="a">The maximum rank you can afford</button>
+    <button class="quiz-btn" data-opt="b">The base model's performance on your held-out test set — the baseline</button>
+    <button class="quiz-btn" data-opt="c">The GPU model you will rent</button>
+    <button class="quiz-btn" data-opt="d">The final deployment tier</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. Training loss keeps dropping while validation loss rises. What is happening?</p>
+  <div class="quiz-opts" data-q="17" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Underfitting — train longer</button>
+    <button class="quiz-btn" data-opt="b">Mode collapse — raise the learning rate</button>
+    <button class="quiz-btn" data-opt="c">Nothing unusual — this is the healthy curve</button>
+    <button class="quiz-btn" data-opt="d">Overfitting — stop earlier, reduce rank, or deduplicate and diversify the data</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <p class="quiz-q">19. What does merging a LoRA adapter actually do?</p>
+  <div class="quiz-opts" data-q="18" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Compresses the adapter, reducing quality</button>
+    <button class="quiz-btn" data-opt="b">Retrains the base model on your data</button>
+    <button class="quiz-btn" data-opt="c">Precomputes W = W₀ + (α/r)·B·A into the base weights, giving one self-contained model with no runtime overhead</button>
+    <button class="quiz-btn" data-opt="d">Converts the model to GGUF</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. You must serve five fine-tunes of the same 8B base model. Cheapest approach?</p>
+  <div class="quiz-opts" data-q="19" data-answer="a">
+    <button class="quiz-btn" data-opt="a">One base model with vLLM multi-LoRA serving, loading all five adapters side by side</button>
+    <button class="quiz-btn" data-opt="b">Five merged models, one per GPU</button>
+    <button class="quiz-btn" data-opt="c">Average all five adapters into one model</button>
+    <button class="quiz-btn" data-opt="d">Concatenate all five datasets and train one model</button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <p class="quiz-q">21. What is the structural cost difference between self-hosting and a managed endpoint?</p>
+  <div class="quiz-opts" data-q="20" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Self-hosting is always cheaper regardless of volume</button>
+    <button class="quiz-btn" data-opt="b">Self-hosting is fixed cost with near-zero marginal cost; managed is near-zero fixed cost with a linear marginal cost that never ends</button>
+    <button class="quiz-btn" data-opt="c">Managed is always cheaper because providers buy GPUs in bulk</button>
+    <button class="quiz-btn" data-opt="d">They are identical; only the invoice format differs</button>
+  </div>
+  <div class="quiz-feedback" data-q="20"></div>
+
+  <p class="quiz-q">22. What should you do first when you have 500 examples and don't yet know if the task is learnable?</p>
+  <div class="quiz-opts" data-q="21" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Book a managed job on the largest available model</button>
+    <button class="quiz-btn" data-opt="b">Set rank to 256 and train 10 epochs</button>
+    <button class="quiz-btn" data-opt="c">Put a few worked examples in a prompt to a small model and see whether it can do the task in principle</button>
+    <button class="quiz-btn" data-opt="d">Buy an H100</button>
+  </div>
+  <div class="quiz-feedback" data-q="21"></div>
+
+  <div class="score-panel" id="quiz-12-score" style="display:none">
+    <div class="progress" id="quiz-12-progress">Answered 0 of 22</div>
+    <div id="quiz-12-result"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-12');
+  if (!qb) return;
+  var TOTAL = 22;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-12-score');
+  var progressEl = document.getElementById('quiz-12-progress');
+  var resultEl = document.getElementById('quiz-12-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 20) { grade = 'A'; msg = 'Outstanding. You could plan and run a fine-tuning project this week — and, more importantly, you would know when not to.'; }
+      else if (correct >= 16) { grade = 'B'; msg = 'Strong grasp. Revisit the failure-diagnosis and cost lessons before your first real run.'; }
+      else if (correct >= 11) { grade = 'C'; msg = 'Solid foundation. The concepts are landing — go back through the lessons where you hesitated.'; }
+      else { grade = 'D'; msg = 'Worth another pass through the course. Start with Lessons 1 to 4, which carry the most weight.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>
+
+<h3>Where to go next</h3>
+
+<ul>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-llms-guide" target="_blank" rel="noopener">Run the pipeline yourself — Unsloth's fine-tuning guide</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning" target="_blank" rel="noopener">Try the managed track — Azure AI Foundry fine-tuning</a></li>
+  <li><a href="https://huggingface.co/docs/trl/index" target="_blank" rel="noopener">Go deeper on the framework layer — Hugging Face TRL</a></li>
+</ul>

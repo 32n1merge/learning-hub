@@ -1,0 +1,183 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.86rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Shipping It — Merge, Quantise, Serve</h2>
+
+<p>You have a trained adapter. It is a few tens of megabytes sitting next to a multi-gigabyte base model, and it is useless until you decide which of three shapes to ship it in.</p>
+
+<table>
+<tr><th>Shape</th><th>What it is</th><th>Choose it when</th></tr>
+<tr><td><strong>Unmerged adapter</strong></td><td>The LoRA files loaded alongside the untouched base model at serving time</td><td>You want many fine-tunes sharing one base model, or you expect to keep iterating and swapping.</td></tr>
+<tr><td><strong>Merged model</strong></td><td>The adapter mathematically folded into the base weights — one self-contained model</td><td>You want the simplest possible deployment, and one model per GPU is fine.</td></tr>
+<tr><td><strong>Hosted endpoint</strong></td><td>A provider runs the deployment for you and bills by the hour or the token</td><td>You don't want to run GPUs. Convenient, and usually the most expensive per-request option above moderate traffic.</td></tr>
+</table>
+
+<h3>Merging: the one-line payoff</h3>
+
+<p>Merging evaluates <code>W = W₀ + (α/r)·B·A</code> once, for every adapted matrix, and writes the result out as a normal model file. There is no runtime cost and no quality loss — it is exactly the same maths the model was already doing at inference, just precomputed.</p>
+
+<pre><code># Unsloth / TRL path — after training completes
+model.save_pretrained_merged("merged_model", tokenizer, save_method="merged_16bit")
+
+# Need a smaller artefact for local use?
+model.save_pretrained_gguf("gguf_model", tokenizer, quantization_method="q4_k_m")</code></pre>
+
+<p>That second call is how a fine-tune ends up as a file Ollama or LM Studio can load. If you have taken the quantization course on this site, this is the moment those GGUF suffixes stop being trivia: <code>q4_k_m</code> is the standard quality/size compromise, <code>q8_0</code> is nearly lossless, and anything below 3-bit will visibly damage a model this small. Merging first and quantising second is the right order — quantising before merging throws away precision the merge could have used.</p>
+
+<h3>Serving options</h3>
+
+<table>
+<tr><th>Runtime</th><th>Best for</th><th>Notes</th></tr>
+<tr><td><span class="glossary-term">vLLM</span></td><td>Production, concurrency, throughput</td><td>PagedAttention and continuous batching give by far the best tokens/sec per GPU. OpenAI-compatible API out of the box. Supports <strong>multi-LoRA</strong> serving.</td></tr>
+<tr><td><span class="glossary-term">Ollama</span> / llama.cpp</td><td>Local, laptop, single-user, GGUF files</td><td>Trivial to set up, CPU-friendly, no Python environment. Poor at concurrency — it is a personal runtime, not a server.</td></tr>
+<tr><td>TGI (Text Generation Inference)</td><td>Production, Hugging Face ecosystem</td><td>Similar niche to vLLM with a different operational feel; strong Docker story.</td></tr>
+<tr><td>Managed endpoint</td><td>You don't want to run GPUs at all</td><td>Zero ops, highest marginal cost, least control. Check the hourly hosting price before committing (Lesson 8).</td></tr>
+</table>
+
+<h4>Running the merged model locally in Ollama</h4>
+
+<pre><code># Modelfile
+FROM ./my-finetune-q4_k_m.gguf
+
+PARAMETER temperature 0.3
+PARAMETER stop "&lt;|im_end|&gt;"
+
+SYSTEM "Respond only with the required JSON schema."</code></pre>
+
+<pre><code>ollama create my-claims-model -f Modelfile
+ollama run my-claims-model</code></pre>
+
+<h4>Multi-LoRA: the biggest serving-side cost lever</h4>
+
+<pre><code>vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --enable-lora \
+  --lora-modules claims=./adapter-claims triage=./adapter-triage tone=./adapter-tone
+
+# One resident base model. Three fine-tunes. Requests select the adapter
+# by name via the "model" field, exactly like separate deployments.</code></pre>
+
+<p>This matters enormously for cost. Without it, each fine-tune needs its own GPU-resident model copy, and you pay the full base-model memory cost per variant. With it, you pay for the base model once and the adapters are megabytes. If your roadmap contains "and then we'll fine-tune it for three more teams," design for multi-LoRA from the start.</p>
+
+<div class="callout-token">
+<strong>🪙 Token angle — the prompt you get to delete:</strong> a fine-tune bakes instructions into weights, so the 1,500-token system prompt that enforced your format can shrink to almost nothing. Two effects compound: the model is a smaller, cheaper one <em>and</em> every request carries fewer prompt tokens. At high volume this is often a larger saving than the training run cost. Measure it: log prompt tokens per request before and after.
+</div>
+
+<h3>The pre-deployment checklist</h3>
+
+<table>
+<tr><th>Gate</th><th>What it means</th></tr>
+<tr><td>Eval passed on the untouched test set</td><td>Format compliance and task metric both beat the recorded baseline. Numbers on file.</td></tr>
+<tr><td>Regression suite passed</td><td>Unrelated capabilities — general chat, reasoning, safety refusals — did not degrade beyond an agreed threshold.</td></tr>
+<tr><td>Human review completed</td><td>A person read 50–100 outputs and signed off. Judges miss tone and subtle wrongness.</td></tr>
+<tr><td>Everything versioned together</td><td>Base model checkpoint, adapter hash, dataset hash, hyperparameters, eval results. Without this you cannot reproduce or debug the model next quarter.</td></tr>
+<tr><td>Rollback path exists</td><td>One flag flips traffic back to the previous model. Fine-tunes fail in ways that only show up at scale.</td></tr>
+<tr><td>Monitoring wired up</td><td>Log format-compliance rate, refusal rate, latency and output length in production. Behaviour drifts as real inputs drift away from your training distribution.</td></tr>
+<tr><td>Retraining trigger defined</td><td>What production signal means "collect new data and retrain"? If there is no answer, the model quietly rots.</td></tr>
+</table>
+
+<div class="callout-warn">
+<strong>The distribution trap:</strong> your fine-tune is excellent — on inputs that look like your training data. Real traffic contains typos, mixed languages, empty fields, adversarial inputs and entirely new request types. Always sample real production inputs for your test set, not synthetic ones. A model that scores 98% on synthetic tests and 71% in production was never actually evaluated.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/W_xh6qNSfAQ" target="_blank" rel="noopener">Fine-Tuning Local LLMs with Unsloth &amp; Ollama</a> — NeuralNine. The merge-then-serve path end to end, exactly as this lesson describes it.</li>
+    <li><a href="https://youtu.be/4JofSJIrjwU" target="_blank" rel="noopener">How to Fine-Tune any AI Model Locally (FULL Tutorial)</a> — Tech With Tim. Full local pipeline including export and running the result.</li>
+    <li><a href="https://youtu.be/o26EUk0gv1A" target="_blank" rel="noopener">Fine Tuning and Distillation with Azure AI Foundry</a> — Microsoft's Marco Casalaina on the managed deployment side.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does merging a LoRA adapter actually do?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Compresses the adapter to reduce quality loss</button>
+    <button class="quiz-btn" data-opt="b">Precomputes W = W₀ + (α/r)·B·A into the base weights, producing one self-contained model with no runtime overhead</button>
+    <button class="quiz-btn" data-opt="c">Retrains the base model from scratch with the new data</button>
+    <button class="quiz-btn" data-opt="d">Converts the model to GGUF format</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. You need to serve five different fine-tunes of the same 8B base model. What's the most cost-efficient approach?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Deploy five separate merged models, one per GPU</button>
+    <button class="quiz-btn" data-opt="b">Merge all five adapters into a single averaged model</button>
+    <button class="quiz-btn" data-opt="c">Run one base model with vLLM multi-LoRA serving, loading all five adapters side by side</button>
+    <button class="quiz-btn" data-opt="d">Fine-tune a single model on all five datasets concatenated</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Correct order of operations for a locally-served fine-tune?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Train adapter → merge into base → quantise to GGUF → serve</button>
+    <button class="quiz-btn" data-opt="b">Train adapter → quantise adapter → merge into quantised base</button>
+    <button class="quiz-btn" data-opt="c">Quantise the base first, then merge, then train</button>
+    <button class="quiz-btn" data-opt="d">Merge, train, then quantise</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.vllm.ai/en/latest/features/lora.html" target="_blank" rel="noopener">vLLM — LoRA and multi-LoRA serving</a></li>
+  <li><a href="https://huggingface.co/docs/peft/developer_guides/lora" target="_blank" rel="noopener">Hugging Face PEFT — merging adapters</a></li>
+  <li><a href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener">llama.cpp — GGUF conversion and quantisation</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

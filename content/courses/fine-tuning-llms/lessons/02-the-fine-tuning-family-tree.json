@@ -1,0 +1,4 @@
+{
+  "title": "The Fine-Tuning Family Tree — Every Term You'll Meet",
+  "description": "A complete glossary organised into four groups: structural terms (LoRA, QLoRA, adapters), objectives (SFT, DPO, RLHF, RFT), training mechanics (rank, alpha, epochs, packing), and ops terms (JSONL, endpoints, GGUF)."
+}

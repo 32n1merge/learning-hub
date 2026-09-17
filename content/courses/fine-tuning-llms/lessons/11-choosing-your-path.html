@@ -1,0 +1,203 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .strategy-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.15rem; margin: 1rem 0; background: var(--color-surface); }
+  .strategy-card h4 { margin: 0 0 0.4rem; color: var(--color-accent); font-size: 1rem; }
+  .strategy-card .verdict { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.3rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.86rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 11: Choosing Your Path — Unsloth, Azure, or Something Else</h2>
+
+<p>The two tracks in this course are not competitors. They are optimised for different constraints, and the professionals use both — often in the same project, in sequence.</p>
+
+<div class="strategy-card">
+  <span class="verdict">Track A · Open weights · your hardware</span>
+  <h4>Unsloth</h4>
+  <p>An open-source training library that makes LoRA/QLoRA on open-weight models (Llama, Qwen, Gemma, Mistral, Phi and friends) dramatically faster and smaller in VRAM than the standard Hugging Face stack. You supply the GPU — a free Colab/Kaggle session, a rented hourly GPU, or your own card — and you get a merged model or a GGUF file that is entirely yours.</p>
+  <p><strong>Pick it when:</strong> you want zero marginal cost, full control, data that must stay on your own machines, a small model to run locally, or fast iteration while you figure out what "good" even means.</p>
+</div>
+
+<div class="strategy-card">
+  <span class="verdict">Track B · Managed · someone else's infrastructure</span>
+  <h4>Azure AI Foundry</h4>
+  <p>A managed fine-tuning service covering both Microsoft's own models (GPT-4o, GPT-4.1, o4-mini families) and popular open-weight families. You upload JSONL, submit a job, and Azure handles GPUs, checkpoints, safety evaluation and deployment. Fine-tuned models are served through the same endpoint surface as the base models you already call.</p>
+  <p><strong>Pick it when:</strong> you need frontier-model quality in a specific behaviour, you want no infrastructure work, you are already inside an Azure/Entra tenancy, or governance and data-residency requirements make a managed service the path of least resistance.</p>
+</div>
+
+<h3>The honest comparison</h3>
+
+<table>
+<tr><th></th><th>Unsloth (self-hosted)</th><th>Azure AI Foundry (managed)</th></tr>
+<tr><td><strong>Models</strong></td><td>Open-weight only — Llama, Qwen, Gemma, Mistral, Phi</td><td>Microsoft's GPT family <em>plus</em> several open-weight families</td></tr>
+<tr><td><strong>Hardware</strong></td><td>Yours. Free tier is viable for 7B-class QLoRA.</td><td>None. You never see a GPU.</td></tr>
+<tr><td><strong>Cost shape</strong></td><td>One-time GPU-hours (or zero on a free tier)</td><td>Per-token training charge + <em>hourly deployment charge</em></td></tr>
+<tr><td><strong>Time to first result</strong></td><td>~1 hour including setup, on a free Colab GPU</td><td>Hours — data prep, upload, job queue, safety eval, deploy</td></tr>
+<tr><td><strong>Iteration speed</strong></td><td>Very fast — change a flag, rerun in minutes</td><td>Slower — each cycle is a job submission</td></tr>
+<tr><td><strong>Control</strong></td><td>Total: every hyperparameter, every export format</td><td>Bounded: whatever the service exposes</td></tr>
+<tr><td><strong>Ops burden</strong></td><td>You own serving, scaling, monitoring</td><td>Near zero</td></tr>
+<tr><td><strong>Data governance</strong></td><td>Data never leaves your machine</td><td>Managed within your Azure tenancy and its policies</td></tr>
+<tr><td><strong>What you ship</strong></td><td>A model file you possess forever</td><td>A deployed endpoint you rent</td></tr>
+</table>
+
+<div class="callout">
+<strong>The decision that actually matters:</strong> self-hosting has a <em>fixed</em> cost and <em>falling</em> marginal cost; managed hosting has a <em>near-zero</em> fixed cost and a <em>linear</em> marginal cost that never goes away. At low volume, managed wins on effort. At high volume, self-hosting wins overwhelmingly. Find your crossover point before you commit — and remember that the model you trained yourself can be redeployed anywhere, forever, while the endpoint exists only as long as you keep paying.
+</div>
+
+<h3>The workflow professionals actually use</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 660 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hybrid fine-tuning workflow from cheap iteration to production scale">
+    <g font-family="var(--font-sans)">
+      <rect x="14" y="30" width="196" height="112" rx="10" fill="var(--color-surface)" stroke="var(--color-success)" stroke-width="1.5"/>
+      <text x="112" y="54" text-anchor="middle" fill="var(--color-success)" font-size="11.5" font-weight="700">1 · ITERATE CHEAP</text>
+      <text x="112" y="76" text-anchor="middle" fill="var(--color-text)" font-size="10.5">Unsloth on a free Colab T4</text>
+      <text x="112" y="94" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Small runs, rank sweeps,</text>
+      <text x="112" y="110" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">data experiments, format checks</text>
+      <text x="112" y="130" text-anchor="middle" fill="var(--color-accent)" font-size="10" font-weight="600">cost: $0</text>
+
+      <rect x="232" y="30" width="196" height="112" rx="10" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="1.5"/>
+      <text x="330" y="54" text-anchor="middle" fill="var(--color-accent)" font-size="11.5" font-weight="700">2 · PROVE IT</text>
+      <text x="330" y="76" text-anchor="middle" fill="var(--color-text)" font-size="10.5">Baseline + eval harness</text>
+      <text x="330" y="94" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Held-out test set, regression</text>
+      <text x="330" y="110" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">suite, human review of 50-100</text>
+      <text x="330" y="130" text-anchor="middle" fill="var(--color-accent)" font-size="10" font-weight="600">don't skip this</text>
+
+      <rect x="450" y="30" width="196" height="112" rx="10" fill="var(--color-surface)" stroke="var(--color-warning)" stroke-width="1.5"/>
+      <text x="548" y="54" text-anchor="middle" fill="var(--color-warning)" font-size="11.5" font-weight="700">3 · SCALE OUT</text>
+      <text x="548" y="76" text-anchor="middle" fill="var(--color-text)" font-size="10.5">Managed platform, big dataset,</text>
+      <text x="548" y="94" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">or your own GPU with vLLM.</text>
+      <text x="548" y="110" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">Whichever is cheaper at volume.</text>
+      <text x="548" y="130" text-anchor="middle" fill="var(--color-warning)" font-size="10" font-weight="600">production</text>
+
+      <path d="M212 86 L230 86" stroke="var(--color-border)" stroke-width="2"/>
+      <polygon points="230,86 220,81 220,91" fill="var(--color-border)"/>
+      <path d="M430 86 L448 86" stroke="var(--color-border)" stroke-width="2"/>
+      <polygon points="448,86 438,81 438,91" fill="var(--color-border)"/>
+
+      <rect x="14" y="166" width="632" height="76" rx="10" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+      <text x="330" y="190" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-weight="600">Why this order matters</text>
+      <text x="330" y="211" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">Managed platforms bill per training token. Discovering your dataset is malformed on a paid platform</text>
+      <text x="330" y="228" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">is the classic expensive mistake. Iterate where runs are free; pay only for the run you believe in.</text>
+    </g>
+  </svg>
+</div>
+
+<h3>Other options worth knowing</h3>
+
+<table>
+<tr><th>Option</th><th>Niche</th></tr>
+<tr><td>OpenAI fine-tuning API</td><td>The same idea as Azure with a simpler surface and no tenancy integration. Convenient, closed models, no self-hosting path.</td></tr>
+<tr><td>Together / Fireworks / Predibase</td><td>Managed fine-tuning of <em>open-weight</em> models with serverless or dedicated deployment. Often cheaper per token than the big clouds, and you can export some models.</td></tr>
+<tr><td>Google Vertex AI</td><td>Managed tuning including adapter-based tuning for Gemini, plus open models. Strong if you are already on GCP.</td></tr>
+<tr><td>Rented GPUs (RunPod, Vast.ai, Lambda, Modal)</td><td>The middle path: full control like self-hosting, hourly pricing like a cloud. The right answer for a serious open-weight fine-tune without buying hardware.</td></tr>
+<tr><td>Hugging Face AutoTrain / TRL</td><td>The manual, framework-level path. More code and more knobs than Unsloth, no speed magic, and the most portable — every managed platform's recipe is really this underneath.</td></tr>
+</table>
+
+<div class="callout-success">
+<strong>A defensible default plan:</strong> start on a free Unsloth session with 200–500 examples and rank 16 for 1–2 epochs. Get to a baseline-vs-tuned number you trust. Only then decide whether to spend money — on a bigger open model, a rented A100 for a longer run, or a managed Azure job for a proprietary model. The first version of almost every fine-tune costs nothing but an afternoon.
+</div>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> the cheapest optimisation in fine-tuning is <em>picking the right base model size</em>. Most narrow tasks that people attempt with a 70B model succeed with a 3B–8B one after fine-tuning — at one tenth the inference cost, or less. Before you spend anything on training infrastructure, spend an hour testing whether a small model can already do the task <em>in principle</em> when given three worked examples in the prompt. If it can, fine-tuning will make it reliable and cheap. If it can't even with examples, no amount of fine-tuning will teach it.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/dQLG34PjjSQ" target="_blank" rel="noopener">Fine-Tune LLM Models with Ease on Azure AI Foundry</a> — Tech with Kirk. Portal walkthrough, useful to see how much is genuinely point-and-click.</li>
+    <li><a href="https://youtu.be/hw6-rrYtUy8" target="_blank" rel="noopener">Fine-tuning and distillation with Azure AI Foundry — BRK150</a> — Microsoft Developer. The distillation story at platform scale.</li>
+    <li><a href="https://youtu.be/dMY3dBLojTk" target="_blank" rel="noopener">Fast Fine Tuning with Unsloth</a> — Matt Williams. The self-hosted track's speed argument, demonstrated.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the structural difference in cost between self-hosting and a managed endpoint?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Self-hosting is always cheaper regardless of volume</button>
+    <button class="quiz-btn" data-opt="b">Self-hosting has fixed infrastructure cost but near-zero marginal cost; managed has near-zero fixed cost but linear marginal cost that persists</button>
+    <button class="quiz-btn" data-opt="c">Managed is always cheaper because GPUs are cheaper at scale</button>
+    <button class="quiz-btn" data-opt="d">Both cost exactly the same; only the billing UI differs</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why do experienced practitioners iterate on a free local session first?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Because managed platforms cannot train open-weight models</button>
+    <button class="quiz-btn" data-opt="b">Because local models are always higher quality</button>
+    <button class="quiz-btn" data-opt="c">Because discovered-late data problems are the classic expensive mistake when every run is billed per training token</button>
+    <button class="quiz-btn" data-opt="d">Because local training produces smaller merged artefacts</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You have a 500-example dataset and no idea whether the task is learnable at all. What's the smartest first move?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Put three worked examples in a prompt to a small model and see whether it can do the task in principle</button>
+    <button class="quiz-btn" data-opt="b">Book a managed training job on the largest available model</button>
+    <button class="quiz-btn" data-opt="c">Set the LoRA rank to 256 and train for 10 epochs</button>
+    <button class="quiz-btn" data-opt="d">Buy an H100</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://docs.unsloth.ai/" target="_blank" rel="noopener">Unsloth documentation</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/fine-tuning-overview" target="_blank" rel="noopener">Microsoft Learn — Azure AI Foundry fine-tuning overview</a></li>
+  <li><a href="https://huggingface.co/docs/autotrain/index" target="_blank" rel="noopener">Hugging Face AutoTrain</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,228 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.55; font-size: 0.84rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  td.num { font-family: var(--font-mono); font-size: 0.86rem; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Hyperparameters, VRAM and Time — The Numbers</h2>
+
+<p>Three questions decide whether your project is feasible: <em>what do I set?</em>, <em>will it fit?</em>, and <em>how long will it take?</em> This lesson answers all three with real figures — the VRAM table below is Unsloth's own published minimums, and the hyperparameter defaults are the ones their documentation recommends after "hundreds of research papers and experiments."</p>
+
+<h3>Does it fit? The VRAM table</h3>
+
+<p>Minimum VRAM required, by model size and method. QLoRA is 4-bit, LoRA is 16-bit. These are absolute minimums — real runs often need more, especially at longer context.</p>
+
+<table>
+<tr><th>Model size</th><th>QLoRA (4-bit)</th><th>LoRA (16-bit)</th><th>What that means in practice</th></tr>
+<tr><td class="num">3B</td><td class="num">3.5 GB</td><td class="num">8 GB</td><td>Anything with a GPU. Even a 6 GB laptop card.</td></tr>
+<tr><td class="num">7B</td><td class="num">5 GB</td><td class="num">19 GB</td><td>Free Colab T4 comfortably. LoRA needs a 24 GB card.</td></tr>
+<tr><td class="num">8B</td><td class="num"><strong>6 GB</strong></td><td class="num">22 GB</td><td><strong>The sweet spot.</strong> 8B QLoRA is the recommended first project.</td></tr>
+<tr><td class="num">9B</td><td class="num">6.5 GB</td><td class="num">24 GB</td><td>Fits a 4090 / L4 / T4 in QLoRA.</td></tr>
+<tr><td class="num">11B</td><td class="num">7.5 GB</td><td class="num">29 GB</td><td>—</td></tr>
+<tr><td class="num">14B</td><td class="num">8.5 GB</td><td class="num">33 GB</td><td>Still fits a 16 GB T4 in QLoRA, tighter at long context.</td></tr>
+<tr><td class="num">27B</td><td class="num">22 GB</td><td class="num">64 GB</td><td>Needs a 24 GB card (3090/4090) or an A6000 for LoRA.</td></tr>
+<tr><td class="num">32B</td><td class="num">26 GB</td><td class="num">76 GB</td><td>32 GB card, or A100 80 GB for 16-bit.</td></tr>
+<tr><td class="num">40B</td><td class="num">30 GB</td><td class="num">96 GB</td><td>—</td></tr>
+<tr><td class="num">70B</td><td class="num">41 GB</td><td class="num">164 GB</td><td>QLoRA on a single A100 80 GB. LoRA needs multi-GPU.</td></tr>
+<tr><td class="num">81B</td><td class="num">48 GB</td><td class="num">192 GB</td><td>—</td></tr>
+<tr><td class="num">90B</td><td class="num">53 GB</td><td class="num">212 GB</td><td>—</td></tr>
+<tr><td class="num">405B</td><td class="num">237 GB</td><td class="num">950 GB</td><td>A cluster. Not a hobby project.</td></tr>
+</table>
+
+<div class="callout">
+<strong>Read the table as a budget, not a promise.</strong> The dominant variable it does not show is <span class="glossary-term">sequence length</span>. Attention memory grows roughly with the square of context length, so a 27B QLoRA run that fits in 22 GB at 2,048 tokens will not fit at 8,192. If you OOM, the fix order is: <strong>reduce batch size to 1</strong>, then <strong>reduce <code>max_seq_length</code></strong>, then raise <code>gradient_accumulation_steps</code> to keep the effective batch size where you want it. Unsloth's docs call an oversized batch size the most common cause of OOM.
+</div>
+
+<h3>Matching hardware to ambition</h3>
+
+<table>
+<tr><th>Hardware</th><th>VRAM</th><th>Comfortable workload (QLoRA, r=16, 2k ctx)</th></tr>
+<tr><td>Free Google Colab T4</td><td>16 GB</td><td>8B model, up to ~14B. The default starting point.</td></tr>
+<tr><td>Kaggle (T4 ×2 or P100)</td><td>16 GB ×2</td><td>Same, with more weekly hours than Colab's free tier.</td></tr>
+<tr><td>RTX 3090 / 4090</td><td>24 GB</td><td>Up to 27B QLoRA, or 8B at 16-bit LoRA.</td></tr>
+<tr><td>A100 40 GB</td><td>40 GB</td><td>70B QLoRA at moderate context.</td></tr>
+<tr><td>A100 / H100 80 GB</td><td>80 GB</td><td>70B QLoRA at long context, 32B at 16-bit.</td></tr>
+<tr><td>Multi-GPU (2–8×)</td><td>160 GB+</td><td>Full fine-tuning territory, or 405B QLoRA.</td></tr>
+</table>
+
+<p>Two Unsloth-specific facts that change these numbers: <code>use_gradient_checkpointing="unsloth"</code> cuts memory a further ~30%, and the framework supports roughly 4× longer context than the standard stack at the same VRAM. So "minimum" here is genuinely a floor, not a comfortable target.</p>
+
+<h3>The hyperparameter defaults that actually work</h3>
+
+<table>
+<tr><th>Parameter</th><th>Recommended</th><th>Why / how it moves quality</th></tr>
+<tr><td><code>learning_rate</code></td><td class="num">2e-4</td><td>The recommended starting point for LoRA and QLoRA. Full range 2e-4 to 5e-6. For reinforcement learning (DPO, GRPO), use ~5e-6 instead. Full fine-tuning wants lower rates generally.</td></tr>
+<tr><td><code>num_train_epochs</code></td><td class="num">1–3</td><td>Beyond 3 epochs on instruction data, returns diminish and overfitting rises. Start at 1 and check your eval set before adding more.</td></tr>
+<tr><td><code>r</code> (rank)</td><td class="num">16</td><td>Choose 8, 16, 32, 64 or 128. Small and complex datasets want higher rank; rank usually lands between 4 and 64. Unsloth suggests 8 or 16 for fast runs. Too large overfits.</td></tr>
+<tr><td><code>lora_alpha</code></td><td class="num">= r, or 2r</td><td>Scaling is <code>alpha / r</code>, so keep that ratio at 1 or 2. Alpha = r is the reliable baseline; alpha = 2r learns more aggressively. This is the cheapest knob to adjust after a run that over- or under-cooks.</td></tr>
+<tr><td><code>lora_dropout</code></td><td class="num">0</td><td>Zero is the optimised path and recent research suggests dropout is an unreliable regulariser on the short runs typical of fine-tuning. Raise to ~0.1 only if you suspect overfitting.</td></tr>
+<tr><td><code>weight_decay</code></td><td class="num">0.01–0.1</td><td>Raises regularization. 0.01 is the recommended minimum; don't go large.</td></tr>
+<tr><td><code>warmup_steps</code></td><td class="num">5–10% of steps</td><td>Gradually raises the learning rate at the start so the first update isn't destructive.</td></tr>
+<tr><td><code>lr_scheduler_type</code></td><td class="num">linear / cosine</td><td>How the rate decays over the run. Either is fine; both are standard.</td></tr>
+<tr><td><code>per_device_train_batch_size</code></td><td class="num">2</td><td>Primary driver of VRAM. Raise only if you have memory to spare — and note that larger batches can actually be <em>slower</em> due to padding on short examples.</td></tr>
+<tr><td><code>gradient_accumulation_steps</code></td><td class="num">4–8</td><td>Primary driver of training time. Simulates a larger batch without more memory. Prefer raising this over raising batch size.</td></tr>
+<tr><td>effective batch size</td><td class="num">16</td><td><code>batch_size × gradient_accumulation_steps</code>. A target of 16 is a good default for most fine-tuning (e.g. 2 × 8). This is the number that actually governs stability.</td></tr>
+<tr><td><code>target_modules</code></td><td class="num">all 7</td><td><code>q,k,v,o,gate,up,down</code>. Targeting all major linear layers is what lets LoRA match full fine-tuning.</td></tr>
+<tr><td><code>max_seq_length</code></td><td class="num">2048</td><td>2048 is the recommended value for testing. Doubling it roughly squares attention memory.</td></tr>
+<tr><td><code>random_state</code> / seed</td><td class="num">3407</td><td>Reproducibility. Without a fixed seed you cannot tell a real improvement from run-to-run noise.</td></tr>
+<tr><td><code>bias</code></td><td class="num">"none"</td><td>Leaves bias terms frozen: faster, less memory, negligible quality impact.</td></tr>
+</table>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> two settings dominate your GPU bill, and neither is the one people fiddle with. <strong>Effective batch size</strong> (raise it via gradient accumulation — free) and <strong>epoch count</strong> (1–3, and 1 is often right). Going from 1 epoch to 3 epochs triples your training cost for a gain your eval set can usually detect as negative. Train short, evaluate, and only extend the run when the curve says it is still improving.
+</div>
+
+<h3>How long will it take?</h3>
+
+<p>Training wall-clock time is throughput arithmetic, and you can compute it before you spend a cent:</p>
+
+<pre><code>total_tokens   = examples × avg_tokens_per_example × epochs
+training_time  = total_tokens ÷ throughput_tokens_per_second
+
+# Worked example: 1,000 examples averaging 500 tokens, 1 epoch
+total_tokens   = 1000 × 500 × 1 = 500,000 tokens
+
+# The trainer prints iterations/sec and tokens/sec while running.
+# Read that number at step 10 and extrapolate — don't guess.</code></pre>
+
+<p>Non-padding throughput varies enormously with model size, method, sequence length and GPU generation, so rather than trust a table, <strong>run a 20-step smoke test</strong> (<code>max_steps=20</code>) and read the reported speed. That takes about two minutes and gives you an exact answer for your hardware, your model and your sequence length — a number no blog post can give you.</p>
+
+<p>What the speed test will show you qualitatively: QLoRA is slightly slower per step than 16-bit LoRA but uses ~4× less memory, so it is nearly always the right call on consumer hardware. Unsloth's kernel-level optimisations make both substantially faster than the equivalent plain Hugging Face run. And the two settings that move wall-clock the most are <code>gradient_accumulation_steps</code> (more accumulation = proportionally more time per step) and <code>max_seq_length</code> (attention cost grows faster than linearly).</p>
+
+<h3>The time nobody budgets for</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Time breakdown of a realistic fine-tuning project showing training is a small fraction">
+    <g font-family="var(--font-sans)">
+      <text x="16" y="22" fill="var(--color-text)" font-size="12" font-weight="600">A realistic first fine-tuning project, 1 engineer</text>
+
+      <rect x="16" y="40" width="264" height="34" rx="6" fill="var(--color-success)" opacity="0.85"/>
+      <text x="148" y="62" text-anchor="middle" fill="#04140a" font-size="11.5" font-weight="700">Data: collect, clean, format (40%)</text>
+
+      <rect x="288" y="40" width="165" height="34" rx="6" fill="var(--color-accent)" opacity="0.85"/>
+      <text x="370" y="62" text-anchor="middle" fill="#04101c" font-size="11.5" font-weight="700">Eval harness (25%)</text>
+
+      <rect x="461" y="40" width="132" height="34" rx="6" fill="var(--color-warning)" opacity="0.85"/>
+      <text x="527" y="62" text-anchor="middle" fill="#1a1000" font-size="11.5" font-weight="700">Iteration (20%)</text>
+
+      <rect x="601" y="40" width="43" height="34" rx="6" fill="var(--color-danger)" opacity="0.9"/>
+      <text x="622" y="62" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">10%</text>
+
+      <text x="622" y="90" text-anchor="middle" fill="var(--color-danger)" font-size="10" font-weight="600">training</text>
+
+      <rect x="16" y="118" width="628" height="118" rx="10" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+      <text x="330" y="140" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-weight="600">Why the training bar is so small</text>
+      <text x="330" y="162" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">A 1,000-example, 8B QLoRA run on a free T4 is a matter of minutes to an hour of actual GPU time.</text>
+      <text x="330" y="180" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">Writing the dataset properly, building a baseline-vs-tuned evaluation, and running three iterations to</text>
+      <text x="330" y="198" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">fix what the eval caught — that is where the calendar time goes.</text>
+      <text x="330" y="223" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="600">Plan in days-to-weeks for a first project. Almost none of it is GPU-bound.</text>
+    </g>
+  </svg>
+</div>
+
+<p>The honest headline: <strong>a first fine-tune is a data project that happens to end in a training run.</strong> Budget one to three weeks for a serious first attempt, of which the GPU is busy for a tiny fraction. If you find yourself waiting on training more than working on data, something has gone wrong with your priorities.</p>
+
+<div class="callout-warn">
+<strong>Plan for at least three iterations.</strong> Run one almost never ships. The realistic loop is: train → evaluate → discover the dataset has 400 near-duplicate rows and a chat-template mismatch → fix → retrain. If your budget assumes one run, it is wrong by a factor of three. The good news: because iteration two and three reuse the same pipeline, they cost a fraction of the first.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/dMY3dBLojTk" target="_blank" rel="noopener">Fast Fine Tuning with Unsloth</a> — Matt Williams. Demonstrates the speed and memory claims on real hardware.</li>
+    <li><a href="https://youtu.be/g80Q1sVtikE" target="_blank" rel="noopener">Fine-tune your own LLM in 13 minutes, here's how</a> — David Ondrej. Useful for calibrating how short an actual training run is.</li>
+    <li><a href="https://youtu.be/4JofSJIrjwU" target="_blank" rel="noopener">How to Fine-Tune any AI Model Locally (FULL Tutorial)</a> — Tech With Tim. Includes the OOM-and-fix cycle this lesson warns about.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You have a free 16 GB Colab T4 and want to fine-tune an 8B model. Which method and why?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">16-bit LoRA — it needs 22 GB, so it will just fit</button>
+    <button class="quiz-btn" data-opt="b">QLoRA — 8B in 4-bit needs roughly 6 GB minimum, leaving room for activations at 2k context</button>
+    <button class="quiz-btn" data-opt="c">Full fine-tuning — it's the most accurate</button>
+    <button class="quiz-btn" data-opt="d">Neither; a 16 GB GPU cannot train any LLM</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. You set <code>per_device_train_batch_size=2</code> and <code>gradient_accumulation_steps=8</code>. What is your effective batch size, and which setting would you raise first to save VRAM?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">16; raise the batch size to save memory</button>
+    <button class="quiz-btn" data-opt="b">10; raise the learning rate</button>
+    <button class="quiz-btn" data-opt="c">16; lower the batch size (the driver of VRAM) and raise gradient accumulation to compensate</button>
+    <button class="quiz-btn" data-opt="d">8; lower the rank</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Where does most of the wall-clock time in a realistic first fine-tuning project actually go?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Data preparation, building the eval harness, and iterating — not the training run itself</button>
+    <button class="quiz-btn" data-opt="b">Waiting for the GPU to finish training</button>
+    <button class="quiz-btn" data-opt="c">Downloading the base model</button>
+    <button class="quiz-btn" data-opt="d">Exporting to GGUF format</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-llms-guide/lora-hyperparameters-guide" target="_blank" rel="noopener">Unsloth — LoRA Hyperparameters Guide</a></li>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-for-beginners/unsloth-requirements" target="_blank" rel="noopener">Unsloth — VRAM requirements table</a></li>
+  <li><a href="https://arxiv.org/abs/2410.09692" target="_blank" rel="noopener">On the (in)effectiveness of LoRA dropout as a regulariser</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

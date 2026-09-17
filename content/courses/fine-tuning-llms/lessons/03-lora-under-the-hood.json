@@ -1,0 +1,4 @@
+{
+  "title": "LoRA Under the Hood — Why 7 Billion Weights Fit on Your GPU",
+  "description": "The memory maths behind full fine-tuning, what W = W0 + (alpha/r)·B·A actually does, how QLoRA cuts VRAM 4x, and which target modules to adapt."
+}

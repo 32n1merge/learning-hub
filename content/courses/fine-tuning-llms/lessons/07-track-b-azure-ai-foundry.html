@@ -1,0 +1,291 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .step-box { border-left: 3px solid var(--color-accent); background: var(--color-elevated); padding: 0.5rem 0.9rem; margin: 1.5rem 0 0.5rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .step-box .step-num { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .step-box h4 { margin: 0.1rem 0 0; color: var(--color-text); font-size: 1.02rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.55; font-size: 0.83rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: Track B — Managed Fine-Tuning on Azure AI Foundry</h2>
+
+<p>In Track A you owned every moving part. Track B is the opposite trade: you supply a JSONL file and a model name, and Microsoft handles GPUs, checkpoints, safety evaluation and serving. You give up control and gain a deployment that behaves exactly like the base models you already call.</p>
+
+<p>Under the hood it is still LoRA. The Azure documentation is explicit that they use low-rank adaptation to fine-tune models "in a way that reduces their complexity without significantly affecting their performance," approximating the original high-rank matrix with a lower-rank one. Same mathematics as Lesson 3 — you just never see the adapter.</p>
+
+<h3>What Azure AI Foundry actually offers</h3>
+
+<p>Three fine-tuning methods, and <strong>not every model supports every method.</strong> This table is the single most useful thing to check before you start:</p>
+
+<table>
+<tr><th>Model</th><th>Methods</th><th>Modality</th><th>Regions / Data Zones</th></tr>
+<tr><td><strong>gpt-4o-mini</strong> (2024-07-18)</td><td>SFT</td><td>Text → text</td><td>North Central US, Sweden Central / US</td></tr>
+<tr><td><strong>gpt-4o</strong> (2024-08-06)</td><td>SFT, DPO</td><td>Text + vision → text</td><td>East US2, North Central US, Sweden Central / US</td></tr>
+<tr><td><strong>gpt-4.1</strong> (2025-04-14)</td><td>SFT, DPO</td><td>Text + vision → text</td><td>North Central US, Sweden Central / US, EU, Asia</td></tr>
+<tr><td><strong>gpt-4.1-mini</strong> (2025-04-14)</td><td>SFT, DPO</td><td>Text → text</td><td>North Central US, Sweden Central / US</td></tr>
+<tr><td><strong>gpt-4.1-nano</strong> (2025-04-14)</td><td>SFT, DPO</td><td>Text → text</td><td>North Central US, Sweden Central / US</td></tr>
+<tr><td><strong>o4-mini</strong> (2025-04-16)</td><td><strong>RFT</strong></td><td>Text → text</td><td>East US2, Sweden Central / US</td></tr>
+<tr><td><strong>gpt-5</strong> (2025-08-07)</td><td><strong>RFT</strong></td><td>Text → text</td><td>North Central US, Sweden Central / US</td></tr>
+<tr><td><strong>Ministral-3B</strong>, <strong>Qwen-32B</strong>, <strong>Llama-3.3-70B-Instruct</strong></td><td>SFT</td><td>Text → text</td><td>US data zone</td></tr>
+</table>
+
+<div class="callout-warn">
+<strong>Read the Methods column carefully.</strong> If you want o4-mini, you are doing reinforcement fine-tuning — there is no SFT option for it. If you want DPO for preference pairs, gpt-4o-mini is out (SFT only) while gpt-4.1 and gpt-4o support it. gpt-5's fine-tuning is described as "generally available by application only." Model availability moves fast; check the live table before you plan a project around a specific model.
+</div>
+
+<p>Note also the two distinct model populations: <strong>Microsoft's proprietary models</strong> (the GPT family — frontier quality, closed weights, endpoint-only) and <strong>open-weight models</strong> (Qwen-32B, Llama-3.3-70B, Ministral-3B). The open-weight ones are dramatically cheaper to host — as Lesson 8 shows, $0.30–0.33/hour against $1.70/hour.</p>
+
+<h3>The data format — and the two requirements people miss</h3>
+
+<p>Azure consumes the <em>same</em> conversational JSONL you would feed Unsloth. It must be formatted as JSON Lines in the conversational format the Chat Completions API uses. There are two hard requirements that catch people out:</p>
+
+<div class="callout-warn">
+<strong>UTF-8 with a byte-order mark (BOM), and under 512 MB per file.</strong> Most tools write UTF-8 <em>without</em> a BOM by default. A file that trains fine in Unsloth can be rejected by Azure validation for this alone. In Python: <code>open(path, "w", encoding="utf-8-sig")</code> — the <code>-sig</code> suffix is what adds the BOM.
+</div>
+
+<pre><code>{"messages": [{"role": "system", "content": "You are a claims adjudicator. Respond only with valid JSON."}, {"role": "user", "content": "Claim: rear-ended at a stoplight, police report filed."}, {"role": "assistant", "content": "{\"decision\":\"approve\",\"payout_usd\":4200}"}]}</code></pre>
+
+<p>Three capabilities worth knowing about:</p>
+
+<table>
+<tr><th>Feature</th><th>How it works</th></tr>
+<tr><td><strong>Multi-turn conversations</strong></td><td>Put the whole exchange in one line's <code>messages</code> array. Supported directly.</td></tr>
+<tr><td><strong>Per-message weighting</strong></td><td>Add <code>"weight": 0</code> or <code>"weight": 1</code> to an assistant message to exclude it from training. This is how you keep multi-turn context without training on a weak intermediate answer.</td></tr>
+<tr><td><strong>Vision fine-tuning</strong></td><td>Use the <code>content</code> array with typed parts — <code>{"type": "text", ...}</code> and <code>{"type": "image_url", "image_url": {"url": ...}}</code> — for gpt-4o and gpt-4.1.</td></tr>
+</table>
+
+<pre><code>{"messages": [{"role": "system", "content": "Marv is a factual chatbot that is also sarcastic."},
+              {"role": "user", "content": "What's the biggest city in France?"},
+              {"role": "assistant", "content": "Paris", "weight": 0},
+              {"role": "user", "content": "Can you be more sarcastic?"},
+              {"role": "assistant", "content": "Paris, as if everyone doesn't already know that.", "weight": 1}]}</code></pre>
+
+<p>On volume: a fine-tuning job will not proceed with fewer than <strong>10 training examples</strong>, Microsoft's guidance is to start with <strong>50 well-crafted examples</strong>, and the stated best practice is "hundreds, if not thousands." That is consistent with everything in Lesson 4 — the floor is a technical limit, not a recommendation.</p>
+
+<h3>The workflow</h3>
+
+<div class="step-box"><span class="step-num">Step 1</span><h4>Upload the files</h4></div>
+
+<pre><code>import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key = os.getenv("AZURE_OPENAI_API_KEY"),
+    base_url = "https://YOUR-RESOURCE-NAME.openai.azure.com/openai/v1/"
+)
+
+training_response = client.files.create(file=open("training_set.jsonl", "rb"), purpose="fine-tune")
+validation_response = client.files.create(file=open("validation_set.jsonl", "rb"), purpose="fine-tune")
+
+training_file_id = training_response.id
+validation_file_id = validation_response.id</code></pre>
+
+<div class="step-box"><span class="step-num">Step 2</span><h4>Create the training job</h4></div>
+
+<pre><code>response = client.fine_tuning.jobs.create(
+    training_file = training_file_id,
+    validation_file = validation_file_id,
+    model = "gpt-4.1-2025-04-14",
+    suffix = "my-model",     # no dots/periods allowed in Foundry model names
+    seed = 105,
+    extra_body = { "trainingType": "GlobalStandard" }   # or "Standard", "Developer"
+)
+
+job_id = response.id</code></pre>
+
+<p>To set hyperparameters explicitly, use the <code>method</code> parameter:</p>
+
+<pre><code>client.fine_tuning.jobs.create(
+    training_file = "file-abc123",
+    model = "gpt-4.1-2025-04-14",
+    suffix = "my-model",
+    seed = 105,
+    method = {
+        "type": "supervised",
+        "supervised": {
+            "hyperparameters": { "n_epochs": 2 }
+        }
+    },
+    extra_body = { "trainingType": "GlobalStandard" }
+)</code></pre>
+
+<div class="step-box"><span class="step-num">Step 3</span><h4>Monitor, and pause if it isn't converging</h4></div>
+
+<p>Metrics are visible during the run, and you can <strong>pause</strong> a job — which is not just a cancel button. Pausing creates a deployable checkpoint once safety evaluations complete, so you can evaluate what you have, then either deploy it or resume training. This is a genuinely useful cost lever for a run that is obviously drifting.</p>
+
+<div class="step-box"><span class="step-num">Step 4</span><h4>Deploy</h4></div>
+
+<pre><code># ARM/REST shape for the deployment itself
+sku: { name: "GlobalStandard", capacity: 1 }</code></pre>
+
+<p>You can also enable <strong>automatic deployment</strong> so a successful run deploys itself, with the deployment named from the generated model name plus your suffix.</p>
+
+<h3>The hyperparameters Azure exposes</h3>
+
+<p>This is a deliberately short list — a real difference from Track A, where you set a dozen values:</p>
+
+<table>
+<tr><th>Parameter</th><th>What it does</th><th>Guidance</th></tr>
+<tr><td><code>batch_size</code></td><td>Examples per forward/backward pass</td><td>Defaults and maxima are model-specific. Larger batches generally work better on larger datasets; larger batch means less frequent updates with lower variance.</td></tr>
+<tr><td><code>learning_rate_multiplier</code></td><td>Multiplies the model's original pretraining learning rate</td><td>Experiment in the range <strong>0.02 to 0.2</strong>. Larger learning rates suit larger batches; a smaller value helps avoid overfitting.</td></tr>
+<tr><td><code>n_epochs</code></td><td>Full passes over the dataset</td><td>Defaults are set automatically; the documented defaults run to about 2 epochs. Lesson 9's advice still applies — more epochs is not better.</td></tr>
+<tr><td><code>seed</code></td><td>Reproducibility</td><td>Set it explicitly. Same seed and parameters should reproduce results.</td></tr>
+</table>
+
+<div class="callout-success">
+<strong>For a first job, take the defaults.</strong> Microsoft's own guidance is to use the automatic defaults initially. You do not have visibility into the base model's original learning rate, which makes <code>learning_rate_multiplier</code> harder to reason about than Unsloth's absolute <code>2e-4</code>. Change one thing at a time, and only once you have a baseline number.
+</div>
+
+<h3>Training tiers — the cost/risk dial</h3>
+
+<table>
+<tr><th>Tier</th><th>What it buys</th><th>What it costs you</th></tr>
+<tr><td><strong>Standard</strong></td><td>Training in your resource's region. Data residency guarantees.</td><td>Highest price. Use when residency is a hard requirement.</td></tr>
+<tr><td><strong>Global</strong> (GlobalStandard)</td><td>Lower price, faster queue times by using capacity beyond your region.</td><td>Data and weights are copied outside your region. The documented recommendation when residency isn't a constraint.</td></tr>
+<tr><td><strong>Developer</strong></td><td>"Significant cost savings" by using idle capacity.</td><td>No latency or SLA guarantees, jobs may be preempted and resumed, no residency guarantee. For experimentation and price-sensitive work.</td></tr>
+</table>
+
+<h3>RFT: the method that behaves differently</h3>
+
+<p>Reinforcement fine-tuning optimises behaviour from <em>reward signals</em> rather than labelled answers. You supply <strong>graders</strong> — which can be deterministic code (did the unit test pass?) or another model acting as a judge — and the model learns from its own sampled outputs.</p>
+
+<table>
+<tr><th>Aspect</th><th>SFT / DPO</th><th>RFT</th></tr>
+<tr><td>What you provide</td><td>Ideal input→output pairs (and preference pairs for DPO)</td><td>Prompts plus graders that score outputs</td></tr>
+<tr><td>Billing basis</td><td>Training tokens × epochs × price per token</td><td><strong>Training hours</strong> × hourly rate (plus grader tokens)</td></tr>
+<tr><td>Cost control</td><td>Shrink the dataset, cut epochs</td><td><code>reasoning_effort</code> low, fewer validation samples and <code>eval_samples</code>, smallest adequate grader, <code>compute_multiplier</code> tuning, pause/cancel monitoring</td></tr>
+<tr><td>Safety net</td><td>—</td><td><strong>Per-job billing is capped at $5,000.</strong> At the cap, training pauses and a deployable checkpoint is created; you decide whether to resume, after which billing continues uncapped.</td></tr>
+<tr><td>Best for</td><td>Teaching a format, tone, or task</td><td>Complex, dynamic behaviour where a correct answer is hard to write but easy to <em>check</em></td></tr>
+</table>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> RFT is the single easiest way to spend a lot of money by accident, because you are billed by the hour and the model's own generation time is inside that hour. The $5,000 per-job cap is a real safety net, but treat it as a kill switch rather than a budget. Before your first RFT job, set an Azure cost alert well below it, run with the smallest grader that can still judge your task, and keep <code>reasoning_effort</code> low until you have measured one run's actual cost.
+</div>
+
+<h3>Serving: four deployment types</h3>
+
+<table>
+<tr><th>Deployment type</th><th>Billing</th><th>Notes</th></tr>
+<tr><td><strong>Standard</strong></td><td>Per-token (same as base model) + <strong>$1.70/hour</strong></td><td>Regional data residency. Best-effort latency.</td></tr>
+<tr><td><strong>Global Standard</strong></td><td>Per-token (same as base model) + hosting fee</td><td>No residency guarantee, higher throughput. Usually what you want.</td></tr>
+<tr><td><strong>Regional Provisioned Throughput</strong></td><td>PTU-hours — no per-token, no hourly hosting fee</td><td>Latency guarantees for latency-sensitive workloads. Needs regional PTU quota and is billed per your Azure agreements.</td></tr>
+<tr><td><strong>Developer tier</strong></td><td>Per-token, <strong>no hourly hosting fee</strong></td><td>No residency or availability guarantees, and <strong>deployments are removed automatically after 24 hours</strong>. Designed for candidate evaluation and proofs of concept — and the cheapest way to smoke-test a fine-tuned model.</td></tr>
+</table>
+
+<div class="callout-success">
+<strong>The Developer tier is the finest cost tool in this lesson.</strong> A 24-hour auto-expiring deployment with no hourly fee lets you run a real end-to-end evaluation of your fine-tune — latency, format compliance, output quality — for essentially the token cost and nothing else. Compare that with leaving a Standard deployment up for a month: at $1.70/hour that is roughly $1,224 of hosting before you have sent a single request.
+</div>
+
+<h3>Where the managed path fits</h3>
+
+<table>
+<tr><th>Choose Azure when…</th><th>Choose Unsloth when…</th></tr>
+<tr><td>You need frontier-model quality in a specific behaviour</td><td>You want a small model at near-zero marginal cost</td></tr>
+<tr><td>You're already in an Azure tenancy with governance in place</td><td>Data must never leave your own hardware</td></tr>
+<tr><td>Nobody on the team wants to own GPU infrastructure</td><td>You want total control over export format and serving stack</td></tr>
+<tr><td>You want to iterate primarily against an eval harness rather than kernels</td><td>You're still discovering what the task even is</td></tr>
+<tr><td>The audit trail of a managed service matters</td><td>You want to own the artifact permanently</td></tr>
+</table>
+
+<p>The two tracks also compose well: many teams prototype on a free GPU with Unsloth to nail the dataset and prompt, then run the production job on a managed platform for a proprietary model once the approach is proven. The dataset is portable — the conversational JSONL is identical apart from the BOM.</p>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/mv5pdNj4sx8" target="_blank" rel="noopener">Deep Dive: Fine-Tuning in Microsoft Foundry — SFT, DPO, Tool Calling and Cost</a> — MadeForCloud. The most complete walkthrough of this lesson's material.</li>
+    <li><a href="https://youtu.be/hw6-rrYtUy8" target="_blank" rel="noopener">Fine-tuning and distillation with Azure AI Foundry — BRK150</a> — Microsoft Developer. Official, and covers the distillation workflow.</li>
+    <li><a href="https://youtu.be/dQLG34PjjSQ" target="_blank" rel="noopener">Fine-Tune LLM Models with Ease on Azure AI Foundry</a> — Tech with Kirk. Portal-first, good for seeing how much is point-and-click.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What is the one hard file requirement that differs from the Unsloth track and commonly causes validation failures?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The file must be under 10 MB</button>
+    <button class="quiz-btn" data-opt="b">Each line must be a JSON array, not an object</button>
+    <button class="quiz-btn" data-opt="c">UTF-8 encoding <em>with a byte-order mark (BOM)</em></button>
+    <button class="quiz-btn" data-opt="d">Files must be CSV, not JSONL</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. You want to use o4-mini. Which fine-tuning method are you limited to?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Supervised fine-tuning (SFT)</button>
+    <button class="quiz-btn" data-opt="b">Reinforcement fine-tuning (RFT) — o4-mini doesn't offer SFT</button>
+    <button class="quiz-btn" data-opt="c">Direct preference optimization (DPO)</button>
+    <button class="quiz-btn" data-opt="d">Vision fine-tuning</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You need to evaluate a fine-tuned model end-to-end for one day, cheaply. Which deployment type is purpose-built for this?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Standard — residential guarantees matter</button>
+    <button class="quiz-btn" data-opt="b">Regional Provisioned Throughput — reserve PTUs</button>
+    <button class="quiz-btn" data-opt="c">Global Standard — highest throughput</button>
+    <button class="quiz-btn" data-opt="d">Developer tier — per-token with no hourly hosting fee, and it auto-removes after 24 hours</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning" target="_blank" rel="noopener">Microsoft Learn — Customize a model with fine-tuning</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/fine-tuning-considerations" target="_blank" rel="noopener">Microsoft Learn — When to use fine-tuning</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/reinforcement-fine-tuning" target="_blank" rel="noopener">Microsoft Learn — Reinforcement fine-tuning</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning-direct-preference-optimization" target="_blank" rel="noopener">Microsoft Learn — Direct preference optimization</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

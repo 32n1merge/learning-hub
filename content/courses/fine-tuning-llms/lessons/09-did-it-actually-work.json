@@ -1,0 +1,4 @@
+{
+  "title": "Did It Actually Work? — Evaluation and Failure Diagnosis",
+  "description": "Baseline-first measurement, the metrics that matter, reading loss curves, a symptom-to-fix diagnostic table, and how to run LLM-as-judge without fooling yourself."
+}

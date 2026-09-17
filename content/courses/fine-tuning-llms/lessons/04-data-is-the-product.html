@@ -1,0 +1,229 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .good { border-left: 3px solid var(--color-success); }
+  .bad { border-left: 3px solid var(--color-danger); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.85rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: Data Is the Product</h2>
+
+<p>Here is the uncomfortable truth of this field: the choice between Unsloth and Azure, between rank 16 and rank 64, between 2 epochs and 3, is a rounding error next to the quality of your dataset. Practitioners who do this professionally spend the overwhelming majority of their time on data and a small fraction on training. Budget your own time accordingly.</p>
+
+<div class="callout">
+<strong>The one-line version:</strong> 500 excellent, consistent, well-formatted examples beat 50,000 scraped, noisy, contradictory ones. Every time. No hyperparameter searches exist that rescue a bad dataset.
+</div>
+
+<h3>How much data do you actually need?</h3>
+
+<table>
+<tr><th>Goal</th><th>Realistic volume</th><th>Notes</th></tr>
+<tr><td>Teaching a strict output format or house tone</td><td><strong>100–500 examples</strong></td><td>Small datasets work here because the task is narrow and the signal is consistent. 200 well-formed JSON examples will reliably change output shape.</td></tr>
+<tr><td>A single narrow task (classify, extract, transform)</td><td><strong>500–5,000 examples</strong></td><td>The sweet spot for most production fine-tunes. Diminishing returns set in fairly early on consistent tasks.</td></tr>
+<tr><td>Robust general behaviour change across many input types</td><td><strong>5,000–50,000 examples</strong></td><td>Coverage becomes the bottleneck, not raw count.</td></tr>
+<tr><td>Preference tuning (DPO / ORPO)</td><td><strong>1,000–10,000 pairs</strong></td><td>Pairs are more informative per row than SFT examples, so you need fewer.</td></tr>
+<tr><td>Continued pretraining / domain adaptation</td><td><strong>Hundreds of MB to GB of raw text</strong></td><td>A completely different regime. Token counts in the hundreds of millions, not example counts in the thousands.</td></tr>
+</table>
+
+<p>The most cited evidence that quality dominates quantity is Meta's <strong>LIMA</strong> paper (2023), which fine-tuned a 65B model on just <strong>1,000 carefully curated prompt–response pairs</strong> and found it competitive with models tuned on far larger datasets. The lesson is not "1,000 is always enough" — it's that a small, high-quality, <em>diverse</em> set teaches behaviour effectively, and that scale cannot compensate for inconsistency.</p>
+
+<div class="callout-warn">
+<strong>The consistency trap:</strong> if 20% of your examples format dates as <code>2026-09-17</code> and 80% as <code>September 17, 2026</code>, you have not taught a formatting rule — you have taught the model that both are acceptable, and it will pick essentially at random. Decide the format once, enforce it programmatically across the whole dataset, and put it in your eval set.
+</div>
+
+<h3>The formats you'll actually write</h3>
+
+<p>Everything is <span class="glossary-term">JSONL</span>: one JSON object per line, no trailing commas, no wrapping array. Four shapes cover almost all real work.</p>
+
+<h4>1. Chat / messages — the default for both Unsloth and Azure</h4>
+
+<pre><code>{"messages": [{"role": "system", "content": "You are a claims adjudicator. Respond only with valid JSON."},
+              {"role": "user", "content": "Claim: rear-ended at a stoplight, police report filed."},
+              {"role": "assistant", "content": "{\"decision\":\"approve\",\"payout_usd\":4200,\"reason\":\"no-fault collision with report\"}"}]}
+{"messages": [{"role": "system", "content": "You are a claims adjudicator. Respond only with valid JSON."},
+              {"role": "user", "content": "Claim: scratched the door in my own driveway, no third party."},
+              {"role": "assistant", "content": "{\"decision\":\"deny\",\"payout_usd\":0,\"reason\":\"single-vehicle, not a covered collision\"}"}]}</code></pre>
+
+<p>This is the lingua franca. Azure AI Foundry consumes it, and Unsloth's chat-template helpers consume it. If you write your dataset in this shape, you can move it between a free Colab GPU and a managed cloud job without touching a line of code.</p>
+
+<h4>2. Alpaca / instruction — common in older open-source datasets</h4>
+
+<pre><code>{"instruction": "Extract the total from this invoice.", "input": "Invoice total: $1,240.00 due 2026-10-01", "output": "1240.00"}
+{"instruction": "Summarise this ticket in one sentence.", "input": "Customer says login fails after password reset...", "output": "User cannot log in after resetting their password."}</code></pre>
+
+<h4>3. Plain completion — for non-chat tasks</h4>
+
+<pre><code>{"prompt": "Translate to French: the invoice is overdue", "completion": " la facture est en retard"}</code></pre>
+
+<h4>4. Preference pairs — for DPO / ORPO</h4>
+
+<pre><code>{"prompt": "Explain our refund policy to an angry customer.",
+ "chosen": "I understand the frustration. Here's exactly what we can do...",
+ "rejected": "Per our policy, refunds are not available. Please refer to the terms."}</code></pre>
+
+<h3>The chat template — the silent killer</h3>
+
+<p>Every model family expects its own special tokens around turns. Llama uses <code>&lt;|start_header_id|&gt;</code> markers, Qwen uses ChatML (<code>&lt;|im_start|&gt;</code>), Mistral uses <code>[INST]</code>. If you train on one template and infer with another, you have taught the model on structure it will never see again — and the symptom is maddening: a model that seems <em>almost</em> trained, that produces the right content wrapped in the wrong scaffolding, or that ignores instructions at inference despite perfect training loss.</p>
+
+<div class="callout-warn">
+<strong>Rule:</strong> never hand-write turn markers. Always go through the model's own template function, which reads them from the tokenizer config. In Unsloth that's <code>get_chat_template(tokenizer, chat_template="llama-3.1")</code>; in plain Transformers it's <code>tokenizer.apply_chat_template(conversation, tokenize=False)</code>. Then apply the <em>same</em> template at inference time — which the merged model usually handles for you, but the unmerged adapter path may not.
+</div>
+
+<h3>Making data when you have none: distillation</h3>
+
+<p>You almost certainly don't have thousands of hand-labelled examples, and you don't need to. The standard modern workflow is:</p>
+
+<pre><code>1. Collect 500-2,000 REAL inputs from your product
+   (support tickets, user prompts, log samples) — no labels needed.
+
+2. Have a strong teacher model (a frontier API model) produce the
+   ideal output for each input, with a carefully engineered prompt
+   describing exactly the behaviour you want.
+
+3. Human-review a sample — fix, filter, or reject. This is where
+   the quality comes from, and it is not optional.
+
+4. SFT a small open model on those pairs.
+
+5. Evaluate the student against the teacher on a held-out set.
+   Aim for "close enough, 100x cheaper", not "identical".</code></pre>
+
+<p>Techniques for scaling this up include <strong>Self-Instruct</strong> and <strong>Evol-Instruct</strong> (generate prompts, then evolve them into harder variants), and tooling like <code>distilabel</code> which orchestrates teacher-model generation with filtering pipelines. Quality control still lands on you: teacher models hallucinate confidently, drift in format, and occasionally refuse. A distillation dataset that hasn't been sampled and reviewed is a dataset of your teacher's bugs.</p>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> distillation is where the economics of fine-tuning actually pay off. Generating 5,000 teacher responses costs a handful of dollars in API tokens — a one-time spend — and can replace millions of frontier-model tokens per month at inference. This is the single most common way fine-tuning produces a genuinely large cost reduction rather than an incremental one.
+</div>
+
+<h3>The pre-training data checklist</h3>
+
+<table>
+<tr><th>Check</th><th>Why it matters</th></tr>
+<tr><td>Every example is valid JSON on its own line</td><td>Parsers fail the whole file, not the bad line. Validate before you upload — this is the #1 cause of failed cloud jobs.</td></tr>
+<tr><td>Format is <em>identical</em> across examples</td><td>Inconsistency teaches inconsistency. Enforce with a script, not discipline.</td></tr>
+<tr><td>Exact duplicates removed</td><td>Duplicates silently weight the model toward whatever was duplicated and inflate the appearance of learning.</td></tr>
+<tr><td>Near-duplicates removed</td><td>Paraphrase clusters skew the distribution. MinHash/LSH or embedding clustering, then keep one per cluster.</td></tr>
+<tr><td>Eval set decontaminated</td><td>If a test question appears in training, your eval score is fiction. Grep for overlap before you believe any number.</td></tr>
+<tr><td>Task coverage is balanced and intentional</td><td>If 90% of examples are one sub-task, you have built a one-task model. Count your categories.</td></tr>
+<tr><td>Output length distribution is realistic</td><td>Train only on 2,000-token answers and the model will pad everything to 2,000 tokens.</td></tr>
+<tr><td>No PII, secrets, or credentials</td><td>Weights are not a secure store and cannot be selectively redacted after the fact.</td></tr>
+<tr><td>Refusals and edge cases included</td><td>A model that has never seen a "this isn't something I should do" example will invent an answer instead.</td></tr>
+</table>
+
+<h3>Splitting: 80/10/10, and don't cheat</h3>
+
+<pre><code>train.jsonl      80%   the model learns from this
+valid.jsonl      10%   watched during training to detect overfitting
+test.jsonl       10%   touched ONCE, at the end, to report an honest number
+
+Rules:
+  - Split before you deduplicate, then dedupe each split, so duplicates
+    cannot straddle the boundary.
+  - Test must never inform training decisions. If you tune hyperparameters
+    against it, it has silently become a validation set.
+  - 200-500 test examples is plenty. Hand-review them; these are your
+    ground truth.</code></pre>
+
+<div class="callout-success">
+<strong>What "done with data" feels like:</strong> you can open a random line and it is exactly what you would want the model to say. You can name the five categories you're teaching and roughly how many examples each has. A colleague looking at two random lines couldn't tell which came from the train file. If any of those are false, keep working on the data — training will not fix it.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/Wx1oiBCmxjY" target="_blank" rel="noopener">LLM Fine-Tuning Explained: The Complete Guide</a> — covers dataset construction and the chat-template problem in the middle third.</li>
+    <li><a href="https://youtu.be/mmbkP8NARH4" target="_blank" rel="noopener">Get Started with Unsloth Studio: Generate Data &amp; Fine-Tune LLMs Locally</a> — NVIDIA Developer. Shows the synthetic data-generation workflow this lesson describes.</li>
+    <li><a href="https://youtu.be/B8Ur62D3J3U" target="_blank" rel="noopener">How to finetune LLMs on custom data domains (CPT tutorial with Unsloth)</a> — the continued-pretraining branch, where data volume looks completely different.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You have 300 support tickets but no labelled outputs. What's the standard, highest-ROI way to build a dataset?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Fine-tune on the raw tickets as-is</button>
+    <button class="quiz-btn" data-opt="b">Use a strong teacher model to generate ideal responses, human-review a sample, then SFT a small model on the pairs (distillation)</button>
+    <button class="quiz-btn" data-opt="c">Wait until you have 50,000 hand-labelled examples</button>
+    <button class="quiz-btn" data-opt="d">Increase the LoRA rank until it learns from 300 examples</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Your fine-tune shows beautiful falling training loss but the deployed model ignores instructions. What's the most likely culprit?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The rank was too low</button>
+    <button class="quiz-btn" data-opt="b">Learning rate was too low</button>
+    <button class="quiz-btn" data-opt="c">A chat-template mismatch between training and inference</button>
+    <button class="quiz-btn" data-opt="d">Not enough epochs</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Half your examples format the date as ISO and half as long-form English. What will the model learn?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">That both are acceptable — it will pick essentially at random</button>
+    <button class="quiz-btn" data-opt="b">The majority format, reliably</button>
+    <button class="quiz-btn" data-opt="c">Nothing, the run will fail to converge</button>
+    <button class="quiz-btn" data-opt="d">To ask the user which format they prefer</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://arxiv.org/abs/2305.11206" target="_blank" rel="noopener">Zhou et al., <em>LIMA: Less Is More for Alignment</em> (2023)</a></li>
+  <li><a href="https://platform.openai.com/docs/guides/fine-tuning" target="_blank" rel="noopener">OpenAI — dataset formatting and sizing guidance</a></li>
+  <li><a href="https://huggingface.co/docs/trl/index" target="_blank" rel="noopener">Hugging Face TRL — SFTTrainer and dataset preparation</a></li>
+  <li><a href="https://distilabel.argilla.io/" target="_blank" rel="noopener">distilabel — synthetic data generation pipelines</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,243 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .rule-box { border: 1px solid var(--color-border); border-left: 4px solid var(--color-accent); background: var(--color-elevated); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.9rem 1.1rem; margin: 1.25rem 0; }
+  .rule-box .rule-num { display: inline-block; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.08em; }
+  .rule-box h4 { margin: 0.15rem 0 0.4rem; color: var(--color-text); font-size: 1rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: What Fine-Tuning Actually Is (And What It Isn't)</h2>
+
+<p>Every bad model output you have ever seen is one of exactly three failures, and each has a different fix. Getting this taxonomy right is the single highest-leverage thing in this course, because the most expensive mistake in applied AI is fine-tuning to solve a problem fine-tuning cannot solve.</p>
+
+<table>
+<tr><th>Failure</th><th>Symptom</th><th>Correct fix</th></tr>
+<tr><td><strong>Knowledge gap</strong></td><td>The model doesn't know your refund policy, your product SKUs, last quarter's numbers, or anything after its training cutoff.</td><td><strong>RAG</strong> (retrieval-augmented generation) — look the facts up at request time and paste them into the prompt.</td></tr>
+<tr><td><strong>Instruction gap</strong></td><td>The model knows what to do but won't do it reliably — wrong format, ignores your system prompt, drifts.</td><td><strong>Prompt engineering</strong> first; fine-tuning only if the prompt is already perfect and still fails.</td></tr>
+<tr><td><strong>Behaviour gap</strong></td><td>The model can do the task but not in your voice, your format, your house style, at your latency or price point.</td><td><strong>Fine-tuning.</strong> This is the one job it does uniquely well.</td></tr>
+</table>
+
+<div class="callout">
+<strong>The core rule:</strong> fine-tuning teaches <em>form</em>, not <em>facts</em>. It shapes <em>how</em> a model responds — tone, structure, format, reasoning style, refusal behaviour — far more reliably than it teaches <em>what</em> is true. Facts go stale the moment the weights freeze; behaviour doesn't.
+</div>
+
+<p>Why it works this way: fine-tuning nudges the probability distribution over the next token. Behaviour is a distribution-level property ("always answer as compact JSON"), so nudging works. Facts are discrete lookups ("SKU 4471 costs $19"), and forcing those into weights is expensive, unreliable, hard to update, and prone to hallucination when a near-miss fact gets blended in. Retrieval gives you an exact quote and an audit trail. Weights give you a vibe.</p>
+
+<h3>The four levers, ranked by cost</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four levers of LLM behaviour change, ordered by cost from prompt engineering to fine-tuning">
+    <text x="20" y="26" fill="var(--color-text-secondary)" font-size="12" font-family="var(--font-sans)">CHEAPEST / FASTEST</text>
+    <text x="620" y="26" fill="var(--color-text-secondary)" font-size="12" text-anchor="end" font-family="var(--font-sans)">MOST EXPENSIVE / SLOWEST</text>
+
+    <rect x="20"  y="46" width="148" height="94" rx="10" fill="var(--color-elevated)" stroke="var(--color-success)"/>
+    <text x="94" y="74" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="700" font-family="var(--font-sans)">1. Prompting</text>
+    <text x="94" y="96" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Minutes to hours</text>
+    <text x="94" y="113" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">$0 to build</text>
+    <text x="94" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Costs tokens/request</text>
+
+    <rect x="180" y="46" width="148" height="94" rx="10" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="254" y="74" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="700" font-family="var(--font-sans)">2. RAG</text>
+    <text x="254" y="96" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Days to weeks</text>
+    <text x="254" y="113" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Vector store + pipeline</text>
+    <text x="254" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Facts stay fresh</text>
+
+    <rect x="340" y="46" width="148" height="94" rx="10" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="414" y="74" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="700" font-family="var(--font-sans)">3. Agents / tools</text>
+    <text x="414" y="96" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Weeks</text>
+    <text x="414" y="113" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Deterministic actions</text>
+    <text x="414" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Bad for style</text>
+
+    <rect x="500" y="46" width="120" height="94" rx="10" fill="var(--color-elevated)" stroke="var(--color-danger)"/>
+    <text x="560" y="74" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="700" font-family="var(--font-sans)">4. Fine-tune</text>
+    <text x="560" y="96" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Weeks to months</text>
+    <text x="560" y="113" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">Data + GPU cost</text>
+    <text x="560" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">One-time + hosting</text>
+
+    <line x1="30" y1="170" x2="610" y2="170" stroke="var(--color-border)" stroke-width="2"/>
+    <polygon points="610,170 598,164 598,176" fill="var(--color-border)"/>
+
+    <text x="320" y="205" text-anchor="middle" fill="var(--color-text)" font-size="12" font-weight="600" font-family="var(--font-sans)">Climb this ladder left-to-right. Stop as soon as the problem is solved.</text>
+    <text x="320" y="228" text-anchor="middle" fill="var(--color-text-secondary)" font-size="11" font-family="var(--font-sans)">Most teams jump straight to step 4 and pay 100× for a problem step 1 or 2 already fixed.</text>
+
+    <text x="320" y="262" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" font-family="var(--font-sans)">RAG and fine-tuning are not rivals — the strong combination is</text>
+    <text x="320" y="280" text-anchor="middle" fill="var(--color-accent)" font-size="11.5" font-weight="600" font-family="var(--font-sans)">retrieval for facts + a fine-tune for behaviour</text>
+  </svg>
+</div>
+
+<h3>When fine-tuning is genuinely worth it</h3>
+
+<div class="rule-box">
+  <span class="rule-num">Case 1</span>
+  <h4>You need a big model's behaviour at a small model's price</h4>
+  <p>This is the most common real business case, and by far the most defensible. GPT-class quality at 100× lower inference cost, because a 7-8B open model fine-tuned on a few thousand of your best examples now does <em>your</em> narrow task. Fine-tuning is how you buy back the cost of a frontier model.</p>
+</div>
+
+<div class="rule-box">
+  <span class="rule-num">Case 2</span>
+  <h4>Format and style must be exact, every single time</h4>
+  <p>Strict JSON, a house tone, a regulatory disclaimer pattern, a specific report skeleton. Prompting gets you 90%; fine-tuning gets you 99%+ on in-distribution inputs, and it stops leaking tokens on a 900-word system prompt you re-send on every request.</p>
+</div>
+
+<div class="rule-box">
+  <span class="rule-num">Case 3</span>
+  <h4>The task needs private, non-retrievable expertise</h4>
+  <p>Not facts — <em>judgment</em>. How your radiologists phrase findings. How your underwriters reason about edge cases. If the "knowledge" lives in the shape of thousands of examples rather than in a document you can quote, retrieval can't deliver it.</p>
+</div>
+
+<div class="rule-box">
+  <span class="rule-num">Case 4</span>
+  <h4>Latency and privacy are hard constraints</h4>
+  <p>A small fine-tuned model on your own hardware, or data that legally cannot leave your network. Sometimes fine-tuning is the only architecture that satisfies the constraint at all.</p>
+</div>
+
+<h3>When it is a waste of money</h3>
+
+<table>
+<tr><th>You want to…</th><th>Fine-tuning won't do it</th></tr>
+<tr><td>Teach the model new facts, prices, or policies</td><td>Those will be stale on day one and inconsistently recalled. Use RAG.</td></tr>
+<tr><td>Ground answers in your documents with citations</td><td>Fine-tuning has no citation mechanism. Use RAG.</td></tr>
+<tr><td>Fix occasional instruction-following sloppiness</td><td>Usually a prompt problem. Fix the prompt first — it takes an afternoon, not a month.</td></tr>
+<tr><td>Escape a knowledge cutoff</td><td>A cutoff is a training-data date. Fine-tuning on your own data doesn't reliably add world knowledge.</td></tr>
+<tr><td>Make a model "smarter" or better at reasoning</td><td>Broad reasoning is emergent from scale and post-training, not something you bolt on with 2,000 examples.</td></tr>
+<tr><td>Get out of a context-window limit</td><td>Different problem (long-context architectures, chunking, retrieval).</td></tr>
+</table>
+
+<div class="callout-warn">
+<strong>The trap:</strong> "the model got it wrong twice today" is almost never a fine-tuning signal. One bad output is an anecdote. Fifty bad outputs with a consistent shape — the same format failure, the same tone drift, the same task — is what a dataset is made of. If you can't describe the failure as a <em>pattern</em>, you can't build a dataset for it, and you shouldn't fine-tune.
+</div>
+
+<div class="callout-warn">
+<strong>The honest counterpoint:</strong> the framing above is the mainstream consensus, but it is not universally held. Unsloth's own documentation argues the opposite — that fine-tuning <em>can and does</em> teach new facts, and that "fine-tuning can't add knowledge" is a myth born from badly configured runs. They are partly right, and the reconciliation matters: <strong>continued pretraining</strong> (Lesson 2) genuinely does inject domain knowledge, and enough SFT examples can teach narrow facts reliably. What remains true is the <em>cost asymmetry</em>. Teaching a model a fact through weights is expensive, hard to update when the fact changes, and gives you no citation; retrieval is cheap, instantly updatable, and auditable. So the practical rule stands — reach for retrieval when facts change, and for weights when behaviour must be consistent — but do not repeat "fine-tuning can't teach knowledge" as an absolute. It can. It is usually just the wrong tool for it.
+</div>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> fine-tuning is often <em>cheaper per request</em> than prompting, even before you count replacing a big model with a small one. A 2,000-token system prompt sent on every call costs real money at scale — and it multiplies by every turn in a conversation. A fine-tune bakes that instruction into the weights, so the prompt shrinks to a few dozen tokens. At a million requests a month, that alone can pay for the training run.
+</div>
+
+<h3>The honest decision flow</h3>
+
+<pre><code>Start
+  |
+  |-- Is the problem missing KNOWLEDGE? -----------> RAG (+ citations)
+  |       (facts, policies, docs, anything dated)
+  |
+  |-- Is it missing an ACTION? --------------------> Tools / agents
+  |       (call an API, write a file, run a query)
+  |
+  |-- Is the prompt already excellent? -- NO ------> Prompt engineering
+  |                                                  (hours, free)
+  |
+  |-- Are there 500+ good examples of the
+  |   behaviour you want? -- NO -------------------> Collect data first.
+  |                                                  Label, or distil from a
+  |                                                  stronger model. No dataset,
+  |                                                  no fine-tune.
+  |
+  |-- Do you need exact FORMAT, TONE, or
+  |   CHEAP INFERENCE on a narrow task? -- YES ----> FINE-TUNE. Start here.</code></pre>
+
+<div class="callout-success">
+<strong>What success looks like:</strong> "a 4B open model that emits our exact claim-adjudication format, at 0.3% of the inference cost of the frontier model it replaced, with 96% agreement against our human-reviewed eval set." That is a real, achievable, well-scoped fine-tuning project. "A smarter assistant" is not.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/zYGDpG-pTho" target="_blank" rel="noopener">RAG vs Fine-Tuning vs Prompt Engineering</a> — IBM Technology (725k views). The clearest articulation of this lesson's core decision.</li>
+    <li><a href="https://youtu.be/Wx1oiBCmxjY" target="_blank" rel="noopener">LLM Fine-Tuning Explained: The Complete Guide</a> — Aishwarya Srinivasan. Good end-to-end orientation with the terminology tour.</li>
+    <li><a href="https://youtu.be/IxEUPF_7MJs" target="_blank" rel="noopener">How to Choose Fine Tuning vs RAG</a> — Microsoft's own take on the decision.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Your support bot keeps quoting the wrong refund window because the policy changed last month. What's the right fix?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Fine-tune on the new policy document</button>
+    <button class="quiz-btn" data-opt="b">Retrieve the current policy into the prompt at request time (RAG)</button>
+    <button class="quiz-btn" data-opt="c">Increase the temperature so it explores</button>
+    <button class="quiz-btn" data-opt="d">Fine-tune with more epochs so it memorizes</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which of these is the strongest genuine case for fine-tuning?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Adding your product catalogue to the model's knowledge</button>
+    <button class="quiz-btn" data-opt="b">Making a model better at general reasoning</button>
+    <button class="quiz-btn" data-opt="c">Replacing an expensive frontier model on a narrow task with a small local one</button>
+    <button class="quiz-btn" data-opt="d">Avoiding context-window limits on long documents</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. "Fine-tuning teaches form, not facts." What is the practical consequence?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Use it for tone, format, and behaviour; use retrieval for anything that can be quoted or goes stale</button>
+    <button class="quiz-btn" data-opt="b">Never fine-tune, because it can't learn anything useful</button>
+    <button class="quiz-btn" data-opt="c">Always fine-tune before building a RAG pipeline</button>
+    <button class="quiz-btn" data-opt="d">Facts and behaviour are equally suited to fine-tuning</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://platform.openai.com/docs/guides/fine-tuning" target="_blank" rel="noopener">OpenAI — Fine-tuning guide (when to use it)</a></li>
+  <li><a href="https://huggingface.co/docs/peft/index" target="_blank" rel="noopener">Hugging Face — PEFT documentation</a></li>
+  <li><a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">Lewis et al., <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</em> (2020)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

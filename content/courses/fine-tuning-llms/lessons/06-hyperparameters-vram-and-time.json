@@ -1,0 +1,4 @@
+{
+  "title": "Hyperparameters, VRAM and Time — The Numbers",
+  "description": "The official VRAM table by model size for QLoRA and LoRA, every recommended hyperparameter with reasoning, the throughput arithmetic for estimating runtime, and where project time actually goes."
+}

@@ -1,0 +1,249 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content h4 { color: var(--color-text); margin: 1.15rem 0 0.4rem; font-size: 1rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  td:first-child { white-space: nowrap; font-family: var(--font-mono); font-size: 0.86rem; color: var(--color-accent-link); }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Fine-Tuning Family Tree — Every Term You'll Meet</h2>
+
+<p>Fine-tuning vocabulary is genuinely confusing because three different questions get mixed into one word. Every technique you will encounter answers one of three questions:</p>
+
+<table>
+<tr><th>Question</th><th>The axis</th><th>The options</th></tr>
+<tr><td><strong>How much of the model do you change?</strong></td><td>Parameter efficiency</td><td>Full fine-tuning · PEFT (LoRA, QLoRA, DoRA)</td></tr>
+<tr><td><strong>What are you optimising toward?</strong></td><td>Objective</td><td>SFT · DPO/ORPO/KTO · RL (PPO, GRPO, RFT) · distillation</td></tr>
+<tr><td><strong>What stage of the pipeline are you at?</strong></td><td>Curriculum</td><td>Pretraining → continued pretraining → SFT → preference tuning → RL</td></tr>
+</table>
+
+<p>When someone says "we fine-tuned it with QLoRA," they mean: <em>parameter-efficiency = QLoRA, objective = (usually) SFT</em>. When someone says "we did DPO," they mean: <em>objective = preference optimisation, efficiency = whatever they happened to use</em>. These are not alternatives to each other.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 660 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fine-tuning family tree split by how much you change and what objective you optimise">
+    <rect x="245" y="8" width="170" height="34" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="330" y="30" text-anchor="middle" fill="var(--color-text)" font-size="12.5" font-weight="700" font-family="var(--font-sans)">Fine-tuning</text>
+
+    <line x1="330" y1="42" x2="330" y2="58" stroke="var(--color-border)"/>
+    <line x1="160" y1="58" x2="500" y2="58" stroke="var(--color-border)"/>
+    <line x1="160" y1="58" x2="160" y2="76" stroke="var(--color-border)"/>
+    <line x1="500" y1="58" x2="500" y2="76" stroke="var(--color-border)"/>
+
+    <rect x="60" y="76" width="200" height="30" rx="7" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="160" y="96" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-weight="600" font-family="var(--font-sans)">HOW MUCH CHANGES?</text>
+    <rect x="400" y="76" width="200" height="30" rx="7" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="500" y="96" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-weight="600" font-family="var(--font-sans)">TOWARD WHAT?</text>
+
+    <line x1="160" y1="106" x2="160" y2="124" stroke="var(--color-border)"/>
+    <line x1="500" y1="106" x2="500" y2="124" stroke="var(--color-border)"/>
+
+    <rect x="20" y="124" width="130" height="34" rx="7" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="85" y="145" text-anchor="middle" fill="var(--color-text)" font-size="11" font-family="var(--font-sans)">Full fine-tune</text>
+    <rect x="165" y="124" width="130" height="34" rx="7" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="230" y="145" text-anchor="middle" fill="var(--color-text)" font-size="11" font-family="var(--font-sans)">PEFT / LoRA</text>
+
+    <rect x="360" y="124" width="130" height="34" rx="7" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="425" y="145" text-anchor="middle" fill="var(--color-text)" font-size="11" font-family="var(--font-sans)">SFT (next token)</text>
+    <rect x="505" y="124" width="135" height="34" rx="7" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="572" y="145" text-anchor="middle" fill="var(--color-text)" font-size="11" font-family="var(--font-sans)">Preference / RL</text>
+
+    <line x1="85" y1="158" x2="85" y2="176" stroke="var(--color-border)"/>
+    <line x1="85" y1="176" x2="230" y2="176" stroke="var(--color-border)"/>
+    <line x1="150" y1="176" x2="150" y2="192" stroke="var(--color-border)"/>
+    <line x1="230" y1="176" x2="230" y2="192" stroke="var(--color-border)"/>
+
+    <text x="150" y="210" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">all weights</text>
+    <text x="150" y="224" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">80GB+ for 7B</text>
+    <text x="230" y="210" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">0.1–1% of weights</text>
+    <text x="230" y="224" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">8–16GB for 7B</text>
+
+    <line x1="425" y1="158" x2="425" y2="176" stroke="var(--color-border)"/>
+    <line x1="572" y1="158" x2="572" y2="176" stroke="var(--color-border)"/>
+
+    <text x="425" y="196" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">"here is the right</text>
+    <text x="425" y="210" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">answer"</text>
+
+    <text x="572" y="196" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">"A is better</text>
+    <text x="572" y="210" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">than B"</text>
+
+    <rect x="20" y="248" width="620" height="68" rx="10" fill="var(--color-surface)" stroke="var(--color-warning)"/>
+    <text x="330" y="270" text-anchor="middle" fill="var(--color-warning)" font-size="11.5" font-weight="700" font-family="var(--font-sans)">PRACTICAL DEFAULT IN 2026</text>
+    <text x="330" y="291" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-family="var(--font-sans)">QLoRA (4-bit base + LoRA adapters) for the efficiency axis</text>
+    <text x="330" y="308" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-family="var(--font-sans)">+ SFT for the objective axis — then DPO/ORPO only if you have preference pairs</text>
+  </svg>
+</div>
+
+<h3>Group A — Structural terms (how much of the model moves)</h3>
+
+<table>
+<tr><th>Term</th><th>What it means</th></tr>
+<tr><td>parameters / weights</td><td>The learned numbers in the model — the matrices doing the computation. A "7B model" has ~7 billion of them.</td></tr>
+<tr><td>base model</td><td>The general-purpose pretrained model you start from (Llama, Qwen, Mistral, Gemma…). "Base" sometimes strictly means <em>not</em> instruction-tuned — the raw next-token-prediction version, which is a poor chatbot and generally the wrong starting point unless you're doing continued pretraining.</td></tr>
+<tr><td>instruct / chat model</td><td>A base model already post-trained on instructions and conversations. This is almost always your starting point for SFT — you're teaching a specialist on top of a generalist that already understands English and follows instructions.</td></tr>
+<tr><td>full fine-tuning</td><td>Updating every weight. Highest quality ceiling, enormous memory cost, and nothing to merge or serve separately. Rarely the right choice below ~70B-scale budgets.</td></tr>
+<tr><td>PEFT</td><td>Parameter-Efficient Fine-Tuning — the umbrella term for methods that train a tiny fraction of parameters instead of all of them. LoRA is the dominant member.</td></tr>
+<tr><td>LoRA</td><td>Low-Rank Adaptation. Freeze the base weights, and beside each targeted weight matrix add a small trainable pair of low-rank matrices whose product is the update. Fewer than 1% of parameters become trainable.</td></tr>
+<tr><td>QLoRA</td><td>LoRA on top of a base model whose frozen weights are stored in 4-bit (NF4) precision. Roughly a 4× memory reduction versus LoRA-on-bf16, at a small quality cost and slower step time. This is what makes fine-tuning a 7B model on a single free cloud T4 GPU possible.</td></tr>
+<tr><td>DoRA</td><td>Weight-Decomposed LoRA — splits the update into magnitude and direction, which tends to improve quality at the same rank. Slightly slower per step, available in both Unsloth and Hugging Face PEFT as an option flag.</td></tr>
+<tr><td>rsLoRA / LoRA+</td><td>Variants that change the scaling factor (rsLoRA) or use different learning rates for the two adapter matrices (LoRA+). Incremental wins; not where beginners should spend attention.</td></tr>
+<tr><td>adapter</td><td>The small trained artefact: the merged product of your LoRA matrices. Typically tens to hundreds of megabytes, versus the base model's gigabytes. Adapters are portable between copies of the same base model.</td></tr>
+<tr><td>rank (r)</td><td>The inner dimension of the LoRA matrices — your main capacity dial. r=8–16 is light, r=32–64 is common, r=128+ is heavy. Bigger rank means more capacity to learn and more ability to overfit.</td></tr>
+<tr><td>alpha (lora_alpha)</td><td>A scaling constant applied to the update. The effective scale is <code>alpha / r</code>, so alpha and r must be reasoned about together. A very common convention is <code>alpha = 2 × r</code>.</td></tr>
+<tr><td>target modules</td><td><em>Which</em> matrices get adapters. Older recipes adapted attention only (<code>q_proj</code>, <code>v_proj</code>); modern defaults adapt every linear layer, including the MLP (<code>gate_proj</code>, <code>up_proj</code>, <code>down_proj</code>). More coverage = better quality and more parameters trained.</td></tr>
+<tr><td>merged vs unmerged</td><td>The adapter can be kept separate (a small file loaded alongside the base model — flexible, swappable, enables multi-adapter serving) or <strong>merged</strong> into the base weights (one self-contained model, simplest to deploy, no runtime overhead).</td></tr>
+<tr><td>catastrophic forgetting</td><td>When training on your narrow task degrades capabilities you never meant to touch — the model becomes better at your task and worse at everything else. The main risk that grows with epochs and learning rate.</td></tr>
+</table>
+
+<h3>Group B — Objective terms (what the model is being optimised toward)</h3>
+
+<table>
+<tr><th>Term</th><th>What it means</th></tr>
+<tr><td>pretraining</td><td>Original training on a giant text corpus — "predict the next token." Millions of GPU-hours. You will never do this.</td></tr>
+<tr><td>continued pretraining (CPT) / domain adaptation</td><td>More next-token training on a large corpus of <em>your</em> domain's raw text (contracts, clinical notes, code). Teaches vocabulary, jargon and register rather than task behaviour. Needs far more data than SFT — typically hundreds of MB to GB of text, not hundreds of examples — and is the one legitimate way fine-tuning does inject knowledge.</td></tr>
+<tr><td>SFT / instruction tuning</td><td>Supervised Fine-Tuning — train on input→output example pairs, still with next-token loss but only on the assistant's tokens. This is what 90%+ of "fine-tuning" projects mean. Your dataset is a pile of ideal conversations.</td></tr>
+<tr><td>RLHF</td><td>Reinforcement Learning from Human Feedback. The classic three-step recipe: SFT → train a <em>reward model</em> on human preference comparisons → run PPO against it. Powerful, expensive, operationally fiddly (needs two models in memory).</td></tr>
+<tr><td>reward model</td><td>A model trained to score outputs the way humans do, used as the automated grader in RLHF/RL.</td></tr>
+<tr><td>PPO</td><td>Proximal Policy Optimisation — the RL algorithm in classic RLHF.</td></tr>
+<tr><td>DPO</td><td>Direct Preference Optimisation — skips the reward model entirely and trains directly on pairs of (chosen, rejected) responses. Much simpler and cheaper than PPO, and usually the better first choice. Needs preference data, not just good examples.</td></tr>
+<tr><td>ORPO / KTO</td><td>Further simplifications. ORPO combines SFT and preference alignment into one pass. KTO works from a simple binary signal (this output was good / this was bad) instead of paired comparisons — handy because unpaired thumb-up data is far easier to collect.</td></tr>
+<tr><td>GRPO</td><td>Group Relative Policy Optimisation — the RL method behind modern reasoning-model training. Scores several sampled completions per prompt against a reward and pushes toward the better ones. Requires verifiable rewards (a unit test passes, a maths answer is correct).</td></tr>
+<tr><td>RFT (reinforcement fine-tuning)</td><td>The managed productised version of GRPO — notably the name Azure AI Foundry uses for its RL offering, where you supply graders rather than a reward model.</td></tr>
+<tr><td>distillation</td><td>Using a strong teacher model to generate training data for a small student. Say a frontier model produces 20,000 ideal responses to your real inputs; you fine-tune a small open model on those. This is the highest-ROI technique in this entire course for cost reduction, and it is what most "we fine-tuned a small model to match the big one" stories actually describe.</td></tr>
+</table>
+
+<h3>Group C — Training mechanics (the words in the config)</h3>
+
+<table>
+<tr><th>Term</th><th>What it means</th></tr>
+<tr><td>epoch</td><td>One full pass over your dataset. SFT runs are usually measured in 1–3 epochs.</td></tr>
+<tr><td>step</td><td>One weight update. A step processes one <em>batch</em> of examples. Steps = (examples ÷ effective batch size) × epochs.</td></tr>
+<tr><td>batch size / grad accumulation</td><td>Examples processed per forward pass, and how many passes are summed before updating. <code>effective batch = batch_size × grad_accum × num_gpus</code>. The effective batch is what matters for optimisation stability; the per-device batch is what fits in your VRAM.</td></tr>
+<tr><td>learning rate</td><td>How big each update is. LoRA tolerates far higher rates than full fine-tuning — <code>1e-4</code> to <code>2e-4</code> is a normal range for LoRA, versus <code>1e-5</code>-ish for full FT. The single most common cause of a ruined run.</td></tr>
+<tr><td>scheduler / warmup</td><td>How the learning rate changes over the run. Typically a warmup from near-zero, then a cosine decay. Warmup prevents a destructive first step.</td></tr>
+<tr><td>loss</td><td>The training objective's value. It should fall and then flatten. Falling train loss with rising validation loss is overfitting. A flat, barely-moving loss usually means the learning rate is far too low — or the data is unlearnable.</td></tr>
+<tr><td>packing</td><td>Packing several short examples into one fixed-length sequence so the GPU doesn't waste compute on padding tokens. A big speed win on short-example datasets; must respect example boundaries.</td></tr>
+<tr><td>chat template</td><td>The exact formatting the model expects for turns (<code>&lt;|im_start|&gt;user…</code> etc.). Every model family differs. Using the wrong template produces a model that was trained on gibberish-adjacent structure and behaves erratically at inference. This is one of the most common silent failures in the entire discipline.</td></tr>
+<tr><td>max_seq_length</td><td>The maximum token length per example. Directly drives memory and time — doubling it roughly squares attention memory. Truncated examples teach truncation.</td></tr>
+<tr><td>gradient checkpointing</td><td>Recompute activations during the backward pass instead of storing them. Buys memory at ~20–30% slower training. Essential on small GPUs.</td></tr>
+</table>
+
+<h3>Group D — Ops and serving terms</h3>
+
+<table>
+<tr><th>Term</th><th>What it means</th></tr>
+<tr><td>JSONL</td><td>JSON Lines — one JSON object per line, the universal fine-tuning data format. Every provider expects it.</td></tr>
+<tr><td>training / validation file</td><td>The examples the model learns from, and a held-out slice used to detect overfitting. A third, untouched <em>test</em> split is for honest final reporting.</td></tr>
+<tr><td>held-out eval set</td><td>Data the model never trains on, used to measure whether the fine-tune actually helped. If you don't have one, you don't have a result — only a vibe.</td></tr>
+<tr><td>deployment / endpoint</td><td>A served, invocable copy of your model. On managed platforms, training and serving are billed separately, and serving is usually the larger ongoing cost.</td></tr>
+<tr><td>provisioned throughput (PTU)</td><td>Reserved capacity with a fixed hourly price instead of pay-per-token. Sensible above a certain steady request volume; wasteful below it.</td></tr>
+<tr><td>multi-LoRA serving</td><td>Serving one base model plus many adapters, swapping per request. Lets dozens of fine-tunes share a single GPU. A large cost lever.</td></tr>
+<tr><td>GGUF</td><td>The quantised, single-file format used by llama.cpp / Ollama / LM Studio for local inference. The usual export target for a merged fine-tune you want to run on your own machine.</td></tr>
+</table>
+
+<div class="callout">
+<strong>What you actually need to know first:</strong> <em>r, alpha, target modules, learning rate, epochs, chat template, and which objective (SFT vs DPO)</em>. That's seven concepts. Everything else in this lesson is vocabulary you'll absorb on contact — but the seven above are the ones that decide whether your run works.
+</div>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> the jargon map is also a cost map. <em>Full fine-tuning</em> costs 10–50× a LoRA run in GPU-hours. <em>PPO</em> costs several times a <em>DPO</em> run because it needs a reward model in memory. <em>Continued pretraining</em> costs orders of magnitude more than <em>SFT</em> because it ingests raw corpora instead of curated pairs. Knowing the words is how you avoid picking the expensive branch by accident.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/t1caDsMzWBk" target="_blank" rel="noopener">LoRA &amp; QLoRA Fine-tuning Explained In-Depth</a> — Mark Hennings. The best visual explanation of the PEFT branch.</li>
+    <li><a href="https://youtu.be/ezdIOLbUSWg" target="_blank" rel="noopener">Fine Tuning LLM Explained Simply</a> — codebasics. Good if the vocabulary above needs a second pass at a slower pace.</li>
+    <li><a href="https://youtu.be/iOdFUJiB0Zc" target="_blank" rel="noopener">Fine Tuning LLM Models — Generative AI Course</a> — freeCodeCamp. Long-form, covers the objective axis (SFT vs preference tuning) properly.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Someone says "we trained with QLoRA and then ran DPO." Which two axes do those terms belong to?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Both describe the objective being optimised</button>
+    <button class="quiz-btn" data-opt="b">QLoRA is the efficiency axis (how much changes); DPO is the objective axis (what it's optimised toward)</button>
+    <button class="quiz-btn" data-opt="c">Both describe hardware requirements</button>
+    <button class="quiz-btn" data-opt="d">QLoRA is an objective; DPO is a serving mode</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. What is the practical difference between a LoRA adapter and a merged model?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">A merged model is lower quality — merging loses the learning</button>
+    <button class="quiz-btn" data-opt="b">An adapter is a full copy of the model in 4-bit</button>
+    <button class="quiz-btn" data-opt="c">An adapter is a small file loaded alongside the base weights and swappable; merged bakes it into the base for one self-contained deployment</button>
+    <button class="quiz-btn" data-opt="d">There is no difference; they are two names for the same artefact</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which technique is the highest-leverage way to make a small model behave like an expensive one?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Continued pretraining on your company wiki</button>
+    <button class="quiz-btn" data-opt="b">Increasing the LoRA rank to 256</button>
+    <button class="quiz-btn" data-opt="c">Running PPO instead of SFT</button>
+    <button class="quiz-btn" data-opt="d">Distillation — have the strong model generate ideal responses to your real inputs, then SFT the small model on them</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/docs/peft/index" target="_blank" rel="noopener">Hugging Face PEFT — supported methods and configuration</a></li>
+  <li><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">Hu et al., <em>LoRA: Low-Rank Adaptation of Large Language Models</em> (2021)</a></li>
+  <li><a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Rafailov et al., <em>Direct Preference Optimization</em> (2023)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,288 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .step-box { border-left: 3px solid var(--color-accent); background: var(--color-elevated); padding: 0.5rem 0.9rem; margin: 1.5rem 0 0.5rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .step-box .step-num { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .step-box h4 { margin: 0.1rem 0 0; color: var(--color-text); font-size: 1.02rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.55; font-size: 0.83rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 5: Track A — A Real Fine-Tune with Unsloth</h2>
+
+<p>Unsloth is an open-source framework for training and running open-weight models. Its selling point is efficiency: it rewrites the attention and MLP kernels so that LoRA and QLoRA training runs substantially faster and in dramatically less VRAM than the standard Hugging Face stack, with no change to your data or your model choice. It also handles the fiddly parts — chat templates, gradient checkpointing, quantisation — with sane defaults.</p>
+
+<h3>Three ways to use it</h3>
+
+<table>
+<tr><th>Product</th><th>What it is</th><th>Pick it if…</th></tr>
+<tr><td><strong>Unsloth Core</strong></td><td>The original Python library. <code>pip install unsloth</code>, then write the training script yourself (or paste a notebook).</td><td>You want full control, scriptability, and reproducibility. <em>This is the path this lesson teaches.</em></td></tr>
+<tr><td><strong>Unsloth Studio</strong></td><td>A local web UI: upload a dataset, pick a model, train, chat, export — no code.</td><td>You want a first result without writing Python, or you want their <em>Data Recipes</em> feature to generate a dataset.</td></tr>
+<tr><td><strong>Unsloth Desktop</strong></td><td>A packaged desktop app for Mac, Windows and Linux.</td><td>You want the whole thing as an installed application.</td></tr>
+</table>
+
+<p>Hardware reality check, straight from their docs: training works on NVIDIA, AMD, Intel and Apple Silicon (MLX); CUDA compute capability 7.0+ (V100, T4, RTX 20-series and newer) is the floor, and anything from 2018 onward generally works. CPU-only still works for chat and dataset generation. Python must be 3.11–3.13, and CUDA 12.4+ is recommended (12.8+ for Blackwell).</p>
+
+<div class="callout-success">
+<strong>You probably don't need to buy anything.</strong> Unsloth's own documentation states you can fine-tune <em>for free on Google Colab or Kaggle</em>, and that some workloads fit in as little as ~3 GB of VRAM. For a first project — 200–1,000 examples, a 3B–8B model, QLoRA, rank 16 — a free Colab T4 (16 GB) is genuinely sufficient. Lesson 6 gives the exact VRAM per model size.
+</div>
+
+<h3>Install</h3>
+
+<pre><code># Recommended: uv with an explicit Python and automatic torch backend selection
+uv venv unsloth_env --python 3.13
+source unsloth_env/bin/activate
+uv pip install unsloth --torch-backend=auto
+
+# Or plain pip (unsloth pulls in matching torch / transformers / trl versions)
+pip install unsloth
+
+# Unsloth and vLLM together (for serving what you train)
+uv pip install unsloth vllm --torch-backend=auto
+
+# Linux, from scratch, if you need a venv first
+apt install python3.13-venv -y
+python -m venv unsloth_env
+source unsloth_env/bin/activate
+pip install --upgrade pip
+pip install uv
+uv pip install unsloth --torch-backend=auto</code></pre>
+
+<p>There is also an official Docker image (<code>unsloth/unsloth</code> on Docker Hub) which sidesteps every CUDA/driver version problem in one step.</p>
+
+<h3>The six steps of every fine-tune</h3>
+
+<p>Everything below is the same shape whether you are on a free Colab T4 or a rented H100. The numbers change; the pipeline does not.</p>
+
+<div class="step-box"><span class="step-num">Step 1</span><h4>Load a base model in 4-bit</h4></div>
+
+<pre><code>from unsloth import FastLanguageModel
+import torch
+
+max_seq_length = 2048   # context length; 2048 is the recommended test value
+dtype = None            # None = auto; torch.bfloat16 on newer GPUs
+load_in_4bit = True     # QLoRA. 4x less memory, ~1-2% accuracy cost.
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/llama-3.1-8b-unsloth-bnb-4bit",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    load_in_4bit = load_in_4bit,
+)</code></pre>
+
+<p>Note the model name. Models ending in <code>unsloth-bnb-4bit</code> are Unsloth's <em>dynamic</em> 4-bit quants — they use a little more VRAM than standard BitsAndBytes 4-bit but recover meaningfully more accuracy. Names ending in plain <code>bnb-4bit</code> are the ordinary variety, and names with no suffix are the full 16-bit originals. Use the Unsloth one when it exists. There is a full <a href="https://unsloth.ai/docs/get-started/unsloth-model-catalog.md" target="_blank" rel="noopener">model catalogue</a> and a <a href="https://unsloth.ai/docs/get-started/fine-tuning-llms-guide/what-model-should-i-use.md" target="_blank" rel="noopener">"which model should I use" guide</a>.</p>
+
+<div class="step-box"><span class="step-num">Step 2</span><h4>Attach the LoRA adapters</h4></div>
+
+<pre><code>model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,                       # rank: 8, 16, 32, 64 or 128
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 16,              # set equal to r, or 2x r
+    lora_dropout = 0,             # 0 is the optimised path
+    bias = "none",                # optimised path
+    use_gradient_checkpointing = "unsloth",   # extra ~30% memory saving
+    random_state = 3407,          # reproducible runs
+    use_rslora = False,           # rank-stabilised LoRA (alpha/sqrt(r))
+    loftq_config = None,
+)</code></pre>
+
+<p>Unsloth's docs are unusually firm about <code>target_modules</code>: adapt <em>all</em> major linear layers, both attention and MLP. Removing modules to save memory costs quality for very little saving — the RoUGE scores in their guide show all-layers winning over attention-only or MLP-only.</p>
+
+<div class="step-box"><span class="step-num">Step 3</span><h4>Load your dataset</h4></div>
+
+<pre><code>from datasets import load_dataset
+
+dataset = load_dataset("json", data_files="train.jsonl", split="train")
+# Each row: {"messages": [{"role": "user", ...}, {"role": "assistant", ...}]}</code></pre>
+
+<div class="step-box"><span class="step-num">Step 4</span><h4>Apply the model's chat template</h4></div>
+
+<pre><code>from unsloth.chat_templates import get_chat_template
+
+tokenizer = get_chat_template(tokenizer, chat_template="llama-3.1")
+
+def formatting_prompts_func(examples):
+    convos = examples["messages"]
+    texts = [tokenizer.apply_chat_template(c, tokenize=False,
+                                           add_generation_prompt=False)
+             for c in convos]
+    return {"text": texts}
+
+dataset = dataset.map(formatting_prompts_func, batched=True)</code></pre>
+
+<p>This is the step that silently ruins runs when it is skipped or mismatched (Lesson 4). <code>get_chat_template</code> loads the correct special tokens for the family you chose — <code>llama-3.1</code>, <code>qwen-2.5</code>, <code>gemma-3</code>, and so on. The <a href="https://unsloth.ai/docs/basics/chat-templates" target="_blank" rel="noopener">chat templates guide</a> lists the supported names.</p>
+
+<div class="step-box"><span class="step-num">Step 5</span><h4>Train</h4></div>
+
+<pre><code>from trl import SFTTrainer, SFTConfig
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,          # newer TRL builds call this processing_class
+    train_dataset = dataset,
+    args = SFTConfig(
+        dataset_text_field = "text",
+        max_seq_length = max_seq_length,
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,   # effective batch size = 8
+        warmup_steps = 5,
+        max_steps = 60,              # quick smoke test; use num_train_epochs for real runs
+        learning_rate = 2e-4,
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        report_to = "none",
+    ),
+)
+trainer.train()</code></pre>
+
+<div class="callout">
+<strong>Train on the answer, not the question.</strong> Masking the user turns so the loss is computed only on assistant tokens typically adds a percentage point or two of accuracy, and matters more on multi-turn data. Unsloth exposes it directly:<br><br>
+<code>from unsloth.chat_templates import train_on_responses_only</code><br>
+<code>trainer = train_on_responses_only(trainer, instruction_part="&lt;|start_header_id|&gt;user&lt;|end_header_id|&gt;\n\n", response_part="&lt;|start_header_id|&gt;assistant&lt;|end_header_id|&gt;\n\n")</code><br><br>
+For Gemma models the parts are <code>"&lt;start_of_turn&gt;user\n"</code> and <code>"&lt;start_of_turn&gt;model\n"</code>. Get these strings wrong and you get a confusingly untrained model.
+</div>
+
+<div class="step-box"><span class="step-num">Step 6</span><h4>Test, then export</h4></div>
+
+<pre><code>FastLanguageModel.for_inference(model)   # Unsloth's 2x faster inference path
+
+inputs = tokenizer([tokenizer.apply_chat_template(
+    [{"role": "user", "content": "Claim: rear-ended at a stoplight."}],
+    tokenize=False, add_generation_prompt=True)], return_tensors="pt").to("cuda")
+
+out = model.generate(**inputs, max_new_tokens=256)
+print(tokenizer.batch_decode(out)[0])
+
+# Save the adapter (~tens to hundreds of MB)
+model.save_pretrained("lora_adapter")
+tokenizer.save_pretrained("lora_adapter")
+
+# Or merge into a standalone model / export for local runtimes
+model.save_pretrained_merged("merged_model", tokenizer, save_method="merged_16bit")
+model.save_pretrained_gguf("gguf_model", tokenizer, quantization_method="q4_k_m")</code></pre>
+
+<div class="callout-warn">
+<strong>The mistake to avoid:</strong> Unsloth's own guide calls it out explicitly — do not jump straight to full fine-tuning (FFT) because LoRA "didn't work." If a task can't be learned with LoRA on a well-prepared dataset, the problem is almost always the data, the chat template, the learning rate, or the base model choice — not the parameter-efficiency method. FFT will reproduce the same failure at 10× the cost. Diagnose first.
+</div>
+
+<h3>The Unsloth-specific gotchas worth knowing</h3>
+
+<table>
+<tr><th>Gotcha</th><th>Detail</th></tr>
+<tr><td><code>tokenizer=</code> vs <code>processing_class=</code></td><td>Recent TRL releases renamed the <code>SFTTrainer</code> argument. If you get an unexpected-keyword or deprecation error, swap to <code>processing_class=tokenizer</code>.</td></tr>
+<tr><td><code>use_gradient_checkpointing="unsloth"</code></td><td>Not a boolean — the string is a Unsloth-specific implementation that cuts memory a further ~30% and enables very long context. <code>True</code> works but gives up the extra saving.</td></tr>
+<tr><td>Training loss below ~0.2</td><td>Per Unsloth's guide, that's the overfitting signal. Their cheap remedy: halve <code>lora_alpha</code>, or equivalently average the base model and the fine-tune's weights 50/50 — a softer, less pronounced fine-tune.</td></tr>
+<tr><td>Dynamic vs standard 4-bit</td><td>Dynamic (<code>unsloth-bnb-4bit</code>) costs slightly more VRAM and is worth it for accuracy.</td></tr>
+<tr><td>Unsloth fixes gradient accumulation</td><td>They corrected the long-standing bug where <code>b2/g8</code> and <code>b8/g2</code> produced different loss curves despite equal effective batch size. In Unsloth, those configurations are now genuinely equivalent.</td></tr>
+<tr><td>Verify the adapter actually changed</td><td>Do not use <code>np.allclose()</code> to check that LoRA weights updated — it misses the tiny Gaussian values in matrix A. Use a hash/checksum, the sum of absolute differences, or <code>np.array_equal()</code>.</td></tr>
+</table>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> the free-tier path is not a toy. A 16 GB T4 with QLoRA fits an 8B model at rank 16, which covers the overwhelming majority of first fine-tuning projects. Reserve paid GPU hours for the run you have already proven works — the difference between "one more free Colab iteration" and "an hour of A100 time" is the single biggest cost lever on this track, and it costs you nothing but patience.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/Lt7KrFMcCis" target="_blank" rel="noopener">How to Fine-tune LLMs with Unsloth: Complete Guide</a> — pookie (86k views). The full pipeline as written above, run live.</li>
+    <li><a href="https://youtu.be/4JofSJIrjwU" target="_blank" rel="noopener">How to Fine-Tune any AI Model Locally (FULL Tutorial)</a> — Tech With Tim. Good on installation and environment problems.</li>
+    <li><a href="https://youtu.be/mmbkP8NARH4" target="_blank" rel="noopener">Get Started with Unsloth Studio</a> — NVIDIA Developer. The no-code path, including dataset generation.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-5">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What does <code>load_in_4bit = True</code> give you, and what does it cost?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It doubles training speed with no downside</button>
+    <button class="quiz-btn" data-opt="b">About 4x less memory use, at roughly a 1–2% accuracy cost — the thing that makes a free 16 GB GPU viable</button>
+    <button class="quiz-btn" data-opt="c">It converts the model to GGUF format</button>
+    <button class="quiz-btn" data-opt="d">It disables gradient checkpointing</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why does Unsloth insist you adapt all seven linear modules rather than just attention?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Because attention layers can't be adapted with LoRA</button>
+    <button class="quiz-btn" data-opt="b">Because it uses less VRAM</button>
+    <button class="quiz-btn" data-opt="c">Because all-layer adaptation is what lets LoRA match full fine-tuning quality, and dropping modules saves very little</button>
+    <button class="quiz-btn" data-opt="d">Because the MLP layers contain the tokenizer</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Your LoRA run produced a model that behaves almost like the base model. What's the <em>least</em> likely explanation?</p>
+  <div class="quiz-opts" data-q="2" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The chat template at inference doesn't match training</button>
+    <button class="quiz-btn" data-opt="b">The learning rate was effectively too low, or training barely ran</button>
+    <button class="quiz-btn" data-opt="c">The dataset is too small or inconsistent to teach anything</button>
+    <button class="quiz-btn" data-opt="d">LoRA is fundamentally incapable of changing model behaviour, so full fine-tuning is required</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-llms-guide" target="_blank" rel="noopener">Unsloth — Fine-tuning LLMs Guide</a></li>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-for-beginners/unsloth-requirements" target="_blank" rel="noopener">Unsloth — Requirements (GPU, OS, VRAM)</a></li>
+  <li><a href="https://unsloth.ai/docs/get-started/fine-tuning-llms-guide/tutorial-how-to-finetune-llama-3-and-use-in-ollama" target="_blank" rel="noopener">Unsloth — Finetune Llama-3 and use in Ollama</a></li>
+  <li><a href="https://github.com/unslothai/unsloth" target="_blank" rel="noopener">unslothai/unsloth on GitHub</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-5');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

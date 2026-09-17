@@ -1,0 +1,4 @@
+{
+  "title": "Track B — Managed Fine-Tuning on Azure AI Foundry",
+  "description": "The supported model and method matrix, the UTF-8-with-BOM data requirement, the upload-create-monitor-deploy workflow in real SDK code, RFT and graders, and the four deployment types."
+}

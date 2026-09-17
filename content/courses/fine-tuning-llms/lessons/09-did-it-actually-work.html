@@ -1,0 +1,214 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.86rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Did It Actually Work? — Evaluation and Failure Diagnosis</h2>
+
+<p>A fine-tune without evaluation is a rumour. The model <em>feels</em> better, the examples you happened to try looked good, and nobody knows whether the improvement is real or whether you quietly broke three things you weren't looking at. This lesson is the discipline that separates a shipped model from a lucky one.</p>
+
+<div class="callout-warn">
+<strong>Measure the baseline first — before you train anything.</strong> Run your untouched base model on your test set and record the numbers. If you skip this, you have no way to know whether your fine-tune helped, did nothing, or made things worse. This is the single most-skipped step in the field, and it is not recoverable after the fact.
+</div>
+
+<h3>What to measure</h3>
+
+<p>Pick metrics that map to your actual failure mode, not a generic leaderboard score:</p>
+
+<table>
+<tr><th>Metric</th><th>What it catches</th><th>How to compute it</th></tr>
+<tr><td>Format compliance rate</td><td>Whether the output parses and matches the schema you taught</td><td>Try to parse every test output. Report % success. This is the metric most fine-tunes are actually built for.</td></tr>
+<tr><td>Exact match / accuracy</td><td>Correctness on tasks with a single right answer (classification, extraction, maths)</td><td>Programmatic comparison against the test labels. Fully deterministic, no judge needed.</td></tr>
+<tr><td>Task-specific metric</td><td>Whatever your domain already measures (F1 on extraction, BLEU/ROUGE on translation, pass@k on code)</td><td>Reuse your existing evaluation code.</td></tr>
+<tr><td><span class="glossary-term">LLM-as-judge</span> win rate</td><td>Open-ended quality where "correct" is fuzzy</td><td>Pairwise comparison: show a judge model the base output and the tuned output for the same prompt, ask which is better, then repeat with the order swapped and average out the position bias.</td></tr>
+<tr><td>Human review</td><td>Everything the judge misses — tone, safety, subtle wrongness</td><td>50–100 test outputs read by a person. Expensive and irreplaceable. Do it before shipping.</td></tr>
+<tr><td>Regression suite</td><td>Capabilities you broke while fixing your task</td><td>A handful of unrelated prompts (reasoning, safety, general chat) run before and after. Non-negotiable for production.</td></tr>
+</table>
+
+<div class="callout">
+<strong>The pairing rule:</strong> a fine-tune claim needs two numbers, not one. "Format compliance went from 71% (base) to 98% (tuned) on a 300-example held-out test set." A single number is a marketing slide; a before/after pair is evidence.
+</div>
+
+<h3>Reading the loss curves</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four loss curve shapes and their diagnoses">
+    <g font-family="var(--font-sans)">
+      <!-- Healthy -->
+      <rect x="16" y="34" width="148" height="110" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="90" y="24" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="700">HEALTHY</text>
+      <polyline points="30,130 55,100 80,78 110,64 140,60" fill="none" stroke="var(--color-success)" stroke-width="2"/>
+      <polyline points="30,136 55,116 80,104 110,98 140,100" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="90" y="160" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">both fall, then flatten</text>
+
+      <!-- Overfitting -->
+      <rect x="176" y="34" width="148" height="110" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="250" y="24" text-anchor="middle" fill="var(--color-danger)" font-size="11" font-weight="700">OVERFITTING</text>
+      <polyline points="190,130 215,95 240,70 265,52 300,42" fill="none" stroke="var(--color-success)" stroke-width="2"/>
+      <polyline points="190,132 215,118 240,112 265,118 300,136" fill="none" stroke="var(--color-danger)" stroke-width="2"/>
+      <text x="250" y="160" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">train falls, val rises</text>
+
+      <!-- Underfitting -->
+      <rect x="336" y="34" width="148" height="110" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="410" y="24" text-anchor="middle" fill="var(--color-warning)" font-size="11" font-weight="700">UNDERFITTING</text>
+      <polyline points="350,120 375,116 400,114 425,113 460,112" fill="none" stroke="var(--color-warning)" stroke-width="2"/>
+      <polyline points="350,126 375,124 400,123 425,123 460,122" fill="none" stroke="var(--color-warning)" stroke-width="2"/>
+      <text x="410" y="160" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">flat, barely moving</text>
+
+      <!-- Wrong target -->
+      <rect x="496" y="34" width="148" height="110" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+      <text x="570" y="24" text-anchor="middle" fill="var(--color-danger)" font-size="11" font-weight="700">WRONG TARGET</text>
+      <polyline points="510,50 535,64 560,80 585,98 620,114" fill="none" stroke="var(--color-danger)" stroke-width="2"/>
+      <text x="570" y="160" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5">loss RISES from step 1</text>
+
+      <text x="330" y="200" text-anchor="middle" fill="var(--color-text)" font-size="11.5" font-weight="600">solid = training loss · dashed = validation loss</text>
+
+      <rect x="16" y="226" width="628" height="76" rx="10" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+      <text x="330" y="248" text-anchor="middle" fill="var(--color-accent)" font-size="11.5" font-weight="700">THE DIAGNOSTIC RULE</text>
+      <text x="330" y="270" text-anchor="middle" fill="var(--color-text)" font-size="11">Rising loss from the very first steps means the LR is far too high, or labels/prompt tokens are misaligned.</text>
+      <text x="330" y="289" text-anchor="middle" fill="var(--color-text)" font-size="11">Falling train loss with a rising validation loss means stop earlier — you are memorising, not learning.</text>
+    </g>
+  </svg>
+</div>
+
+<div class="callout-warn">
+<strong>A rising loss on step 1 is not a normal warmup artefact.</strong> If loss climbs from the start, kill the run. The usual culprits are a learning rate 100× too high for the method, or a data pipeline that is training on the wrong tokens (masking inverted, so the model is being taught to generate the <em>user's</em> message).
+</div>
+
+<h3>Symptom → cause → fix</h3>
+
+<table>
+<tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+<tr><td>Great on training data, poor on anything new</td><td>Overfitting — too many epochs, rank too high, or synthetic near-duplicates</td><td>Cut epochs to 1–2, reduce rank, dedupe harder. Add more diverse data.</td></tr>
+<tr><td>Trained model is worse at everything than the base</td><td>Catastrophic forgetting — learning rate too high or too many epochs on narrow data</td><td>Lower LR (try 1e-4 for LoRA), 1 epoch, and add 10–20% general-purpose examples to the mix.</td></tr>
+<tr><td>Always produces the same answer</td><td>Mode collapse — data too homogeneous, or the task is dominated by one majority class</td><td>Rebalance the dataset; add variety in length, phrasing and outputs.</td></tr>
+<tr><td>Correct content, wrong scaffolding / ignores system prompt</td><td>Chat-template mismatch between training and inference</td><td>Apply the model's own template function on both sides. Verify by decoding a training example back to text.</td></tr>
+<tr><td>Outputs are much longer than before</td><td>Length imbalance — training answers are all long</td><td>Match the real output-length distribution. Add EOS/stop handling.</td></tr>
+<tr><td>Refuses things it used to answer</td><td>Safety behaviour drifted, or refusal examples leaked into your dataset</td><td>Add the desired behaviour explicitly; run your regression suite.</td></tr>
+<tr><td>Format compliance improved but accuracy dropped</td><td>You optimised for the easy half of the task</td><td>The dataset probably contains many well-formed wrong answers. Audit the training labels, not the model.</td></tr>
+<tr><td>Nothing changed at all from the base model</td><td>Adapters not actually loaded, LR effectively zero, or wrong base checkpoint</td><td>Check the adapter file exists and the config reports non-zero trainable parameters before training.</td></tr>
+</table>
+
+<h3>LLM-as-judge, done properly</h3>
+
+<pre><code>1. PAIRWISE, not absolute. Ask "which of these two answers is better
+   for the request?" — never "rate this 1-10". Absolute scores drift
+   between runs and are not comparable.
+
+2. SWAP THE ORDER. Run every pair twice (A-then-B, B-then-A) and
+   average. Judges have a measurable position bias toward whichever
+   answer comes first.
+
+3. GIVE A RUBRIC, not a vibe. State the criteria: format compliance,
+   factual accuracy, tone. Unrubricked judges reward verbosity.
+
+4. CALIBRATE ON HUMANS. Hand-label 30-50 pairs yourself and check the
+   judge agrees. An uncalibrated judge is a random-number generator
+   with good grammar.
+
+5. TRACK THE JUDGE VERSION. When the judge model changes, your metric
+   changes. Record the model and the prompt alongside the score.</code></pre>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> running an LLM judge costs tokens, and it is easy to accidentally budget more for evaluation than for training. Generate the model outputs <em>once</em>, save them to a JSONL file, and score that fixed file with as many judge prompts as you like — instead of re-generating outputs on every eval iteration. Also cap judge input: for format-compliance checks, a deterministic parser costs nothing and is strictly better than a judge.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/mv5pdNj4sx8" target="_blank" rel="noopener">Deep Dive: Fine-Tuning in Microsoft Foundry — SFT, DPO, Tool Calling and Cost</a> — includes how managed platforms surface evaluation and cost per run.</li>
+    <li><a href="https://youtu.be/Wx1oiBCmxjY" target="_blank" rel="noopener">LLM Fine-Tuning Explained: The Complete Guide</a> — covers baseline-vs-tuned comparison methodology.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. What must you do <em>before</em> starting a fine-tune run?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Buy a bigger GPU</button>
+    <button class="quiz-btn" data-opt="b">Pick the largest available model</button>
+    <button class="quiz-btn" data-opt="c">Measure the base model's performance on the held-out test set</button>
+    <button class="quiz-btn" data-opt="d">Set the learning rate as high as possible</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Training loss keeps falling but validation loss is now rising. What is happening and what should you do?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Underfitting — train more epochs</button>
+    <button class="quiz-btn" data-opt="b">Overfitting — stop earlier, reduce rank, or deduplicate the data</button>
+    <button class="quiz-btn" data-opt="c">Mode collapse — increase the learning rate</button>
+    <button class="quiz-btn" data-opt="d">Nothing; this is the normal healthy shape</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Your fine-tune now emits perfect JSON but the answers inside it are frequently wrong. What's the most likely explanation?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">The training data contains many well-formatted but incorrect answers — you optimised for form and inherited the label errors</button>
+    <button class="quiz-btn" data-opt="b">JSON output and accuracy are mutually exclusive</button>
+    <button class="quiz-btn" data-opt="c">Rank was too low to learn facts</button>
+    <button class="quiz-btn" data-opt="d">The temperature at inference is too low</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://huggingface.co/docs/trl/index" target="_blank" rel="noopener">Hugging Face TRL — training and evaluation utilities</a></li>
+  <li><a href="https://docs.langchain.com/langsmith" target="_blank" rel="noopener">LangSmith — running evals and tracking experiments</a></li>
+  <li><a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener">Zheng et al., <em>Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</em> (2023)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

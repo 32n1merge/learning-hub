@@ -1,0 +1,244 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .math-box { background: var(--color-elevated); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.25rem 0; font-family: var(--font-mono); font-size: 0.92rem; line-height: 1.9; overflow-x: auto; }
+  .math-box .lbl { color: var(--color-text-secondary); font-family: var(--font-sans); font-size: 0.8rem; }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: LoRA Under the Hood — Why 7 Billion Weights Fit on Your GPU</h2>
+
+<p>You cannot reason about memory budgets, rank choices, or why your 8GB card can fine-tune a 7B model without understanding what LoRA actually does to a weight matrix. Fortunately the maths is one equation.</p>
+
+<h3>First, why full fine-tuning is so brutal</h3>
+
+<p>Training a model means storing more than the model. For a 7B-parameter model in half precision (bf16, 2 bytes per number), a full fine-tune needs:</p>
+
+<div class="math-box">
+<span class="lbl">weights (bf16)</span>      7e9 × 2 bytes = <strong>14 GB</strong><br>
+<span class="lbl">gradients (bf16)</span>    7e9 × 2 bytes = <strong>14 GB</strong><br>
+<span class="lbl">Adam optimizer state</span>  7e9 × 2 tensors × 4 bytes = <strong>56 GB</strong><br>
+<span class="lbl">─────────────────────</span><br>
+<span class="lbl">static footprint</span>                          <strong>≈ 84 GB</strong><br>
+<span class="lbl">plus activations, buffers, fragmentation</span>  <strong>+ 10–40 GB</strong>
+</div>
+
+<p>Adam keeps two fp32 numbers (a running mean and a running variance) for <em>every single trainable parameter</em>. That line item alone is four times the size of the weights themselves. This is why a 7B full fine-tune is conventionally run across <strong>eight 80GB A100s</strong> with sharding (ZeRO/FSDP) — or, on newer hardware, a few H100s. The optimiser state, not the model, is what forces the cluster.</p>
+
+<div class="callout">
+<strong>The key insight:</strong> almost all of that cost is proportional to the number of <em>trainable</em> parameters. Make only 0.6% of the model trainable and the gradient and optimiser line items shrink by ~160×, while the frozen weights stay at a comfortable 14 GB.
+</div>
+
+<h3>What LoRA actually does</h3>
+
+<p>For a targeted weight matrix <code>W₀</code> of shape <code>d × k</code> (frozen), LoRA adds a trainable low-rank update:</p>
+
+<div class="math-box">
+<strong>W = W₀ + ΔW = W₀ + (α / r) · B·A</strong><br><br>
+<span class="lbl">W₀  : d × k, frozen — never updated, stored in bf16 or 4-bit NF4</span><br>
+<span class="lbl">A   : r × k, trainable — initialised randomly (Gaussian)</span><br>
+<span class="lbl">B   : d × r, trainable — initialised to zero, so ΔW starts at exactly 0</span><br>
+<span class="lbl">r   : the rank — the inner dimension you choose (8, 16, 32, 64…)</span><br>
+<span class="lbl">α/r : the scaling factor that keeps update magnitude stable as r changes</span>
+</div>
+
+<p>B initialised to zero matters more than it looks: at step 0 the model's behaviour is <em>exactly</em> the base model's. Training only ever departs from a known-good starting point, which is why LoRA is so much more forgiving than full fine-tuning.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LoRA decomposition: a large frozen weight matrix plus the product of two small trainable matrices">
+    <text x="320" y="20" text-anchor="middle" fill="var(--color-text)" font-size="12.5" font-weight="700" font-family="var(--font-sans)">LoRA DECOMPOSITION</text>
+
+    <!-- W0 -->
+    <rect x="24" y="60" width="150" height="150" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)" stroke-width="2"/>
+    <text x="99" y="128" text-anchor="middle" fill="var(--color-text)" font-size="20" font-weight="700" font-family="var(--font-mono)">W₀</text>
+    <text x="99" y="150" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10" font-family="var(--font-mono)">d × k</text>
+    <text x="99" y="176" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-sans)">frozen · 4-bit or bf16</text>
+    <text x="99" y="192" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-sans)">~0% trainable</text>
+    <text x="99" y="42" text-anchor="middle" fill="var(--color-text-secondary)" font-size="14" font-family="var(--font-mono)">W₀</text>
+
+    <text x="196" y="140" text-anchor="middle" fill="var(--color-accent)" font-size="24" font-weight="700" font-family="var(--font-mono)">+</text>
+
+    <!-- B -->
+    <rect x="228" y="60" width="52" height="150" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)" stroke-width="2"/>
+    <text x="254" y="128" text-anchor="middle" fill="var(--color-success)" font-size="16" font-weight="700" font-family="var(--font-mono)">B</text>
+    <text x="254" y="148" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-mono)">d × r</text>
+    <text x="254" y="44" text-anchor="middle" fill="var(--color-success)" font-size="11" font-family="var(--font-sans)">trainable</text>
+
+    <text x="300" y="140" text-anchor="middle" fill="var(--color-text-secondary)" font-size="18" font-family="var(--font-mono)">·</text>
+
+    <!-- A -->
+    <rect x="322" y="130" width="150" height="52" rx="8" fill="var(--color-elevated)" stroke="var(--color-success)" stroke-width="2"/>
+    <text x="397" y="152" text-anchor="middle" fill="var(--color-success)" font-size="16" font-weight="700" font-family="var(--font-mono)">A</text>
+    <text x="397" y="172" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-mono)">r × k</text>
+    <text x="397" y="118" text-anchor="middle" fill="var(--color-success)" font-size="11" font-family="var(--font-sans)">trainable</text>
+
+    <text x="492" y="140" text-anchor="middle" fill="var(--color-accent)" font-size="18" font-family="var(--font-mono)">=</text>
+
+    <!-- W -->
+    <rect x="512" y="60" width="106" height="150" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)" stroke-width="2"/>
+    <text x="565" y="128" text-anchor="middle" fill="var(--color-accent)" font-size="18" font-weight="700" font-family="var(--font-mono)">W</text>
+    <text x="565" y="150" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-mono)">d × k</text>
+    <text x="565" y="176" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-sans)">base + ΔW</text>
+    <text x="565" y="192" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9.5" font-family="var(--font-sans)">merged at export</text>
+
+    <rect x="24" y="238" width="594" height="50" rx="9" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="320" y="258" text-anchor="middle" fill="var(--color-text)" font-size="11" font-family="var(--font-sans)">A big frozen matrix plus two small trainable ones. With r = 16 and d = k = 4096:</text>
+    <text x="320" y="277" text-anchor="middle" fill="var(--color-accent)" font-size="11.5" font-weight="700" font-family="var(--font-mono)">16,777,216 frozen params → 131,072 trained   (0.78%)</text>
+  </svg>
+</div>
+
+<h3>The trainable-parameter maths, concretely</h3>
+
+<p>For a <code>d × k</code> matrix, LoRA trains <code>r × (d + k)</code> parameters instead of <code>d × k</code>. Take Llama-class 7B (hidden size 4096, MLP intermediate 11008, 32 layers) targeting all seven linear projections per layer at <code>r = 16</code>:</p>
+
+<table>
+<tr><th>Module</th><th>Base shape</th><th>Base params</th><th>LoRA params (r=16)</th></tr>
+<tr><td>q_proj / k_proj / v_proj / o_proj</td><td>4096 × 4096</td><td>16,777,216 each</td><td>131,072 each</td></tr>
+<tr><td>gate_proj / up_proj / down_proj</td><td>4096 × 11008</td><td>45,088,768 each</td><td>241,664 each</td></tr>
+<tr><td><strong>Per layer (7 modules)</strong></td><td>—</td><td>202,389,504</td><td><strong>1,249,280</strong></td></tr>
+<tr><td><strong>× 32 layers</strong></td><td>—</td><td>6,476,464,128</td><td><strong>39,976,960 ≈ 40M</strong></td></tr>
+</table>
+
+<p>That's <strong>~0.6% of the model trainable</strong>. Note how the MLP projections dominate — which is exactly why attention-only LoRA recipes lose quality: adapting just <code>q_proj</code> and <code>v_proj</code> touches about 8% of the parameters that full-rank adaptation of all linear layers would.</p>
+
+<div class="callout-warn">
+<strong>The optimiser-state consequence:</strong> 40M trainable parameters means about 0.32 GB of Adam state, not 56 GB. Gradients for those parameters: ~0.08 GB. The frozen 6.5B weights carry no gradients and no optimiser state at all. <em>This</em> is why the memory cliff disappears.
+</div>
+
+<h3>QLoRA: the 4-bit trick that made this mainstream</h3>
+
+<p>LoRA still needs the frozen weights resident, and at bf16 a 7B base is 14 GB. QLoRA (Dettmers et al., 2023) adds three things:</p>
+
+<table>
+<tr><th>Ingredient</th><th>What it does</th><th>Effect</th></tr>
+<tr><td>NF4 quantisation</td><td>Stores frozen weights in 4-bit NormalFloat — a data type whose levels are placed at the quantiles of a normal distribution, which fits normally-distributed weights better than plain 4-bit integers.</td><td>14 GB → ~3.5 GB for a 7B base</td></tr>
+<tr><td>Double quantisation</td><td>Quantises the quantisation constants themselves.</td><td>Saves a further ~0.4 GB per billion params</td></tr>
+<tr><td>Paged optimisers</td><td>Pages optimiser state to CPU memory on spikes instead of OOM-ing.</td><td>Tolerates longer sequences during a batch</td></tr>
+</table>
+
+<p>Because the frozen base is 4-bit and only the adapters are trained in bf16, gradients flow through the dequantised forward pass while the stored weights stay compressed. That is how a 7B model trains inside a <strong>single 16 GB free-tier GPU</strong>, and how the QLoRA paper demonstrated a 65B model on one 48 GB card.</p>
+
+<div class="callout">
+<strong>Pick your acronym by VRAM, not by hype:</strong><br>
+<strong>LoRA</strong> (bf16 base) — best quality, needs ~2× the base model in VRAM before activations.<br>
+<strong>QLoRA</strong> (4-bit base) — ~4× less VRAM, ~1% quality cost, some step-time cost. The default when hardware is the constraint.<br>
+<strong>Full fine-tune</strong> — only when you have the cluster and need the last few percent.
+</div>
+
+<h3>Target modules, and the honest default</h3>
+
+<pre><code># The classic 2023 recipe — adapt attention only
+target_modules = ["q_proj", "v_proj"]
+
+# The modern default — adapt every linear layer (attention + MLP)
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                  "gate_proj", "up_proj", "down_proj"]
+
+# In practice you rarely enumerate them: both Unsloth and PEFT accept
+# a wildcard and figure it out per architecture.
+target_modules = "all-linear"</code></pre>
+
+<p><code>"all-linear"</code> is what you should reach for. It roughly triples the trainable parameters versus <code>q,v</code> only while adding a fraction of a percent to the total — and the quality gap is consistently worth it for behaviour-changing tasks.</p>
+
+<div class="callout-token">
+<strong>🪙 Token angle:</strong> the rank choice is a cost decision, not just a quality one. Trainable parameters set your optimiser memory <em>and</em> your merged-artefact size <em>and</em> (mildly) your step time. Going from r=16 to r=64 quadruples the adapter and its optimiser state for a gain you often can't measure. Start at r=16, and only climb if your eval set says the model is <em>underfitting</em> — a distinction Lesson 9 teaches you to diagnose properly.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/t1caDsMzWBk" target="_blank" rel="noopener">LoRA &amp; QLoRA Fine-tuning Explained In-Depth</a> — Mark Hennings (196k views). Works through exactly this decomposition with diagrams and code.</li>
+    <li><a href="https://youtu.be/g80Q1sVtikE" target="_blank" rel="noopener">Fine-tune your own LLM in 13 minutes, here's how</a> — David Ondrej. A real QLoRA run start to finish, useful for seeing how small the rank numbers actually are in a working script.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Why does a full fine-tune of a 7B model need ~84 GB of <em>non-activation</em> memory, while QLoRA needs a small fraction of that?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Because full fine-tuning stores activations in fp32</button>
+    <button class="quiz-btn" data-opt="b">Because LoRA deletes most of the weights</button>
+    <button class="quiz-btn" data-opt="c">Because gradients and Adam optimiser state scale with <em>trainable</em> parameters, and LoRA makes only ~0.6% trainable</button>
+    <button class="quiz-btn" data-opt="d">Because QLoRA uses a smaller model architecture</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. In <code>W = W₀ + (α/r)·B·A</code>, why is B initialised to zero?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">So the update starts at zero and training begins from the exact base-model behaviour</button>
+    <button class="quiz-btn" data-opt="b">To save memory on the optimiser state</button>
+    <button class="quiz-btn" data-opt="c">To prevent the low-rank decomposition from being full rank</button>
+    <button class="quiz-btn" data-opt="d">It's an arbitrary convention with no effect</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You double the LoRA rank from 16 to 32 but keep alpha at 16. What happens to the effective update scale?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It doubles — larger rank means larger updates</button>
+    <button class="quiz-btn" data-opt="b">It halves, because the scale is alpha/r — which is why recipes often move alpha together with rank</button>
+    <button class="quiz-btn" data-opt="c">It stays identical in all cases</button>
+    <button class="quiz-btn" data-opt="d">It becomes zero</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">Hu et al., <em>LoRA: Low-Rank Adaptation of Large Language Models</em> (2021)</a></li>
+  <li><a href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">Dettmers et al., <em>QLoRA: Efficient Finetuning of Quantized LLMs</em> (2023)</a></li>
+  <li><a href="https://huggingface.co/docs/peft/developer_guides/lora" target="_blank" rel="noopener">Hugging Face — LoRA configuration reference</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

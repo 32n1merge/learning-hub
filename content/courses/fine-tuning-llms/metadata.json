@@ -1,0 +1,10 @@
+{
+  "title": "Fine-Tuning LLMs: From Zero to a Shipped Adapter",
+  "description": "Everything you need to actually fine-tune a model and know whether it worked. Covers the decision framework (when fine-tuning beats prompting or RAG), the complete terminology map, LoRA and QLoRA mechanics, dataset construction, a full walkthrough of the self-hosted Unsloth track and the managed Azure AI Foundry track, real published cost figures and a ranked cost-mitigation playbook, evaluation and failure diagnosis, and how to merge, quantise and serve what you trained.",
+  "difficulty": "intermediate",
+  "estimatedDuration": "150 min",
+  "tags": ["llm", "ai", "devops"],
+  "lastUpdated": "2026-09-17",
+  "icon": "🎛️",
+  "coverImage": null
+}

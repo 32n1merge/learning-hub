@@ -1,0 +1,275 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .watch-box { border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin: 1.5rem 0; background: var(--color-surface); }
+  .watch-box a { color: var(--color-accent-link); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  .math-box { background: var(--color-elevated); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.25rem 0; font-family: var(--font-mono); font-size: 0.88rem; line-height: 1.95; overflow-x: auto; }
+  .math-box .lbl { color: var(--color-text-secondary); font-family: var(--font-sans); font-size: 0.8rem; }
+  .leverage { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 4px; background: var(--color-elevated); color: var(--color-success); border: 1px solid var(--color-success); }
+  .leverage.med { color: var(--color-warning); border-color: var(--color-warning); }
+  .leverage.low { color: var(--color-text-secondary); border-color: var(--color-border); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.55; font-size: 0.84rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.55rem 0.85rem; border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  td.n { font-family: var(--font-mono); font-size: 0.85rem; white-space: nowrap; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: The Cost Ledger — What It Really Costs and How to Cut It</h2>
+
+<p>Fine-tuning has a reputation for being expensive. It is, but not for the reason people assume. Almost everyone budgets for training and gets blindsided by <em>serving</em>. This lesson gives you the real numbers, and then the playbook for shrinking them.</p>
+
+<h3>The four buckets</h3>
+
+<table>
+<tr><th>Bucket</th><th>What's in it</th><th>Typical share of a first project</th></tr>
+<tr><td><strong>Training</strong></td><td>GPU time or per-token training charges</td><td>One-time. Often the <em>smallest</em> bucket.</td></tr>
+<tr><td><strong>Serving / hosting</strong></td><td>Hourly deployment charges and per-token inference</td><td>Recurring. Usually the largest by far.</td></tr>
+<tr><td><strong>Evaluation &amp; iteration</strong></td><td>Judge-model tokens, repeated runs, human review hours</td><td>Recurring during development, easy to forget</td></tr>
+<tr><td><strong>People</strong></td><td>Dataset construction, review, and debugging time</td><td>Usually the biggest total cost of all — and it doesn't appear on a GPU bill</td></tr>
+</table>
+
+<h3>Azure's real price list</h3>
+
+<p>These are live published prices pulled from Azure's public Retail Prices API for US regions, in USD. Training is billed per 1M training tokens; hosting is per hour, <em>whether or not anyone uses the model</em>.</p>
+
+<table>
+<tr><th>Model</th><th>Training / 1M tokens</th><th>Hosting / hour</th></tr>
+<tr><td><strong>gpt-4.1</strong></td><td class="n">$25.00 global · $27.50 regional</td><td class="n">$1.70</td></tr>
+<tr><td><strong>gpt-4.1-mini</strong></td><td class="n">$5.50 regional</td><td class="n">$1.70</td></tr>
+<tr><td><strong>gpt-4.1-nano</strong></td><td class="n">$1.50 global · $1.81 regional</td><td class="n">$1.70</td></tr>
+<tr><td><strong>gpt-4o</strong> (0806)</td><td class="n">$27.50 data zone</td><td class="n">$1.70</td></tr>
+<tr><td><strong>gpt-4o-mini</strong> (0718)</td><td class="n">$3.30 data zone</td><td class="n">$1.70</td></tr>
+<tr><td><strong>Developer-tier training</strong></td><td class="n">gpt-4.1 $12.50 · mini $2.50 · nano $0.75</td><td class="n">—</td></tr>
+<tr><td><strong>o4-mini RFT</strong></td><td class="n">$100/hr global · $110/hr regional</td><td class="n">$1.70</td></tr>
+<tr><td><strong>Open-weight</strong> (Qwen-32B, Llama-3.3-70B, OSS-20B)</td><td class="n">—</td><td class="n"><strong>$0.30–$0.33</strong></td></tr>
+</table>
+
+<p>Four observations that matter more than the individual numbers:</p>
+
+<ol>
+  <li><strong>Hosting is flat across the GPT family.</strong> Whether you fine-tune nano or full gpt-4.1, the deployment costs $1.70/hour. Choosing a smaller model saves training money but <em>not</em> hosting money — unless you leave the GPT family entirely.</li>
+  <li><strong>Open-weight models host at roughly a fifth of the price.</strong> $0.30/hour against $1.70/hour is a 5.7× difference, and it compounds every month.</li>
+  <li><strong>The Developer tier undercuts Standard on training by roughly half to two-thirds.</strong> gpt-4.1 at $12.50 versus $25.00 per 1M tokens, and nano at $0.75 versus $1.50. That discount is paid for in SLA and preemption risk.</li>
+  <li><strong>Regional costs more than global.</strong> gpt-4.1 is $25.00 global and $27.50 regional. You are buying data residency with a 10% premium.</li>
+</ol>
+
+<h3>The number that should change your plan</h3>
+
+<div class="math-box">
+<span class="lbl">One Standard deployment, left running for a month:</span><br>
+$1.70 / hour × 730 hours = <strong>$1,241 per month</strong><br><br>
+<span class="lbl">…and that is before a single inference token is billed.</span>
+</div>
+
+<p>Microsoft's own worked example makes the point dramatically. Take a fine-tuned o4-mini chatbot handling 10,000 conversations a month: 20M input tokens and 40M output tokens.</p>
+
+<table>
+<tr><th>Line item</th><th>Calculation</th><th>Cost</th></tr>
+<tr><td>Hosting</td><td class="n">$1.70 × 24 × 30 days</td><td class="n">$1,224.00</td></tr>
+<tr><td>Input tokens</td><td class="n">20 × $1.10 per 1M</td><td class="n">$22.00</td></tr>
+<tr><td>Output tokens</td><td class="n">40 × $4.40 per 1M</td><td class="n">$176.00</td></tr>
+<tr><td><strong>Monthly total</strong></td><td></td><td class="n"><strong>$1,422.00</strong></td></tr>
+</table>
+
+<div class="callout-warn">
+<strong>Hosting is 86% of that bill.</strong> The token usage — the thing everyone thinks they are paying for — is 14%. Fine-tuning's real cost profile is not "training is expensive," it is <em>"an idle deployment is expensive."</em> A model nobody is calling still bills $1,241 a month.
+</div>
+
+<h3>The alternative: what self-hosting costs</h3>
+
+<table>
+<tr><th>Option</th><th>Cost</th><th>Reality</th></tr>
+<tr><td>Google Colab / Kaggle free tier</td><td class="n">$0</td><td>Genuinely sufficient for 8B-class QLoRA. Not for production serving.</td></tr>
+<tr><td>Consumer GPU you already own</td><td class="n">$0 marginal</td><td>24 GB cards handle up to ~27B QLoRA comfortably. Electricity only.</td></tr>
+<tr><td>Rented RTX 4090 / L4-class</td><td class="n">~$0.30–$0.60/hr</td><td>Fine-tunes 8B models; serves a small model for a small user base.</td></tr>
+<tr><td>Rented A100 80 GB</td><td class="n">~$1.00–$2.50/hr</td><td>The workhorse. 70B QLoRA, or high-throughput serving.</td></tr>
+<tr><td>Rented H100</td><td class="n">~$2.00–$4.00/hr</td><td>Overkill for most fine-tunes; great for big serving loads.</td></tr>
+</table>
+
+<p style="font-size:0.9em;color:var(--color-text-secondary)">Rental rates above are indicative ranges for 2026 marketplace/spot pricing — they move constantly, so check current listings for your region and GPU before committing. The structure of the comparison is what matters and it is durable: a dedicated rented GPU costs roughly what one managed deployment costs, but serves <em>unlimited token volume</em> and can host many models at once.</p>
+
+<h3>The crossover, stated plainly</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cost crossover between a managed endpoint and self-hosted GPU as token volume rises">
+    <g font-family="var(--font-sans)">
+      <text x="16" y="22" fill="var(--color-text)" font-size="12" font-weight="600">Monthly cost vs. traffic volume</text>
+      <text x="16" y="40" fill="var(--color-text-secondary)" font-size="10.5">One fine-tuned model, 3,000-token average request</text>
+
+      <!-- axes -->
+      <line x1="70" y1="210" x2="620" y2="210" stroke="var(--color-border)" stroke-width="1.5"/>
+      <line x1="70" y1="70" x2="70" y2="210" stroke="var(--color-border)" stroke-width="1.5"/>
+      <text x="345" y="238" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">requests per month →</text>
+      <text x="30" y="140" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5" transform="rotate(-90 30 140)">cost / month →</text>
+
+      <!-- managed: flat hosting + linear tokens -->
+      <polyline points="70,158 200,150 340,132 460,104 600,52" fill="none" stroke="var(--color-danger)" stroke-width="2.5"/>
+      <text x="596" y="44" text-anchor="end" fill="var(--color-danger)" font-size="10.5" font-weight="700">Managed endpoint</text>
+      <text x="120" y="150" fill="var(--color-danger)" font-size="9.5">starts at ~$1,240/mo of idle hosting</text>
+
+      <!-- self-hosted: fixed GPU, flat -->
+      <line x1="70" y1="128" x2="620" y2="128" stroke="var(--color-success)" stroke-width="2.5"/>
+      <text x="600" y="120" text-anchor="end" fill="var(--color-success)" font-size="10.5" font-weight="700">Self-hosted GPU</text>
+      <text x="150" y="146" fill="var(--color-success)" font-size="9.5">fixed hourly rate, unlimited tokens</text>
+
+      <!-- crossover -->
+      <line x1="300" y1="70" x2="300" y2="210" stroke="var(--color-accent)" stroke-dasharray="4 4"/>
+      <circle cx="300" cy="138" r="5" fill="var(--color-accent)"/>
+      <text x="308" y="88" fill="var(--color-accent)" font-size="10.5" font-weight="700">crossover</text>
+
+      <rect x="16" y="252" width="628" height="42" rx="8" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+      <text x="330" y="270" text-anchor="middle" fill="var(--color-text)" font-size="11">Below the crossover, managed wins on effort. Above it, self-hosting wins on money —</text>
+      <text x="330" y="286" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10.5">because your cost stops rising with traffic. This is the single most important graph in the lesson.</text>
+    </g>
+  </svg>
+</div>
+
+<div class="callout-success">
+<strong>Do this arithmetic before you deploy anything.</strong> Managed: <code>$1,240/month + tokens</code>, cost rising forever with volume. Self-hosted: <code>fixed hourly rate</code>, cost flat no matter how much traffic you serve. For a low-traffic internal tool, managed is obviously right. For anything serving real volume, the managed endpoint's flat $1,240/month is money you could be spending on a GPU that never gets more expensive as you grow.
+</div>
+
+<h3>The cost-mitigation playbook, ranked</h3>
+
+<table>
+<tr><th>#</th><th>Tactic</th><th>Impact</th><th>Detail</th></tr>
+<tr><td>1</td><td><strong>Distil from a big model to a small one</strong></td><td><span class="leverage">highest</span></td><td>Collect production traffic, have a frontier model generate ideal outputs, fine-tune a small open model on them. This is the documented Azure use case: "collect production traffic from an o1 deployment and use that data to fine-tune GPT-4o-mini… can reduce cost and latency since smaller models are more efficient." Cheap one-time generation cost, permanent inference saving.</td></tr>
+<tr><td>2</td><td><strong>Kill idle deployments</strong></td><td><span class="leverage">highest</span></td><td>Hosting bills hourly regardless of traffic. Delete, or use the Developer tier's 24-hour auto-expiry for evaluation. One forgotten deployment is $1,240/month.</td></tr>
+<tr><td>3</td><td><strong>Prefer open-weight models when quality allows</strong></td><td><span class="leverage">highest</span></td><td>Qwen/Llama/Phi host at $0.30–$0.33/hour versus $1.70. A 5.7× hosting reduction, every month, forever.</td></tr>
+<tr><td>4</td><td><strong>Use the Developer tier for training experiments</strong></td><td><span class="leverage">high</span></td><td>gpt-4.1-nano at $0.75 versus $1.50 per 1M tokens; gpt-4.1 at $12.50 versus $25.00. Accepting preemption risk on runs you're iterating on is close to free money.</td></tr>
+<tr><td>5</td><td><strong>Iterate on a free GPU first</strong></td><td><span class="leverage">high</span></td><td>Nail the dataset, chat template and hyperparameters on a free Colab T4. Pay only for the run you already believe in. This is the whole hybrid workflow from Lesson 11.</td></tr>
+<tr><td>6</td><td><strong>Train for 1–2 epochs, not more</strong></td><td><span class="leverage">high</span></td><td>Training is billed per token <em>× epochs</em>. Going from 1 to 3 epochs triples the training bill for a gain your eval set will usually score as negative.</td></tr>
+<tr><td>7</td><td><strong>Use multi-LoRA serving</strong></td><td><span class="leverage">high</span></td><td>One base model plus many adapters instead of N separate deployments. If you are about to fine-tune for three teams, this is the difference between one $1,240/month bill and three.</td></tr>
+<tr><td>8</td><td><strong>Shrink the prompt your fine-tune replaces</strong></td><td><span class="leverage med">medium</span></td><td>A behaviour baked into weights no longer needs a 1,500-token system prompt. Fewer input tokens on every request, forever. Measure before and after.</td></tr>
+<tr><td>9</td><td><strong>Cap RFT hard</strong></td><td><span class="leverage med">medium</span></td><td>Use the <code>reasoning_effort: Low</code> setting, limit validation examples and <code>eval_samples</code>, choose the smallest grader that judges your task adequately, and tune <code>compute_multiplier</code>. Per-job billing caps at $5,000 — treat that as a kill switch, not a budget.</td></tr>
+<tr><td>10</td><td><strong>Choose global over regional when residency permits</strong></td><td><span class="leverage med">medium</span></td><td>~10% off training (gpt-4.1: $25.00 vs $27.50 per 1M tokens) and faster queue times.</td></tr>
+<tr><td>11</td><td><strong>Make evaluation cheap and repeatable</strong></td><td><span class="leverage low">low-med</span></td><td>Generate model outputs <em>once</em> into a file, then score that file repeatedly. Use deterministic parsers for format checks instead of a judge model. Cache and reuse.</td></tr>
+<tr><td>12</td><td><strong>Quantise and serve yourself</strong></td><td><span class="leverage">high</span></td><td>Merge, export to a 4-bit GGUF, and run it on a GPU you rent or own. This is what converts a recurring managed bill into a fixed infrastructure cost — the crossover graph above.</td></tr>
+</table>
+
+<div class="callout-token">
+<strong>🪙 Token angle — the discipline that saves the most:</strong> compute the cost per 1,000 requests <em>before</em> you deploy, and write it down. Managed endpoints hide their economics because the hosting fee is invisible per-request; a $1,240/month deployment serving 50,000 requests costs $0.025 per request in hosting alone, on top of tokens. Once you express it per request you can compare it to the open-weight alternative, to a rented GPU, and to simply using a bigger base model with a longer prompt — and the right answer is usually obvious. The teams that overspend on fine-tuning are the ones that never did this division.
+</div>
+
+<h3>The hidden costs nobody invoices you for</h3>
+
+<table>
+<tr><th>Cost</th><th>Why it sneaks up</th></tr>
+<tr><td><strong>Dataset construction</strong></td><td>Often 40% of project time. Distillation cuts the generation cost to pennies but human review of the sample is not optional and not free.</td></tr>
+<tr><td><strong>Iteration</strong></td><td>Plan for at least three training runs. Run one never ships.</td></tr>
+<tr><td><strong>Evaluation</strong></td><td>Judge-model tokens plus human review of 50–100 outputs per candidate. Recurring through the whole project.</td></tr>
+<tr><td><strong>Retraining cadence</strong></td><td>A frozen model drifts as production inputs change. Decide the trigger before launch, and budget for it being recurring.</td></tr>
+<tr><td><strong>Monitoring</strong></td><td>Format-compliance rate, refusal rate, latency, output length. Someone has to build and watch it.</td></tr>
+<tr><td><strong>Storage and retention</strong></td><td>Training files, checkpoints, evaluation outputs, and log data all accumulate. Small per unit, real in aggregate.</td></tr>
+</table>
+
+<h3>Three paths, one project</h3>
+
+<p>A 1,000-example dataset, an 8B-class model, moderate production traffic. Rough shapes, so you can see the structure:</p>
+
+<table>
+<tr><th>Path</th><th>One-time</th><th>Monthly</th><th>Best when</th></tr>
+<tr><td><strong>Free tier + self-host on owned GPU</strong></td><td class="n">~$0</td><td class="n">~$0 + electricity</td><td>You have the hardware, the traffic is modest, and you don't need frontier-model behaviour.</td></tr>
+<tr><td><strong>Rented GPU + vLLM</strong></td><td class="n">policy: a few hours of GPU time</td><td class="n">~$250–$1,800 depending on GPU</td><td>Real volume. Cost stops rising with traffic. You accept ops responsibility.</td></tr>
+<tr><td><strong>Managed endpoint (Azure, GPT family)</strong></td><td class="n">training tokens × epochs</td><td class="n">≥$1,241 hosting + tokens</td><td>Frontier quality, compliance, zero ops, low-to-moderate traffic, or when data residency is a requirement.</td></tr>
+</table>
+
+<div class="callout">
+<strong>The one-sentence summary of this lesson:</strong> training a fine-tune is usually cheap and one-time; <em>hosting</em> it is the expensive part; and the two decisions that dominate everything else are <em>which model family you fine-tune</em> and <em>whether the deployment stays up when idle</em>.
+</div>
+
+<div class="watch-box">
+  <p style="margin-top:0"><strong>📺 Watch:</strong></p>
+  <ul style="margin-bottom:0">
+    <li><a href="https://youtu.be/mv5pdNj4sx8" target="_blank" rel="noopener">Deep Dive: Fine-Tuning in Microsoft Foundry — SFT, DPO, Tool Calling and Cost</a> — the cost breakdown segment directly complements this lesson.</li>
+    <li><a href="https://youtu.be/hw6-rrYtUy8" target="_blank" rel="noopener">Fine-tuning and distillation with Azure AI Foundry — BRK150</a> — Microsoft's own framing of distillation as the cost play.</li>
+    <li><a href="https://youtu.be/W_xh6qNSfAQ" target="_blank" rel="noopener">Fine-Tuning Local LLMs with Unsloth &amp; Ollama</a> — NeuralNine. The self-hosted end of the crossover graph.</li>
+  </ul>
+</div>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. In Microsoft's worked example, a fine-tuned o4-mini chatbot serving 10,000 conversations/month costs $1,422. What dominates that bill?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Output tokens — the model's responses</button>
+    <button class="quiz-btn" data-opt="b">Hourly hosting charges (~$1,224, or 86%) — billed whether or not anyone calls the model</button>
+    <button class="quiz-btn" data-opt="c">The one-time training run</button>
+    <button class="quiz-btn" data-opt="d">Data storage</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which change reduces monthly hosting cost the most?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Switching from gpt-4.1 to gpt-4.1-nano</button>
+    <button class="quiz-btn" data-opt="b">Training for 1 epoch instead of 3</button>
+    <button class="quiz-btn" data-opt="c">Moving to an open-weight model — hosting drops from $1.70/hour to roughly $0.30/hour</button>
+    <button class="quiz-btn" data-opt="d">Using global instead of regional training</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why is distillation usually the highest-leverage cost tactic?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">It converts a one-time teacher-model spend into a permanent reduction in per-request inference cost</button>
+    <button class="quiz-btn" data-opt="b">It eliminates the need for an evaluation set</button>
+    <button class="quiz-btn" data-opt="c">It removes the hourly hosting fee on managed platforms</button>
+    <button class="quiz-btn" data-opt="d">It makes training free</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning-cost-management" target="_blank" rel="noopener">Microsoft Learn — Managing costs for fine-tuning</a></li>
+  <li><a href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/" target="_blank" rel="noopener">Azure OpenAI Service pricing</a></li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning-deploy" target="_blank" rel="noopener">Microsoft Learn — Deployment types for fine-tuned models</a></li>
+  <li><a href="https://docs.vllm.ai/en/latest/features/lora.html" target="_blank" rel="noopener">vLLM — multi-LoRA serving</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

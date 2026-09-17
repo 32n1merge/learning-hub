@@ -1,0 +1,4 @@
+{
+  "title": "Track A — A Real Fine-Tune with Unsloth",
+  "description": "Unsloth Core vs Studio vs Desktop, exact install commands, and the six-step pipeline: load in 4-bit, attach adapters, load data, apply the chat template, train, merge and export."
+}

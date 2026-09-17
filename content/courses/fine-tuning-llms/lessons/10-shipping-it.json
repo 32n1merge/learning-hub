@@ -1,0 +1,4 @@
+{
+  "title": "Shipping It — Merge, Quantise, Serve",
+  "description": "Three shapes to ship (adapter, merged model, hosted endpoint), how merging works, serving with vLLM and Ollama, multi-LoRA cost savings, and the pre-deployment gate checklist."
+}
