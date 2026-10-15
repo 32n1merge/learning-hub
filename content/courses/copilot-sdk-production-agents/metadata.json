@@ -1,0 +1,10 @@
+{
+  "title": "Production Agents with the GitHub Copilot SDK",
+  "description": "A builder's course on shipping production-grade agents with the GitHub Copilot SDK in TypeScript — the agent loop and event model, durable sessions, tool packages, guardrails via hooks and permissions, skills and MCP with real OAuth, multi-agent orchestration and state management, OpenTelemetry observability, cost control, evals, and multi-tenant deployment.",
+  "difficulty": "advanced",
+  "estimatedDuration": "3h 30m",
+  "tags": ["agents", "llm", "javascript"],
+  "lastUpdated": "2026-10-14",
+  "icon": "🤖",
+  "coverImage": null
+}

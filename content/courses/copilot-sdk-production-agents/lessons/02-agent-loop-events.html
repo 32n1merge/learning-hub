@@ -1,0 +1,306 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 2: The Agent Loop and the Event Model</h2>
+
+<p>In production you will never see the agent's reasoning directly. You will see a <strong>stream of typed events</strong>. Getting fluent with that stream is what separates "it worked in the demo" from "I can debug a 40-turn run at 2am". This lesson covers the loop that generates the events, the events themselves, and the two completion signals that trip almost everyone up.</p>
+
+<h3>A turn is exactly one LLM API call</h3>
+
+<p>The CLI's loop is mechanical: send the full conversation history to the model; if the model asked for tools, execute them and feed the results back as the next turn's input; repeat until the model answers without requesting a tool. Each iteration is one <span class="glossary-term">turn</span>.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arw2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="var(--color-text-secondary)"/>
+      </marker>
+    </defs>
+    <rect x="14" y="88" width="98" height="46" rx="8" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="63" y="116" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">session.send</text>
+
+    <rect x="150" y="82" width="118" height="58" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="209" y="105" text-anchor="middle" fill="var(--color-text)" font-size="11">LLM call</text>
+    <text x="209" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">= 1 turn</text>
+
+    <polygon points="306,111 336,84 366,111 336,138" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="336" y="115" text-anchor="middle" fill="var(--color-warning)" font-size="9">tools?</text>
+
+    <rect x="400" y="82" width="118" height="58" rx="8" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="459" y="105" text-anchor="middle" fill="var(--color-text)" font-size="11">Execute tools</text>
+    <text x="459" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">collect results</text>
+
+    <rect x="548" y="82" width="80" height="58" rx="8" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="588" y="105" text-anchor="middle" fill="var(--color-success)" font-size="11">Final text</text>
+    <text x="588" y="124" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">no tools</text>
+
+    <line x1="112" y1="111" x2="146" y2="111" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw2)"/>
+    <line x1="268" y1="111" x2="302" y2="111" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw2)"/>
+    <line x1="366" y1="111" x2="396" y2="111" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw2)"/>
+    <line x1="518" y1="111" x2="544" y2="111" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw2)"/>
+
+    <path d="M459,140 C459,186 209,186 209,144" fill="none" stroke="var(--color-warning)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arw2)"/>
+    <text x="334" y="184" text-anchor="middle" fill="var(--color-warning)" font-size="9">results fed back as next turn input</text>
+
+    <line x1="588" y1="140" x2="588" y2="168" stroke="var(--color-success)" stroke-width="1.5" marker-end="url(#arw2)"/>
+    <text x="588" y="188" text-anchor="middle" fill="var(--color-success)" font-size="10">session.idle</text>
+  </svg>
+</div>
+
+<p>Two facts follow directly from this, and both matter operationally:</p>
+
+<ol>
+  <li>The model sees the <strong>full accumulated context</strong> on every call — system prompt, user messages, every prior tool call and result.</li>
+  <li>There are <strong>no hidden calls</strong>. The number of <code>assistant.turn_start</code> / <code>assistant.turn_end</code> pairs in the event log equals the number of LLM API calls made. No separate planning call, no evaluation call, no completion-check call.</li>
+</ol>
+
+<div class="callout">
+  <strong>Why "no hidden calls" is worth memorising:</strong> it is the foundation of cost attribution. If a session cost more than expected, the turn count tells you it was more model round-trips, not a mystery surcharge. You can count turns straight off the event log:
+  <pre><code>grep -c "assistant.turn_start" ~/.copilot/session-state/&lt;sessionId&gt;/events.jsonl</code></pre>
+</div>
+
+<p>The model is the decision-maker for when to stop. The CLI is purely mechanical: "model asked for tools → execute → call model again."</p>
+
+<h3>The two completion signals — and why this distinction bites people</h3>
+
+<p>This is the most consequential API distinction in the whole SDK.</p>
+
+<table>
+  <tr><th></th><th><code>session.idle</code></th><th><code>session.task_complete</code></th></tr>
+  <tr><td>Emitted</td><td><strong>Always</strong> — when the loop ends</td><td><strong>Optionally</strong> — requires the model to signal it</td></tr>
+  <tr><td>Persisted?</td><td>No — ephemeral, not replayed on resume</td><td>Yes — saved to the session event log</td></tr>
+  <tr><td>Means</td><td>"Stopped processing, ready for the next message"</td><td>"I consider the overall task fulfilled"</td></tr>
+  <tr><td>Carries</td><td>—</td><td>Optional <code>summary</code> field</td></tr>
+  <tr><td>Use it for</td><td>Your reliable "done" signal, timeouts, error handling</td><td>Best-effort task-done detection</td></tr>
+</table>
+
+<p><code>sendAndWait()</code> waits for <code>session.idle</code>:</p>
+
+<pre><code>// Blocks until session.idle fires, then returns the final assistant message
+const response = await session.sendAndWait({ prompt: "Fix the bug" });
+
+// Or drive it yourself and treat task_complete as advisory
+session.on("session.task_complete", (event) => {
+  console.log("Task done:", event.data.summary);
+});</code></pre>
+
+<p>Why does <code>task_complete</code> go missing in normal chat? Because in interactive mode the CLI does not nudge for it. If you ask a conversational question, there is no discrete "task" to complete, so the model just answers and stops. <code>session.idle</code> still fires, because it is a <em>mechanical</em> signal (the loop ended), not a semantic one (the model thinks it is done).</p>
+
+<div class="callout-warn callout">
+  <strong>Never gate a production workflow on <code>task_complete</code> alone.</strong> If you wait for it and it never arrives, your job hangs forever while the agent has already finished. Gate on <code>session.idle</code>, and optionally <em>record</em> <code>task_complete</code> for richer reporting.
+</div>
+
+<h3>Autopilot nudges — a two-level completion mechanism</h3>
+
+<p>In <strong>autopilot mode</strong> (headless, autonomous work), the CLI actively tracks whether the model called <code>task_complete</code>. If the loop ends without it, the CLI injects a synthetic user message that restarts the loop — roughly:</p>
+
+<blockquote><em>"You have not yet marked the task as complete using the task_complete tool. If you were planning, stop planning and start implementing."</em></blockquote>
+
+<p>The nudge also instructs the model not to claim completion if it has open questions, hit an error, or left steps undone. The practical effect: in autopilot, "the agent stopped" is not the same as "the agent gave up". This is why autonomous runs behave differently from chat runs, and why you must budget for the extra turns a nudge loop can generate.</p>
+
+<h3>The event envelope</h3>
+
+<p>Every event, whatever its type, carries the same envelope. Learn these six fields once and every event becomes parseable:</p>
+
+<table>
+  <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+  <tr><td><code>id</code></td><td>string (UUID v4)</td><td>Unique event identifier</td></tr>
+  <tr><td><code>timestamp</code></td><td>string (ISO 8601)</td><td>When the event was created</td></tr>
+  <tr><td><code>parentId</code></td><td>string | null</td><td>Previous event in the chain — a linkable list. <code>null</code> for the first.</td></tr>
+  <tr><td><code>agentId</code></td><td>string?</td><td><strong>Sub-agent</strong> instance ID. Absent for the root agent and for session-level events.</td></tr>
+  <tr><td><code>ephemeral</code></td><td>boolean?</td><td><code>true</code> = streamed live but not persisted, not replayed on resume</td></tr>
+  <tr><td><code>type</code> + <code>data</code></td><td>string + object</td><td>Discriminator plus type-specific payload</td></tr>
+</table>
+
+<div class="callout-success callout">
+  <strong><code>agentId</code> is your free multiplexer.</strong> Sub-agent events share the parent session's stream and are tagged with <code>agentId</code>. Root-agent and session-level events omit it. So a main-chat renderer is one <code>if (!event.agentId)</code> away from never leaking a sub-agent's chatter into the user's view.
+</div>
+
+<h3>Subscribing</h3>
+
+<pre><code>// Every event — good for traces, bad for rendering
+session.on((event) => {
+  console.log(event.type, event.data);
+});
+
+// One type — data is narrowed automatically, no casts
+session.on("assistant.message_delta", (event) => {
+  process.stdout.write(event.data.deltaContent);
+});
+
+// Render only the parent agent's response (ignore sub-agents)
+export function subscribeParentResponse(session: CopilotSession): void {
+  session.on("assistant.message_delta", (event) => {
+    if (!event.agentId) {
+      process.stdout.write(event.data.deltaContent);
+    }
+  });
+}</code></pre>
+
+<p>You can also subscribe before a session exists — useful when a session is created by another part of your app — and unsubscribe by keeping the return value of <code>session.on(...)</code>.</p>
+
+<h3>The event taxonomy</h3>
+
+<p>There are 40+ event types. You do not need to memorise them, but you do need to know the families, because "which event do I hook?" is a daily question. Here is the map:</p>
+
+<table>
+  <tr><th>Family</th><th>Events</th><th>What you do with them</th></tr>
+  <tr>
+    <td><strong>Assistant</strong></td>
+    <td><code>assistant.turn_start</code>, <code>assistant.intent</code>, <code>assistant.reasoning</code>, <code>assistant.reasoning_delta</code>, <code>assistant.message</code>, <code>assistant.message_delta</code>, <code>assistant.turn_end</code>, <code>assistant.usage</code>, <code>assistant.streaming_delta</code></td>
+    <td>Render text, show reasoning, count turns, capture token usage per call</td>
+  </tr>
+  <tr>
+    <td><strong>Tool execution</strong></td>
+    <td><code>tool.execution_start</code>, <code>tool.execution_partial_result</code>, <code>tool.execution_progress</code>, <code>tool.execution_complete</code>, <code>tool.shell_output</code>, <code>tool.user_requested</code></td>
+    <td>Progress UI, live shell output, per-tool latency, audit trails</td>
+  </tr>
+  <tr>
+    <td><strong>Session lifecycle</strong></td>
+    <td><code>session.idle</code>, <code>session.error</code>, <code>session.compaction_start</code>, <code>session.compaction_complete</code>, <code>session.title_changed</code>, <code>session.context_changed</code>, <code>session.usage_info</code>, <code>session.usage_checkpoint</code>, <code>session.session_limits_changed</code>, <code>session.task_complete</code>, <code>session.shutdown</code></td>
+    <td>Completion detection, error alerting, context-window monitoring, cost dashboards</td>
+  </tr>
+  <tr>
+    <td><strong>Permissions &amp; input</strong></td>
+    <td><code>permission.requested</code>, <code>permission.completed</code>, <code>user_input.requested</code>, <code>user_input.completed</code>, <code>elicitation.requested</code>, <code>elicitation.completed</code></td>
+    <td>Human-in-the-loop approval UI, structured form dialogs</td>
+  </tr>
+  <tr>
+    <td><strong>Sub-agents &amp; skills</strong></td>
+    <td><code>subagent.started</code>, <code>subagent.completed</code>, <code>subagent.failed</code>, <code>subagent.selected</code>, <code>subagent.deselected</code>, <code>skill.invoked</code></td>
+    <td>Multi-agent progress UI, skill-usage analytics</td>
+  </tr>
+  <tr>
+    <td><strong>Transport &amp; plan</strong></td>
+    <td><code>abort</code>, <code>user.message</code>, <code>system.message</code>, <code>external_tool.requested</code>, <code>external_tool.completed</code>, <code>exit_plan_mode.requested</code>, <code>exit_plan_mode.completed</code>, <code>command.queued</code>, <code>command.completed</code></td>
+    <td>Audit, plan-mode approvals, slash-command tracking</td>
+  </tr>
+</table>
+
+<h3>Streaming: deltas vs finals</h3>
+
+<p>With <code>streaming: true</code> you get both delta events (chunks, ephemeral) and final events (complete content, persisted). The rule is simple: <strong>accumulate deltas for liveness, read the final event for truth.</strong> A dropped delta should never change your recorded answer.</p>
+
+<pre><code>const session = await client.createSession({ streaming: true, onPermissionRequest: approveAll });
+
+let buffer = "";
+
+session.on("assistant.message_delta", (e) => {
+  if (e.agentId) return;          // skip sub-agent streams
+  buffer += e.data.deltaContent;
+  process.stdout.write(e.data.deltaContent);
+});
+
+session.on("assistant.message", (e) => {
+  if (e.agentId) return;
+  buffer = e.data.content;        // authoritative — replaces the accumulation
+});</code></pre>
+
+<p>Reasoning models stream a parallel channel: <code>assistant.reasoning_delta</code> chunks up into <code>assistant.reasoning</code>. Deltas are not produced when streaming is disabled, including after a resume — so if your UI depends on them, verify the flag survived the resume.</p>
+
+<div class="callout-token">
+  <strong>Token angle:</strong> <code>assistant.usage</code> is emitted after each model call, which makes it the natural place to build per-turn cost attribution rather than per-session totals. It also exposes <code>apiEndpoint</code> (<code>AssistantUsageApiEndpoint</code>) telling you whether that turn went through Chat Completions, Responses, or Anthropic Messages — the single most useful field when you are trying to explain an unexpected bill. <code>session.compaction_start</code> / <code>session.compaction_complete</code> bracket every context compaction, so you can alert on "this session is compacting constantly", which almost always means your tool results are too large.
+</div>
+
+<h3>Error handling in the stream</h3>
+
+<p>Two different failure surfaces, and conflating them is a common bug:</p>
+
+<ul>
+  <li><code>session.error</code> is an <strong>event</strong> — the loop hit a problem but the session survives. Log it, alert, decide whether to re-prompt.</li>
+  <li>A thrown exception from <code>sendAndWait</code> or <code>createSession</code> is a <strong>rejected promise</strong> — transport or creation failure. <code>await</code> plus try/catch handles that path.</li>
+</ul>
+
+<p>You can also intercept errors <em>inside</em> the loop and choose a strategy — covered in Lesson 5's <code>onErrorOccurred</code> hook, which returns <code>"retry"</code>, <code>"skip"</code>, or <code>"abort"</code>.</p>
+
+<div class="quiz-block" id="quiz-2">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A single user prompt produces four <code>assistant.turn_start</code> / <code>assistant.turn_end</code> pairs. How many LLM API calls happened?</p>
+  <div class="quiz-opts" data-q="0" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Four — one per turn, with no hidden planning or evaluation calls</button>
+    <button class="quiz-btn" data-opt="b">One — the turns are streaming chunks of a single call</button>
+    <button class="quiz-btn" data-opt="c">Eight — turns are paired with a hidden completion check</button>
+    <button class="quiz-btn" data-opt="d">Cannot be determined from the event log</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Your headless job awaits <code>session.task_complete</code> and hangs, though the agent visibly finished. What is the correct fix?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Set <code>streaming: true</code> so the event is emitted</button>
+    <button class="quiz-btn" data-opt="b">Retry the prompt until <code>task_complete</code> appears</button>
+    <button class="quiz-btn" data-opt="c">Gate on <code>session.idle</code>, which always fires when the loop ends; treat <code>task_complete</code> as advisory</button>
+    <button class="quiz-btn" data-opt="d">Use <code>session.rpc.task.complete()</code> to force the signal</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which envelope field lets a single renderer distinguish the main agent's output from a sub-agent's, and what is its value for the root agent?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>parentId</code>; it is <code>null</code> for the root agent</button>
+    <button class="quiz-btn" data-opt="b"><code>agentId</code>; it is absent for the root agent and session-level events</button>
+    <button class="quiz-btn" data-opt="c"><code>ephemeral</code>; it is <code>false</code> for sub-agents</button>
+    <button class="quiz-btn" data-opt="d"><code>type</code>; sub-agent events are prefixed <code>subagent.</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/agent-loop.md" target="_blank" rel="noopener">The agent loop</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/streaming-events.md" target="_blank" rel="noopener">Streaming events reference (40+ types, full field detail)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/steering-and-queueing.md" target="_blank" rel="noopener">Steering and queueing</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-2');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,4 @@
+{
+  "title": "Sessions as Durable State",
+  "description": "Structured session IDs, what actually gets persisted, resume options, infinite sessions and compaction, context clearing, and deployment topologies."
+}

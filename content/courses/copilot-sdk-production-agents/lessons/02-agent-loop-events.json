@@ -1,0 +1,4 @@
+{
+  "title": "The Agent Loop and the Event Model",
+  "description": "Turns as LLM calls, the session.idle vs session.task_complete distinction, the event envelope, the full event taxonomy, and streaming."
+}

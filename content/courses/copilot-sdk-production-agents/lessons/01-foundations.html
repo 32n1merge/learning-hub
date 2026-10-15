@@ -1,0 +1,273 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 1: Foundations — What the Copilot SDK Actually Is</h2>
+
+<p>The single most expensive misunderstanding in this SDK is thinking it is an agent framework. It is not. The <span class="glossary-term">GitHub Copilot SDK</span> is a <em>typed transport layer</em> that speaks JSON-RPC to the <strong>Copilot CLI</strong>, and the CLI is the thing that actually runs the agent: it owns the tool-use loop, prompt assembly, context compaction, model routing, and authentication. Your job is to configure it, observe it, and — critically — to hand it the tools, guardrails, and state it needs.</p>
+
+<p>Once that split clicks, every design decision in the rest of this course becomes obvious. If the CLI owns the loop, you do not write a loop. If the CLI owns permissions, you do not write an authorisation layer — you return a decision. If the CLI owns compaction, you do not build a summariser — you set a threshold.</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 620 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="var(--color-text-secondary)"/>
+      </marker>
+    </defs>
+    <rect x="12" y="60" width="150" height="120" rx="12" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="87" y="98" text-anchor="middle" fill="var(--color-accent)" font-size="13" font-weight="700">Your App</text>
+    <text x="87" y="120" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">tools · hooks · state</text>
+    <text x="87" y="138" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">permissions · UI</text>
+
+    <rect x="230" y="60" width="160" height="120" rx="12" fill="var(--color-elevated)" stroke="var(--color-border)"/>
+    <text x="310" y="92" text-anchor="middle" fill="var(--color-text)" font-size="13" font-weight="700">SDK Client</text>
+    <text x="310" y="112" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">CopilotClient</text>
+    <text x="310" y="130" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">CopilotSession</text>
+    <text x="310" y="150" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">typed events</text>
+
+    <rect x="458" y="30" width="150" height="180" rx="12" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="533" y="58" text-anchor="middle" fill="var(--color-success)" font-size="13" font-weight="700">Copilot CLI</text>
+    <text x="533" y="80" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">agent loop</text>
+    <text x="533" y="98" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">tool dispatch</text>
+    <text x="533" y="116" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">compaction</text>
+    <text x="533" y="134" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">model routing</text>
+    <text x="533" y="152" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">auth</text>
+    <text x="533" y="178" text-anchor="middle" fill="var(--color-warning)" font-size="10">LLM calls happen here</text>
+
+    <line x1="162" y1="120" x2="228" y2="120" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw)"/>
+    <line x1="390" y1="120" x2="456" y2="120" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw)"/>
+    <text x="424" y="112" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">JSON-RPC</text>
+    <text x="424" y="140" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">stdio / TCP</text>
+    <text x="310" y="222" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">events flow back out the same pipe — that is your entire observability surface</text>
+  </svg>
+</div>
+
+<h3>What you own vs. what the runtime owns</h3>
+
+<table>
+  <tr><th>Concern</th><th>Who implements it</th><th>Your lever</th></tr>
+  <tr><td>The tool-use loop</td><td>Copilot CLI</td><td>Nothing — you observe turns</td></tr>
+  <tr><td>Each LLM API call</td><td>Copilot CLI</td><td><code>model</code>, <code>reasoningEffort</code>, <code>capi.autoTier</code></td></tr>
+  <tr><td>Tool execution</td><td>Either — CLI built-ins, or your handlers</td><td><code>tools: [defineTool(...)]</code></td></tr>
+  <tr><td>Approval of an action</td><td>Your handler decides, CLI enforces</td><td><code>onPermissionRequest</code>, <code>hooks.onPreToolUse</code></td></tr>
+  <tr><td>Context window management</td><td>Copilot CLI</td><td><code>infiniteSessions.backgroundCompactionThreshold</code></td></tr>
+  <tr><td>Persistence</td><td>Copilot CLI</td><td><code>sessionId</code>, <code>sessionFs</code>, <code>baseDirectory</code></td></tr>
+  <tr><td>Authentication</td><td>Copilot CLI</td><td><code>gitHubToken</code>, BYOK <code>provider</code>, <code>mode: "empty"</code></td></tr>
+  <tr><td>Telemetry plumbing</td><td>Copilot CLI exports</td><td><code>telemetry: { otlpEndpoint }</code></td></tr>
+</table>
+
+<div class="callout">
+  <strong>Design consequence:</strong> because the CLI owns the loop, "production-grade" in this SDK means <em>configuration and interception</em>, not re-implementation. Nearly every serious capability is expressed as one of four things: a session option, a hook, a permission decision, or an RPC call on <code>session.rpc</code>.
+</div>
+
+<h3>Install and your first agent</h3>
+
+<pre><code>mkdir copilot-demo
+cd copilot-demo
+npm init -y --init-type module
+npm install @github/copilot-sdk tsx</code></pre>
+
+<p>The Node.js SDK bundles the Copilot CLI, so there is no separate install step — but if you are on Go, Java, or Rust you install the CLI yourself, and <code>copilot --version</code> is the smoke test. Now the whole first agent:</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+const session = await client.createSession({ model: "auto" });
+
+const response = await session.sendAndWait({ prompt: "What is 2 + 2?" });
+console.log(response?.data.content);
+
+await client.stop();
+process.exit(0);</code></pre>
+
+<p>Run it with <code>npx tsx index.ts</code>. Five lines and you have a working agent — because everything hard is in the CLI.</p>
+
+<div class="callout-warn callout">
+  <strong>Note the <code>process.exit(0)</code>.</strong> The client holds an open JSON-RPC connection to the CLI child process. Without an explicit stop-and-exit your script will hang. This is the single most common "the docs example doesn't work" report.
+</div>
+
+<h3>The two objects you will live in</h3>
+
+<p><code>CopilotClient</code> is the process/connection-level object. It owns the transport to the CLI, authentication defaults, and telemetry. <code>CopilotSession</code> is the conversation-level object: it owns your tools, hooks, permission handler, model, and the event stream.</p>
+
+<pre><code>import { CopilotClient, RuntimeConnection } from "@github/copilot-sdk";
+
+// Client: process + transport + auth + telemetry. Usually ONE per process.
+const client = new CopilotClient({
+  mode: "empty",                                   // safe baseline for servers
+  telemetry: { otlpEndpoint: "http://localhost:4318" },
+  connection: RuntimeConnection.forUri(process.env.COPILOT_RUNTIME_URL!),
+});
+
+await client.start();
+
+// Session: conversation + tools + hooks + permissions. MANY per process.
+const session = await client.createSession({
+  sessionId: `user-${user.id}-${crypto.randomUUID()}`,
+  model: "gpt-5.4",
+  streaming: true,
+  onPermissionRequest: approveAll,
+  tools: [lookupOrder],
+});</code></pre>
+
+<p>Two methods do almost all the work of talking to an agent:</p>
+
+<table>
+  <tr><th>Call</th><th>Returns</th><th>Use when</th></tr>
+  <tr><td><code>session.send({ prompt })</code></td><td>Immediately, with a message ID</td><td>Fire-and-forget, or you are driving the UI from events</td></tr>
+  <tr><td><code>session.sendAndWait({ prompt })</code></td><td>Wait for <code>session.idle</code>, then the final assistant message</td><td>Request/response, scripts, batch jobs</td></tr>
+</table>
+
+<p><code>sendAndWait</code> is a convenience over one specific event. You will learn in Lesson 2 exactly which event, and why <code>session.idle</code> — not <code>session.task_complete</code> — is the one you can rely on.</p>
+
+<h3>The connection layer is a first-class design choice</h3>
+
+<p>Where the CLI <em>runs</em> is the biggest architectural decision you make, and it is expressed as a single <code>connection</code> option:</p>
+
+<pre><code>// Mode A: SDK spawns and owns the CLI process (default, stdio)
+const client = new CopilotClient();
+
+// Mode B: SDK spawns the CLI with extra arguments
+const client = new CopilotClient({
+  connection: RuntimeConnection.forStdio({
+    args: ["--plugin-dir", "./plugins/code-reviewer"],
+  }),
+});
+
+// Mode C: connect to an already-running headless CLI server
+const client = new CopilotClient({
+  connection: RuntimeConnection.forUri("http://127.0.0.1:8080"),
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>A trap that costs an afternoon:</strong> extra args like <code>--plugin-dir</code> are only forwarded when the SDK <em>spawns</em> the CLI. If you connect with <code>forUri</code>, the SDK is a client of someone else's process — you must pass those flags on the command line that started the runtime server. Silent no-op otherwise.
+</div>
+
+<h3>Five setup paths, one decision tree</h3>
+
+<p>The official setup guides are organised by who you are, which is a useful way to think about it:</p>
+
+<table>
+  <tr><th>You are…</th><th>Start with</th><th>Key config</th></tr>
+  <tr><td>Hobbyist</td><td>Bundled CLI (default)</td><td>Nothing — <code>new CopilotClient()</code></td></tr>
+  <tr><td>Internal app dev</td><td>GitHub OAuth + backend services</td><td><code>gitHubToken</code>, <code>useLoggedInUser: false</code></td></tr>
+  <tr><td>ISV / product</td><td>BYOK or OAuth</td><td><code>provider: { type, endpoint, apiKey }</code></td></tr>
+  <tr><td>Platform dev</td><td>Backend services + multi-tenancy</td><td><code>mode: "empty"</code>, per-session tokens, <code>sessionFs</code></td></tr>
+  <tr><td>Containerised / serverless</td><td>External headless CLI</td><td><code>RuntimeConnection.forUri(...)</code>, <code>baseDirectory</code></td></tr>
+</table>
+
+<div class="callout-token">
+  <strong>Token angle:</strong> the CLI's default <code>mode: "copilot-cli"</code> exposes a large ambient tool set — file reads, search, shell, its own built-in skills. Every one of those tool <em>definitions</em> sits in the system prompt on every single LLM call. Switching a server deployment to <code>mode: "empty"</code> and an explicit <code>availableTools</code> allowlist is simultaneously your biggest security win and your biggest prompt-token saving.
+</div>
+
+<h3>TypeScript is the reference implementation</h3>
+
+<p>Six SDKs exist — Node/TypeScript, Python, Go, .NET, Java, Rust — and they all speak the same JSON-RPC protocol, so behaviour is consistent across them. But TypeScript is where the surface is richest and best documented, and several capabilities land there first:</p>
+
+<table>
+  <tr><th>Capability</th><th>TS</th><th>Notable gaps elsewhere</th></tr>
+  <tr><td>Tool definitions with Zod</td><td>✅</td><td>Python uses Pydantic, Go struct tags, etc.</td></tr>
+  <tr><td><code>session.setTools()</code> (live tool replacement)</td><td>✅</td><td>Experimental; Java needs <code>@AllowCopilotExperimental</code>, .NET raises <code>GHCP001</code></td></tr>
+  <tr><td>Fleet mode (<code>session.rpc.fleet.start</code>)</td><td>✅</td><td>No verified Java binding on the audited branch</td></tr>
+  <tr><td>BYOK / custom providers</td><td>✅</td><td>API keys never persist — must re-provide on resume</td></tr>
+  <tr><td>Session filesystem (<code>sessionFs</code>)</td><td>✅</td><td>No verified public Java option</td></tr>
+</table>
+
+<p>Everything in this course is TypeScript. Where a capability is experimental or missing in another language, it is stated explicitly rather than quietly translated.</p>
+
+<h3>Version-pinning is a real requirement</h3>
+
+<p>The SDK and the CLI are a <em>pair</em>. The SDK's typed events, RPC namespaces, and hook shapes are generated from the runtime's schema. Fleet mode, tool replacement, and the diagnostics API are all marked experimental specifically because the wire contract can move. Pin both in <code>package.json</code>, and treat an SDK upgrade as a runtime upgrade with a release note to read.</p>
+
+<div class="quiz-block" id="quiz-1">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Where does the agent's tool-use loop actually execute?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">In your Node.js process, inside the SDK client</button>
+    <button class="quiz-btn" data-opt="b">In the model provider's API</button>
+    <button class="quiz-btn" data-opt="c">In the Copilot CLI, which the SDK drives over JSON-RPC</button>
+    <button class="quiz-btn" data-opt="d">In a separate orchestration service you must run yourself</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. You connect with <code>RuntimeConnection.forUri(url)</code> and pass <code>args: ["--plugin-dir", "./plugins/x"]</code>. What happens?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The plugin loads, since the SDK forwards args on every connection type</button>
+    <button class="quiz-btn" data-opt="b">The SDK throws a validation error</button>
+    <button class="quiz-btn" data-opt="c">The plugin loads but only for sessions created after the first turn</button>
+    <button class="quiz-btn" data-opt="d">Nothing — extra args are only forwarded when the SDK spawns the CLI itself</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which session option is the safest baseline for a shared multi-user server, and why?</p>
+  <div class="quiz-opts" data-q="2" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>model: "auto"</code>, because routing adapts per user</button>
+    <button class="quiz-btn" data-opt="b"><code>mode: "empty"</code>, because it removes ambient OS tools and bundled skills so you must explicitly allow what a session can touch</button>
+    <button class="quiz-btn" data-opt="c"><code>streaming: true</code>, because it isolates sessions more aggressively</button>
+    <button class="quiz-btn" data-opt="d"><code>infiniteSessions</code>, because compaction resets permissions each cycle</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md" target="_blank" rel="noopener">Getting Started — GitHub Copilot SDK</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/choosing-a-setup-path.md" target="_blank" rel="noopener">Choosing a setup path</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/nodejs/README.md" target="_blank" rel="noopener">Node.js / TypeScript SDK README (API reference)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/troubleshooting/compatibility.md" target="_blank" rel="noopener">SDK vs CLI compatibility matrix</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-1');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

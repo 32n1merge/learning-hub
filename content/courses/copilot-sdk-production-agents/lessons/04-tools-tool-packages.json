@@ -1,0 +1,4 @@
+{
+  "title": "Tools and Tool Packages",
+  "description": "defineTool anatomy, ToolResultObject and result types, built-in overrides, deferral, live tool replacement, and how to package a reusable, testable tool set."
+}

@@ -1,0 +1,336 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 4: Tools and Tool Packages</h2>
+
+<p>Tools are where your agent stops being a chatbot and starts doing work. They are also, in practice, where most production quality is won or lost. A <span class="glossary-term">tool</span> is a typed contract the model can invoke, and the SDK's job is to route the call into your handler and send the result back. Your job is to make each tool's contract honest, narrow, and cheap.</p>
+
+<h3>Anatomy of a tool</h3>
+
+<pre><code>import { z } from "zod";
+import { CopilotClient, defineTool } from "@github/copilot-sdk";
+
+const session = await client.createSession({
+  model: "gpt-5",
+  tools: [
+    defineTool("lookup_issue", {
+      description: "Fetch issue details from our tracker",
+      parameters: z.object({
+        id: z.string().describe("Issue identifier"),
+      }),
+      handler: async ({ id }) => {
+        const issue = await fetchIssue(id);
+        return issue;
+      },
+    }),
+  ],
+});</code></pre>
+
+<p>Four required pieces: a globally unique <code>name</code>, a <code>description</code> the model reads, a <code>parameters</code> schema, and a <code>handler</code>. Zod is the ergonomic path — the SDK converts it to JSON Schema for the model and <em>validates</em> arguments before your handler runs, so your handler receives typed, validated input. A raw JSON Schema object works too if you prefer not to depend on Zod.</p>
+
+<p>Your handler is called as <code>(args, invocation)</code>. The second argument is the one people forget exists, and it is where the production-useful metadata lives:</p>
+
+<table>
+  <tr><th><code>invocation</code> field</th><th>Use it for</th></tr>
+  <tr><td><code>sessionId</code></td><td>Scoping a database transaction, log correlation, tenant lookup</td></tr>
+  <tr><td><code>toolCallId</code></td><td>Correlating your logs with <code>tool.execution_start/complete</code> events and audit trails</td></tr>
+  <tr><td><code>toolName</code></td><td>Generic middleware across all your tools</td></tr>
+  <tr><td><code>arguments</code></td><td>The raw, pre-validation argument object</td></tr>
+  <tr><td><code>traceparent</code> / <code>tracestate</code></td><td>Continuing the distributed trace — see Lesson 9</td></tr>
+</table>
+
+<h3>Return values: the taxonomy that drives behaviour</h3>
+
+<p>You can return a plain string, any JSON-serialisable value (auto-wrapped), or a structured result object. Only the structured form lets you tell the runtime <em>what kind of outcome</em> this was — which matters, because the runtime treats them differently:</p>
+
+<table>
+  <tr><th>What you return</th><th>Interpreted as</th></tr>
+  <tr><td><code>"some text"</code></td><td>Success</td></tr>
+  <tr><td>Any JSON-serialisable object</td><td>Success, auto-wrapped</td></tr>
+  <tr><td><code>{ textResultForLlm, resultType }</code></td><td>Structured result</td></tr>
+  <tr><td><code>undefined</code></td><td><strong>Empty success</strong> — not an error</td></tr>
+  <tr><td>Throwing</td><td><strong>Failure</strong>, with your error message sent to the model</td></tr>
+</table>
+
+<p>The <code>resultType</code> discriminator has four supported values plus one reserved:</p>
+
+<table>
+  <tr><th><code>resultType</code></th><th>Meaning</th><th>Consequence</th></tr>
+  <tr><td><code>"success"</code></td><td>Worked</td><td>Normal path; <code>onPostToolUse</code> fires</td></tr>
+  <tr><td><code>"failure"</code></td><td>The tool ran but did not achieve its goal</td><td><code>onPostToolUseFailure</code> fires (not <code>onPostToolUse</code>)</td></tr>
+  <tr><td><code>"rejected"</code></td><td>The call was refused before execution</td><td>Does not fire the failure hook</td></tr>
+  <tr><td><code>"denied"</code></td><td>Permission was refused</td><td>Does not fire the failure hook</td></tr>
+  <tr><td><code>"timeout"</code></td><td>Reserved — recognised but does not currently fire the failure hook</td><td>—</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>Returning <code>undefined</code> is the sharpest edge in this lesson.</strong> In a tool whose purpose is to <em>report</em> (a validator, a linter, a check), returning nothing produces an empty <em>success</em> — the model concludes the check passed. Silent false-passes in agent pipelines almost always trace back to a handler with no explicit return on the happy path. Always return a string, even if it is just <code>"ok"</code>.
+</div>
+
+<div class="callout-success callout">
+  <strong>Structured results are preserved, not stringified.</strong> When you return a result object with metadata (including tool telemetry), the SDK sends it over RPC as an object rather than flattening it to text — so metadata survives for your own instrumentation without leaking into the model's view. Design your tools to return <em>both</em>: a short <code>textResultForLlm</code> the model can reason about, and rich structure for your observability.
+</div>
+
+<h3>Tool-level flags worth knowing</h3>
+
+<table>
+  <tr><th>Flag</th><th>Effect</th><th>When to reach for it</th></tr>
+  <tr><td><code>overridesBuiltInTool: true</code></td><td>Allows you to replace a built-in CLI tool of the same name</td><td>You want project-specific validation on <code>edit_file</code> / <code>read_file</code></td></tr>
+  <tr><td><code>skipPermission: true</code></td><td>This tool executes without triggering a permission prompt</td><td>Provably read-only, no-side-effect lookups</td></tr>
+  <tr><td><code>defer: "auto" | "never"</code></td><td>Whether the tool may be loaded lazily via tool search instead of always pre-loaded (default <code>"auto"</code>)</td><td><code>"never"</code> for tools that must always be visible</td></tr>
+  <tr><td><code>isTerminal: true</code></td><td>Successful completion ends the current agent turn</td><td>Context-clearing / handoff tools (Lesson 3)</td></tr>
+</table>
+
+<p>Registering a tool whose name collides with a built-in throws <em>unless</em> you explicitly opt in — a deliberate guardrail, since silently shadowing <code>read_file</code> would be a nasty surprise:</p>
+
+<pre><code>defineTool("edit_file", {
+  description: "Custom file editor with project-specific validation",
+  parameters: z.object({ path: z.string(), content: z.string() }),
+  overridesBuiltInTool: true,
+  handler: async ({ path, content }) => {
+    /* your logic */
+  },
+});</code></pre>
+
+<p>There is one schema quirk: an <code>apply_patch</code> override may declare a <em>string</em> schema. The model still sees a required <code>input</code> property, but the runtime restores the declared scalar shape before dispatch — both a Zod-inferred handler and <code>invocation.arguments</code> receive the patch text as a string. String-schema <code>apply_patch</code> overrides cannot contain JSON Schema references; use an object schema if you need <code>$ref</code>.</p>
+
+<h3>Deferral is a prompt-budget decision</h3>
+
+<p>Every tool definition you register occupies space in the model's context on every call. With dozens of tools that becomes real money and a real source of selection errors. <code>defer: "auto"</code> (the default) marks a tool as eligible for <em>tool search</em> — the model can find and load it on demand rather than carrying it always.</p>
+
+<pre><code>defineTool("lookup_issue", {
+  description: "Fetch issue details",
+  parameters: z.object({ id: z.string() }),
+  defer: "auto",
+  handler: async ({ id }) => { /* ... */ },
+});</code></pre>
+
+<div class="callout-token">
+  <strong>Token angle:</strong> think of the tool surface as a standing tax paid on every turn. Three levers reduce it: (1) <code>availableTools</code> to allowlist only what a session needs; (2) <code>defer: "auto"</code> so long-tail tools are searchable rather than always-present; (3) <code>defaultAgent.excludedTools</code> to hide heavy tools from the main agent and force delegation (Lesson 8). A tool with a vague description is worse than a missing tool — the model pays the token cost and still selects it wrongly. Descriptions are prompt engineering that runs on every single call.
+</div>
+
+<h3>Replacing tools on a live session</h3>
+
+<p>You can swap a session's tool set without recreating it — the pattern behind a page-aware assistant that offers only the tools the current view provides. The call replaces <strong>this client's entire tool set</strong>; built-in, MCP, plugin, and other clients' tools are untouched. Pass an empty array to remove all of yours.</p>
+
+<pre><code>import { CopilotClient, approveAll, defineTool } from "@github/copilot-sdk";
+import { z } from "zod";
+
+const client = new CopilotClient();
+const session = await client.createSession({ onPermissionRequest: approveAll });
+
+const searchIssues = defineTool("search_issues", {
+  description: "Search the issues shown on the current page",
+  parameters: z.object({ query: z.string().describe("Search text") }),
+  handler: async ({ query }) => findIssues(query),
+});
+
+await session.setTools([searchIssues]);   // supply only the current page's tools
+await session.setTools([]);               // remove all of this client's tools</code></pre>
+
+<p>The semantics are precise and worth internalising, because each line is a production incident you can avoid:</p>
+
+<table>
+  <tr><th>Aspect</th><th>Behaviour</th></tr>
+  <tr><td>Model visibility</td><td>The new tools appear from the agent's <strong>next model request</strong> — which can be part of a turn already in progress</td></tr>
+  <tr><td>Handlers</td><td>Take effect as soon as the runtime accepts the replacement; calls already running finish on their original handlers</td></tr>
+  <tr><td>Rejection</td><td>Invalid names, or names another connected client already supplies → replaces nothing, previous set stays live</td></tr>
+  <tr><td>Ordering</td><td>Concurrent replacements apply one at a time, in order</td></tr>
+  <tr><td>Cancellation</td><td>Cancelling after the request is sent stops only the wait — an accepted replacement still takes effect</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>Never remove a tool mid-turn.</strong> A model request already in flight was made with the old tool list, so the agent can still call a tool you just removed. The session will not answer that call (another client might legitimately supply the same name), so it stays pending until the turn is aborted. Replace tools while the session is <em>idle</em> — for example after <code>session.idle</code> — or abort first. Replacing a tool's <em>handler</em> under the same name is safe during a turn.
+</div>
+
+<h3>Packaging tools: the module-as-factory pattern</h3>
+
+<p>A "tool package" is just a module that exports a factory returning <code>Tool[]</code>. The value of the pattern is that it forces three good decisions: explicit dependencies, no module-level state, and one place to document the budget each tool spends.</p>
+
+<pre><code>// tools/orders.ts
+import { defineTool, type Tool } from "@github/copilot-sdk";
+import { z } from "zod";
+
+export interface OrderToolDeps {
+  orders: OrderRepository;          // injected, not imported
+  logger: Logger;
+  maxRows: number;                  // budget knob, explicit
+}
+
+export function orderTools(deps: OrderToolDeps): Tool[] {
+  const { orders, logger, maxRows } = deps;
+
+  return [
+    defineTool("orders_lookup", {
+      description:
+        "Look up a single order by its ID. Returns status, total, and item count. " +
+        "Does not return line items — use orders_items for that.",
+      parameters: z.object({
+        orderId: z.string().describe("Order identifier, e.g. ord_1234"),
+      }),
+      handler: async ({ orderId }, invocation) => {
+        logger.info({ orderId, toolCallId: invocation.toolCallId }, "orders_lookup");
+        const order = await orders.find(orderId);
+        if (!order) {
+          return {
+            textResultForLlm: `No order found with id ${orderId}.`,
+            resultType: "failure",
+          };
+        }
+        // Return a PROJECTION, not the whole record.
+        return {
+          textResultForLlm:
+            `Order ${order.id}: ${order.status}, total ${order.total}, ` +
+            `${order.itemCount} items, placed ${order.placedAt}.`,
+          resultType: "success",
+        };
+      },
+    }),
+
+    defineTool("orders_items", {
+      description:
+        "List the line items of an order. Paginated — returns at most `limit` items " +
+        "and reports whether more exist.",
+      parameters: z.object({
+        orderId: z.string(),
+        limit: z.number().int().min(1).max(50).default(20),
+      }),
+      handler: async ({ orderId, limit }) => {
+        const items = await orders.items(orderId, { limit });
+        return {
+          textResultForLlm:
+            items.map((i) => `- ${i.sku} x${i.qty} @ ${i.price}`).join("\n") +
+            (items.length === limit ? "\n(More items exist; call again with an offset.)" : ""),
+          resultType: "success",
+        };
+      },
+    }),
+  ];
+}</code></pre>
+
+<p>Then at the call site, the session becomes a composition of packages:</p>
+
+<pre><code>const session = await client.createSession({
+  onPermissionRequest: permissionHandler,
+  availableTools: ["custom:orders_lookup", "custom:orders_items"],
+  tools: [
+    ...orderTools({ orders: orderRepo, logger, maxRows: 20 }),
+    ...catalogTools({ catalog: catalogRepo }),
+  ],
+});</code></pre>
+
+<h3>Nine rules for tools that hold up in production</h3>
+
+<table>
+  <tr><th>#</th><th>Rule</th><th>Why</th></tr>
+  <tr><td>1</td><td>Never <code>console.log()</code> in a tool handler</td><td><strong>stdout is reserved for JSON-RPC</strong> — logging to it corrupts the protocol. Use a logger writing to stderr or your log sink.</td></tr>
+  <tr><td>2</td><td>Return a projection, not the raw record</td><td>Raw payloads land in context and trigger compaction. Return what the model needs to <em>decide</em>.</td></tr>
+  <tr><td>3</td><td>Paginate anything unbounded</td><td>An unpaginated list tool is an unbounded context injection with a friendly name.</td></tr>
+  <tr><td>4</td><td>State the negative contract in the description</td><td>"Does not return line items" prevents a whole class of wrong-tool selection.</td></tr>
+  <tr><td>5</td><td>Use <code>resultType: "failure"</code> for "ran but did not achieve it"</td><td>Distinguishes a lookup miss from an infrastructure error, and routes to the right hook.</td></tr>
+  <tr><td>6</td><td>Keep handlers stateless</td><td>In-memory tool state is not persisted; a resumed session loses it.</td></tr>
+  <tr><td>7</td><td>Inject dependencies as a factory</td><td>Makes the package unit-testable without a live session, and swappable per tenant.</td></tr>
+  <tr><td>8</td><td>Name tools with a stable prefix</td><td><code>orders_*</code>, <code>catalog_*</code> makes allowlists (<code>availableTools</code>) and audit greps tractable.</td></tr>
+  <tr><td>9</td><td>Correlate with <code>invocation.toolCallId</code></td><td>Your logs then join cleanly to <code>tool.execution_start</code> / <code>tool.execution_complete</code>.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>There is a second packaging surface: CLI extensions.</strong> The SDK also ships an extension entry point (<code>@github/copilot-sdk/extension</code> with <code>joinSession()</code>) for registering tools and hooks <em>into</em> the CLI itself rather than into your process. Same hook names and result shapes, but hard constraints: only immediate subdirectories are scanned, each must contain <code>extension.mjs</code> (TypeScript is not supported), project extensions shadow user extensions on name collision, tool-name collisions are fatal (the second extension fails to load), and extensions reload on <code>/clear</code> so all in-memory state is lost. Use it to ship capability <em>into</em> an existing CLI; use <code>defineTool</code> when you own the process.
+</div>
+
+<h3>Debugging tools</h3>
+
+<p>Two failure modes cover most of it. Tools the model never calls: almost always a description problem — the model cannot tell what it is for, or the tool is deferred and never surfaced. Tools that call but misbehave: watch <code>tool.execution_start</code> (carries <code>toolCallId</code>, <code>toolName</code>, <code>arguments</code>) and <code>tool.execution_complete</code> (carries <code>success</code>, <code>result</code>, <code>error</code>) — that pair is your per-call ground truth, and it includes the validated arguments the model actually sent, which is frequently not what you assumed.</p>
+
+<div class="quiz-block" id="quiz-4">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A validation tool returns nothing on the happy path. What does the runtime conclude?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It throws a validation error back to the model</button>
+    <button class="quiz-btn" data-opt="b">It retries the tool call once</button>
+    <button class="quiz-btn" data-opt="c">An empty <strong>success</strong> — the model treats the check as passed</button>
+    <button class="quiz-btn" data-opt="d">It marks the tool as <code>resultType: "rejected"</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which hook fires when a tool returns <code>resultType: "failure"</code>?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>onPostToolUse</code>, with the failure result attached</button>
+    <button class="quiz-btn" data-opt="b"><code>onPostToolUseFailure</code> — <code>onPostToolUse</code> does not fire for non-success results</button>
+    <button class="quiz-btn" data-opt="c">Both hooks fire, in that order</button>
+    <button class="quiz-btn" data-opt="d">Neither; failures are only visible via <code>session.error</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You want to remove a tool from a busy session. What is the safe sequence?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Abort the turn or wait for <code>session.idle</code>, then call <code>setTools()</code> — an in-flight request can still call the removed tool and the call will hang</button>
+    <button class="quiz-btn" data-opt="b">Call <code>setTools()</code> immediately; removal applies to the current turn atomically</button>
+    <button class="quiz-btn" data-opt="c">Delete the session and recreate it with the new tool set</button>
+    <button class="quiz-btn" data-opt="d">Call <code>setTools([])</code> and rely on the runtime to reject late calls automatically</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/changing-tools.md" target="_blank" rel="noopener">Changing tools during a session</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/nodejs/docs/agent-author.md" target="_blank" rel="noopener">Agent / extension author guide (tool + hook reference)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/nodejs/README.md#tools" target="_blank" rel="noopener">Node.js SDK — Tools section</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/mcp.md#tool-configuration" target="_blank" rel="noopener">MCP tool configuration (allow / deny patterns)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-4');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,287 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 3: Sessions as Durable State</h2>
+
+<p>A <span class="glossary-term">session</span> is the durable unit of an agent run. It has an identity, a conversation history on disk, a plan file, and a working directory. Treat the session ID the way you treat a primary key in a database, because that is functionally what it is — and in multi-tenant systems it is also your access-control boundary.</p>
+
+<h3>Session IDs are an interface, not an implementation detail</h3>
+
+<p>You can let the runtime generate an opaque ID, but in anything resembling production you should not. Structured IDs make auditing, cleanup, and authorisation trivial:</p>
+
+<table>
+  <tr><th>Pattern</th><th>Example</th><th>Why</th></tr>
+  <tr><td>❌ Random</td><td><code>abc123</code></td><td>No ownership information, unauditable</td></tr>
+  <tr><td>✅ User-scoped</td><td><code>user-alice-pr-review-42</code></td><td>Find and delete every session for a user</td></tr>
+  <tr><td>✅ Tenant-scoped</td><td><code>tenant-acme-onboarding</code></td><td>Enforce tenant isolation by parsing the ID</td></tr>
+  <tr><td>✅ Time-scoped</td><td><code>alice-deploy-1706932800000</code></td><td>Time-based retention and cleanup</td></tr>
+</table>
+
+<pre><code>function createSessionId(userId: string, taskType: string): string {
+  const timestamp = Date.now();
+  return `${userId}-${taskType}-${timestamp}`;
+}
+
+const sessionId = createSessionId("alice", "code-review");
+// → "alice-code-review-1706932800000"</code></pre>
+
+<div class="callout-warn callout">
+  <strong>Session IDs are a security boundary, so validate before you trust them.</strong> The runtime scopes state per session but does <em>not</em> enforce your application's authorisation. If a caller supplies a session ID, parse the user/tenant segment and verify the caller is entitled to it <em>before</em> resuming — otherwise you have handed out a conversation-history read primitive.
+</div>
+
+<h3>What actually gets persisted</h3>
+
+<p>State lands in <code>~/.copilot/session-state/{sessionId}/</code>, or under <code>COPILOT_HOME</code> when you override <code>baseDirectory</code>:</p>
+
+<pre><code>~/.copilot/session-state/
+└── user-123-task-456/
+    ├── checkpoints/           # Conversation history snapshots
+    │   ├── 001.json           # Initial state
+    │   ├── 002.json           # After first interaction
+    │   └── ...
+    ├── plan.md                # Agent's planning state (if any)
+    └── files/                 # Session artifacts
+        ├── analysis.md
+        └── notes.txt</code></pre>
+
+<table>
+  <tr><th>Data</th><th>Persisted?</th><th>Note</th></tr>
+  <tr><td>Conversation history</td><td>✅ Yes</td><td>Full message thread</td></tr>
+  <tr><td>Tool call results</td><td>✅ Yes</td><td>Cached for context</td></tr>
+  <tr><td>Agent planning state</td><td>✅ Yes</td><td><code>plan.md</code></td></tr>
+  <tr><td>Session artifacts</td><td>✅ Yes</td><td><code>files/</code> directory</td></tr>
+  <tr><td>Provider / API keys</td><td>❌ <strong>No</strong></td><td>Security — you must re-provide on resume</td></tr>
+  <tr><td>In-memory tool state</td><td>❌ No</td><td><strong>Tools must be stateless</strong></td></tr>
+</table>
+
+<div class="callout">
+  <strong>The two ❌s are design constraints, not trivia.</strong> Keys never touch disk, so a resume that forgets <code>provider</code> fails. And because in-memory tool state is lost, any tool whose correctness depends on a previous call must externalise that state (a database, a cache, or the conversation itself). This is the root cause of most "it worked, then I resumed and it went weird" bugs.
+</div>
+
+<h3>Creating, resuming, listing, deleting</h3>
+
+<pre><code>// Create with a meaningful ID
+const session = await client.createSession({
+  sessionId: "user-123-task-456",
+  model: "gpt-5.4",
+  onPermissionRequest: approveAll,
+});
+
+// Resume later — same ID, different process, different machine
+const resumed = await client.resumeSession("user-123-task-456", {
+  model: "claude-sonnet-4",
+  reasoningEffort: "high",
+});
+
+// Housekeeping
+const sessions = await client.listSessions();
+const repoSessions = await client.listSessions({ repository: "owner/repo" });
+await client.deleteSession("user-123-task-456");   // permanent
+await session.disconnect();                        // detach, keep state</code></pre>
+
+<p><code>disconnect()</code> and <code>deleteSession()</code> are different operations and conflating them is a data-loss bug waiting to happen. Disconnect releases the connection while leaving state on disk; delete removes the session permanently.</p>
+
+<h3>Resume is a reconfiguration point</h3>
+
+<p>The genuinely useful insight here: <code>resumeSession</code> accepts almost the entire session config again. That means you can adapt a live workflow without losing its history.</p>
+
+<table>
+  <tr><th>Option</th><th>Effect</th></tr>
+  <tr><td><code>model</code></td><td>Switch models — escalate to a stronger one for a hard phase</td></tr>
+  <tr><td><code>reasoningEffort</code></td><td>Adjust thinking budget</td></tr>
+  <tr><td><code>systemMessage</code></td><td>Override or extend the system prompt</td></tr>
+  <tr><td><code>availableTools</code> / <code>excludedTools</code></td><td>Change the tool surface</td></tr>
+  <tr><td><code>provider</code></td><td><strong>Required</strong> for BYOK sessions — keys are never persisted</td></tr>
+  <tr><td><code>mcpServers</code>, <code>customAgents</code>, <code>agent</code></td><td>Re-attach or re-select agents and MCP servers</td></tr>
+  <tr><td><code>skillDirectories</code>, <code>disabledSkills</code></td><td>Change skill availability</td></tr>
+  <tr><td><code>infiniteSessions</code></td><td>Compaction behaviour</td></tr>
+  <tr><td><code>workingDirectory</code>, <code>configDir</code></td><td>Relocate execution context</td></tr>
+  <tr><td><code>capi.enableWebSocketResponses</code></td><td>Transport fallback (see pitfall below)</td></tr>
+</table>
+
+<pre><code>// BYOK: the provider MUST be re-provided, because keys are never persisted
+const resumed = await client.resumeSession("user-123-task-456", {
+  provider: {
+    type: "azure",
+    endpoint: "https://my-resource.openai.azure.com",
+    apiKey: process.env.AZURE_OPENAI_KEY,
+    deploymentId: "my-gpt-deployment",
+  },
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>The 400 you will eventually hit:</strong> a resumed session reporting <code>400 input item ID does not belong to this connection</code> is specific to the WebSocket transport for the Responses API (on by default). The fix is <code>capi: { enableWebSocketResponses: false }</code> on the resume call — which is also worth setting proactively when you run behind a proxy. The equivalent env var is <code>COPILOT_CLI_DISABLE_WEBSOCKET_RESPONSES</code>, and note it has the <em>opposite</em> polarity.
+</div>
+
+<h3>Infinite sessions and compaction</h3>
+
+<p>Long-running agents will eventually exceed the context window. Rather than letting that fail, the runtime compacts — summarising older history in the background and continuing. It is on by default, and you tune it with a threshold:</p>
+
+<pre><code>const session = await client.createSession({
+  infiniteSessions: {
+    backgroundCompactionThreshold: 0.80,   // start compaction at 80% of the window
+  },
+  onPermissionRequest: approveAll,
+});</code></pre>
+
+<p>Watch for the pair <code>session.compaction_start</code> and <code>session.compaction_complete</code>. Compaction is where accuracy silently degrades: details can be summarised away, and a resumed-plus-compacted session may not remember a specific identifier it saw 60 turns ago.</p>
+
+<div class="callout-token">
+  <strong>Token angle:</strong> compaction is the runtime spending tokens to buy back context. A session that compacts repeatedly is a session whose <em>individual tool results are too large</em>. Before you raise the threshold, look at your biggest tool payloads — you will usually find a tool returning a whole file or a whole API response where a projection would do. Fixing the tool is cheaper than paying for the summariser every cycle.
+</div>
+
+<h3>Clearing context without losing the session</h3>
+
+<p>Sometimes you want a hard reset of the <em>conversation</em> while keeping the session identity, configuration, system messages, and event log. That is <code>clearContext</code>, and it is a tool-handler primitive — the runtime rejects it unless a tool call is in flight.</p>
+
+<pre><code>import { approveAll, CopilotClient, defineTool } from "@github/copilot-sdk";
+import type { CopilotSession } from "@github/copilot-sdk";
+import { z } from "zod";
+
+const client = new CopilotClient();
+let session: CopilotSession;
+
+session = await client.createSession({
+  onPermissionRequest: approveAll,
+  tools: [
+    defineTool("clear_context", {
+      description: "Clear the conversation and start a fresh context window",
+      parameters: z.object({ prompt: z.string() }),
+      isTerminal: true,       // success ends the turn — essential here
+      defer: "never",         // must always be available, never lazily loaded
+      handler: async ({ prompt }) => {
+        const { messagesCleared } =
+          await session.rpc.history.clearContext({ prompt });
+        return `Cleared ${messagesCleared} messages.`;
+      },
+    }),
+  ],
+});</code></pre>
+
+<p>The required <code>prompt</code> becomes the first user message in the fresh window, and a successful clear emits <code>session.context_cleared</code> with the count and the seed message. This is the primitive behind handoffs and host-managed context lifecycle policies.</p>
+
+<div class="callout-success callout">
+  <strong>Why <code>isTerminal: true</code> is not optional here.</strong> Terminality ends the current agent turn when the tool <em>succeeds</em> (a failure, denial, rejection, timeout, or validation error stays visible to the model so it can recover). Without it, the loop may make another model call against the newly cleared window before starting your seeded turn — burning a turn on an empty context. Use <code>isTerminal</code> only for tools whose success should end the turn; leave it unset everywhere else.
+</div>
+
+<h3>Deployment topology: where the session state lives</h3>
+
+<p>Two patterns dominate, and the choice trades isolation against cost:</p>
+
+<table>
+  <tr><th></th><th>Pattern 1 — CLI per user</th><th>Pattern 2 — shared CLI</th></tr>
+  <tr><td>Isolation</td><td><strong>Strong</strong> — separate process, separate credentials</td><td>Logical only — your app must enforce it</td></tr>
+  <tr><td>Cost</td><td>Higher (one runtime per user)</td><td>Efficient (one runtime, many sessions)</td></tr>
+  <tr><td>Requires</td><td>Process orchestration, per-user lifecycle</td><td><code>mode: "empty"</code>, per-session tokens, app-level access checks</td></tr>
+  <tr><td>Use when</td><td>Regulated data, per-user credentials, hard boundaries</td><td>Many light users, you control tools and auth</td></tr>
+</table>
+
+<p>Pattern 2 additionally wants <code>baseDirectory</code> to isolate runtime state per process/pod/tenant, and <code>sessionIdleTimeoutSeconds</code> so abandoned sessions get reaped rather than leaked.</p>
+
+<pre><code>const client = new CopilotClient({
+  mode: "empty",
+  baseDirectory: `/var/lib/my-app/copilot/${runtimeInstanceId}`,
+  sessionIdleTimeoutSeconds: 900,
+  connection: RuntimeConnection.forUri(process.env.COPILOT_RUNTIME_URL!),
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>Containerised deployments: mount the state directory.</strong> <code>~/.copilot/session-state/</code> must be writable, so a container with an ephemeral filesystem loses every session on restart — and resume silently becomes create. Mount a persistent volume, or route storage through <code>sessionFs</code> so session file I/O goes to your own storage layer (the right answer when disk is ephemeral or you need tenant-aware paths).
+</div>
+
+<h3>Session filesystem (<code>sessionFs</code>)</h3>
+
+<p><code>sessionFs</code> registers a custom session filesystem provider so session-scoped file I/O is routed through your storage instead of local disk. The isolation subtlety is worth stating precisely: the runtime does <strong>not</strong> partition files by session ID for you. Sessions accessing the same files in the same provider namespace <em>share</em> remembered grants. Your application must use distinct namespaces per tenant and authorise access to each.</p>
+
+<div class="quiz-block" id="quiz-3">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A BYOK session worked yesterday. Today you resume it and get an authentication failure. Why?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">OAuth tokens expire after 24 hours and cannot be refreshed</button>
+    <button class="quiz-btn" data-opt="b">Provider keys are never persisted to disk for security, so <code>provider</code> must be re-supplied on resume</button>
+    <button class="quiz-btn" data-opt="c">The model changed and invalidated the credentials</button>
+    <button class="quiz-btn" data-opt="d">Resume always starts a fresh session on a different host</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which is <em>not</em> persisted in session state?</p>
+  <div class="quiz-opts" data-q="1" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Conversation history and cached tool results</button>
+    <button class="quiz-btn" data-opt="b">The agent's <code>plan.md</code></button>
+    <button class="quiz-btn" data-opt="c">Files the agent created in <code>files/</code></button>
+    <button class="quiz-btn" data-opt="d">Your tool handlers' in-memory state — tools must be stateless</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. You expose a <code>clear_context</code> tool. Why must it set <code>isTerminal: true</code>?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">So the tool cannot be called more than once per session</button>
+    <button class="quiz-btn" data-opt="b">So the permission handler is skipped for it</button>
+    <button class="quiz-btn" data-opt="c">So success ends the turn, preventing another model call against the freshly cleared window</button>
+    <button class="quiz-btn" data-opt="d">So the cleared messages are persisted to the event log</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/session-persistence.md" target="_blank" rel="noopener">Session resume and persistence</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/context-management.md" target="_blank" rel="noopener">Context clearing and terminal tools</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/scaling.md" target="_blank" rel="noopener">Scaling and multi-tenancy</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/multi-tenancy.md" target="_blank" rel="noopener">Multi-tenancy and server deployments</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-3');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>
