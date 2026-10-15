@@ -1,0 +1,491 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 7: Extending the Agent — Skills, Plugins, and MCP</h2>
+
+<p>Tools give the agent <em>actions</em>. The three mechanisms in this lesson give it <em>procedures</em> (skills), <em>distribution</em> (plugins), and <em>connections</em> (MCP servers). Together they are how one codebase serves many teams, tenants, and external systems without forking the agent.</p>
+
+<h3>Skills: procedural knowledge as files</h3>
+
+<p>A <span class="glossary-term">skill</span> is a markdown document of instructions the agent loads on demand. Where a tool describes <em>what it can do</em>, a skill describes <em>how this organisation does it</em> — review standards, migration checklists, release procedures. The value is progressive disclosure: the full text is not in every prompt, only when relevant.</p>
+
+<pre><code>skills/
+├── code-review/
+│   └── SKILL.md
+└── documentation/
+    └── SKILL.md</code></pre>
+
+<pre><code>---
+name: code-review
+description: Specialized code review capabilities
+---
+
+# Code Review Guidelines
+
+When reviewing code, always check for:
+
+1. **Security vulnerabilities** - SQL injection, XSS, etc.
+2. **Performance issues** - N+1 queries, memory leaks
+3. **Code style** - Consistent formatting, naming conventions
+4. **Test coverage** - Are critical paths tested?
+
+Provide specific line-number references and suggested fixes.</code></pre>
+
+<table>
+  <tr><th>Frontmatter field</th><th>Purpose</th></tr>
+  <tr><td><code>name</code></td><td>The skill's identifier — used by <code>disabledSkills</code> to disable it selectively. <strong>If omitted, the directory name is used.</strong></td></tr>
+  <tr><td><code>description</code></td><td>What the skill does. This is what the model sees when deciding whether to load it.</td></tr>
+</table>
+
+<p>The body is the payload: it is injected into session context when the skill is loaded.</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+const session = await client.createSession({
+  model: "gpt-5.4",
+  skillDirectories: ["./skills/code-review", "./skills/documentation"],
+  onPermissionRequest: async () =&gt; ({ kind: "approve-once" }),
+});
+
+await session.sendAndWait({ prompt: "Review this code for security issues" });</code></pre>
+
+<div class="callout">
+  <strong>Two directory forms, and both are valid.</strong> Discovery treats a directory that <em>directly</em> contains a <code>SKILL.md</code> as a skill bundle, and otherwise recursively discovers topmost bundles. So a single skill directory (<code>./skills/code-review</code>) and a parent directory whose immediate subdirectories are skills (<code>./skills</code>) both work. If a skill mysteriously fails to load, try the other form before assuming a bug — and remember discovery is <em>immediate subdirectories only</em>, not an unbounded crawl, unless the recursive bundle rule applies.
+</div>
+
+<h3>Four lists, not one: the discovery surface</h3>
+
+<p>Skills are one of four discoverable customization types, and the SDK accepts all four as session options:</p>
+
+<pre><code>const session = await client.createSession({
+  skillDirectories: ["./skills"],
+  agentDirectories: ["./agents"],
+  instructionDirectories: ["./instructions"],
+  hookDirectories: ["./hooks"],
+});</code></pre>
+
+<p>TypeScript and Java use these camelCase names; Python and Rust use snake case; Go and .NET use Pascal case. The same four lists are accepted on <strong>create, resume, and option updates</strong>, and the semantics have real edges:</p>
+
+<table>
+  <tr><th>Behaviour</th><th>Detail</th></tr>
+  <tr><td>SDK paths may live outside the checkout</td><td>Unlike repository-declared paths, which must resolve inside the declaring checkout</td></tr>
+  <tr><td>Relative paths resolve <strong>once</strong></td><td>Against the request's effective working directory. Changing the working directory later does not move retained roots.</td></tr>
+  <tr><td>Empty list vs omitted</td><td>An empty list clears only the explicit SDK contribution; omission or <code>null</code> leaves it unchanged on update</td></tr>
+  <tr><td>Directory inputs are discovery config, not filesystem grants</td><td>They do not widen <code>additionalDirectories</code>; existing hook sandbox rules still apply</td></tr>
+  <tr><td>Failed <code>hookDirectories</code> replacement</td><td>The previous directory option and live hook service remain in place — a failed update never leaves you with no hooks</td></tr>
+</table>
+
+<p>There is a second, repository-scoped surface — <code>.github/copilot/settings.json</code> — for versioned content that ships in packages, submodules, or vendored directories:</p>
+
+<pre><code>{
+  "skillDirectories": ["node_modules/@example/team/skills"],
+  "agentDirectories": ["vendor/team/agents"],
+  "instructionDirectories": ["vendor/team/instructions"],
+  "hookDirectories": ["vendor/team/hooks"]
+}</code></pre>
+
+<p>Precedence notes worth internalising: a key in <code>.github/copilot/settings.local.json</code> replaces only that repository list (an empty list removes its contribution, omitted keys inherit the checked-in list), and repository lists never replace SDK inputs or existing user skill directories. Repository paths must be nonempty literal directories <em>inside</em> the checkout — absolute paths, <code>~</code> or env-var expansion, globs, and escapes are rejected. Symlinks are allowed only if their resolved roots <em>and</em> discovered descendants stay inside. And listing a location does not enable a disabled customization type or grant filesystem access — those are separate switches.</p>
+
+<h3>Per-agent skills, and the inheritance rule</h3>
+
+<pre><code>const session = await client.createSession({
+  skillDirectories: ["./skills"],
+  customAgents: [
+    {
+      name: "security-auditor",
+      description: "Security-focused code reviewer",
+      prompt: "Focus on OWASP Top 10 vulnerabilities",
+      skills: ["security-scan", "dependency-check"],
+    },
+    {
+      name: "docs-writer",
+      description: "Technical documentation writer",
+      prompt: "Write clear, concise documentation",
+      skills: ["markdown-lint"],
+    },
+  ],
+  onPermissionRequest: async () =&gt; ({ kind: "approve-once" }),
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>Skills are opt-in and do not inherit.</strong> An agent with a <code>skills</code> list gets the <em>full content</em> of each listed skill eagerly injected at startup — it never needs to invoke a skill tool, because the instructions are already there. An agent <em>without</em> a <code>skills</code> field receives no skill content at all, and <strong>sub-agents do not inherit skills from the parent session</strong>. Skill names resolve from the session-level <code>skillDirectories</code>. This is deliberate: eager injection costs tokens, so you choose per agent.
+</div>
+
+<h3>Disabling, reloading, and provider-served skills</h3>
+
+<pre><code>const session = await client.createSession({
+  skillDirectories: ["./skills"],
+  disabledSkills: ["markdown-lint"],     // selectively off
+  onPermissionRequest: approveAll,
+});
+
+// Pick up on-disk changes without restarting
+await session.rpc.skills.reload();</code></pre>
+
+<p>For multi-tenant services, skills often live in a database rather than on disk. <strong>Skill providers</strong> (experimental — the API can change) serve them from your own storage. A provider implements exactly two operations:</p>
+
+<table>
+  <tr><th>Operation</th><th>Returns</th><th>Called</th></tr>
+  <tr><td><strong>List skills</strong></td><td>Catalog metadata per skill: <code>name</code>, <code>description</code>, and optionally <code>userInvocable</code>, <code>disableModelInvocation</code>, <code>argumentHint</code></td><td>When the runtime loads the session's skills</td></tr>
+  <tr><td><strong>Read skill</strong></td><td>The markdown for one skill, or a not-found result</td><td>Only when that skill is actually loaded</td></tr>
+</table>
+
+<p>Provider skills join the session catalog alongside file-based skills, and the model loads them on demand through the <code>skill</code> tool. Note the trust posture: provider content is <em>your</em> content served over your own transport, so your provider is responsible for its integrity.</p>
+
+<h3>Plugins: the distribution unit</h3>
+
+<p>A <span class="glossary-term">plugin</span> is a directory that bundles any combination of skills, hooks, MCP servers, agents, and LSP configuration behind one manifest. It is how you ship a capability set — to a team, or into a product image — as a versioned artifact rather than a pile of configuration.</p>
+
+<pre><code>my-plugin/
+├── plugin.json              # manifest (required unless SKILL.md only)
+├── SKILL.md                 # optional: top-level skill
+├── hooks.json               # optional: hooks config
+├── .mcp.json                # optional: MCP server config
+├── agents/                  # optional: custom agents (one .md per agent)
+│   └── code-reviewer.md
+└── skills/                  # optional: additional skills
+    └── lint-fix/
+        └── SKILL.md</code></pre>
+
+<p>The CLI scans each plugin directory for a <code>plugin.json</code> manifest <em>or</em> a root-level <code>SKILL.md</code>. The manifest may alternatively live at <code>.github/plugin.json</code> or <code>.github/plugin/plugin.json</code>, so a plugin can sit inside an existing repository without changing its root layout. Every subsystem has its own loader and is optional — a plugin only needs the parts it contributes.</p>
+
+<pre><code>import { CopilotClient, RuntimeConnection } from "@github/copilot-sdk";
+
+const client = new CopilotClient({
+  connection: RuntimeConnection.forStdio({
+    args: [
+      "--plugin-dir", "./plugins/code-reviewer",
+      "--plugin-dir", "./plugins/lint-fix",
+    ],
+  }),
+});
+
+await client.start();</code></pre>
+
+<div class="callout-warn callout">
+  <strong>Two plugin traps, both silent.</strong> (1) <code>--plugin-dir</code> is only forwarded when the SDK <em>spawns</em> the CLI. Connecting with <code>fromUri</code> means your extra args go nowhere — pass the flags on the command line that starts the runtime server instead. (2) Duplicate hooks: the runtime de-duplicates by <code>cache_path</code> only when the same directory is referenced both as a marketplace install and a <code>--plugin-dir</code>. If two <em>different</em> directories contain the same plugin, both load and your hooks fire twice. Remove one, or set <code>COPILOT_PLUGIN_DIR_ONLY=true</code>.
+</div>
+
+<table>
+  <tr><th>Troubleshooting signal</th><th>Meaning</th></tr>
+  <tr><td><code>no plugin.json or SKILL.md found in &lt;dir&gt;</code></td><td>The directory exists but does not qualify as a plugin — add the manifest at the root or under <code>.github/</code>, or a top-level <code>SKILL.md</code></td></tr>
+  <tr><td>Plugin loads but agents/skills invisible</td><td>The manifest must declare what it contributes, or use the implicit layout (<code>agents/*.md</code>, <code>skills/*/SKILL.md</code>). Then call <code>session.rpc.skills.reload()</code> to pick up changes without a restart.</td></tr>
+  <tr><td>Duplicate hooks firing</td><td>Two directories with the same plugin — see above</td></tr>
+</table>
+
+<h3>MCP: connecting to external tool servers</h3>
+
+<p><span class="glossary-term">MCP</span> (Model Context Protocol) servers expose tools over a standard protocol, so one integration can serve every MCP-speaking agent. Configure them on the session's <code>mcpServers</code> map:</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+
+const session = await client.createSession({
+  mcpServers: {
+    filesystem: {
+      type: "local",
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      tools: ["*"],
+    },
+  },
+});
+
+const result = await session.sendAndWait({
+  prompt: "List the files in the allowed directory",
+});
+console.log(result?.data?.content);
+
+await session.disconnect();
+await client.stop();</code></pre>
+
+<h4>Local / stdio servers</h4>
+<table>
+  <tr><th>Property</th><th>Required</th><th>Description</th></tr>
+  <tr><td><code>type</code></td><td>—</td><td><code>"local"</code> or <code>"stdio"</code> (defaults to local)</td></tr>
+  <tr><td><code>command</code></td><td>✅</td><td>Command to execute</td></tr>
+  <tr><td><code>args</code></td><td>✅</td><td>Command arguments</td></tr>
+  <tr><td><code>env</code></td><td>—</td><td>Environment variables</td></tr>
+  <tr><td><code>cwd</code></td><td>—</td><td>Working directory</td></tr>
+  <tr><td><code>tools</code></td><td>—</td><td><code>["*"]</code> all · <code>[]</code> none · explicit names to allowlist</td></tr>
+  <tr><td><code>timeout</code></td><td>—</td><td>Milliseconds</td></tr>
+</table>
+
+<h4>Remote servers (HTTP / SSE)</h4>
+<table>
+  <tr><th>Property</th><th>Required</th><th>Description</th></tr>
+  <tr><td><code>type</code></td><td>✅</td><td><code>"http"</code> or <code>"sse"</code></td></tr>
+  <tr><td><code>url</code></td><td>✅</td><td>Server URL</td></tr>
+  <tr><td><code>headers</code></td><td>—</td><td>HTTP headers, e.g. for static-token auth</td></tr>
+  <tr><td><code>oauthClientId</code></td><td>—</td><td>Non-empty client ID for a statically configured OAuth client</td></tr>
+  <tr><td><code>oauthScopes</code></td><td>—</td><td>Non-empty array of valid RFC 6749 scope tokens. Requires <code>oauthClientId</code>; used when the server challenge omits scope or sends an empty one, before protected-resource metadata fallback</td></tr>
+  <tr><td><code>oauthPublicClient</code></td><td>—</td><td>Whether the client is public (no client secret)</td></tr>
+  <tr><td><code>oauthGrantType</code></td><td>—</td><td>e.g. <code>client_credentials</code></td></tr>
+  <tr><td><code>tools</code></td><td>—</td><td>Allowlist</td></tr>
+  <tr><td><code>timeout</code></td><td>—</td><td>Milliseconds</td></tr>
+</table>
+
+<p>The <code>tools</code> field is the same allowlist pattern as <code>availableTools</code>, applied per server — <code>["*"]</code> for all, a name list to restrict, <code>[]</code> to disable. And you can suppress a configured server without editing the config:</p>
+
+<pre><code>const session = await client.createSession({
+  mcpServers: {
+    filesystem: { type: "local", command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem", "."] },
+    github: { type: "http", url: "https://api.githubcopilot.com/mcp/" },
+  },
+  disabledMcpServers: ["github"],
+});</code></pre>
+
+<div class="callout">
+  <strong>Disabled servers are not merely hidden.</strong> On session creation and on a <em>cold</em> resume, disabled servers are not started and the runtime does not initiate their authentication — so <code>disabledMcpServers</code> is a genuine security control, not a UI filter. Caveat: a <em>resident</em> resume cannot undo a server the runtime has already spawned, and names are matched exactly.
+</div>
+
+<h3>MCP authentication — three ownership models</h3>
+
+<p>Remote MCP servers that require OAuth force you to pick who owns the credential lifecycle. Choose exactly one model <em>per authentication attempt</em>:</p>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="20" width="196" height="160" rx="10" fill="var(--color-surface)" stroke="var(--color-accent)"/>
+    <text x="108" y="44" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">1 · Runtime loopback</text>
+    <text x="108" y="66" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">mcp.oauth.login</text>
+    <text x="108" y="82" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">no redirectUri</text>
+    <text x="108" y="108" text-anchor="middle" fill="var(--color-text)" font-size="9">Runtime owns discovery,</text>
+    <text x="108" y="122" text-anchor="middle" fill="var(--color-text)" font-size="9">PKCE, state, exchange,</text>
+    <text x="108" y="136" text-anchor="middle" fill="var(--color-text)" font-size="9">persistence, refresh,</text>
+    <text x="108" y="150" text-anchor="middle" fill="var(--color-text)" font-size="9">reconnect</text>
+    <text x="108" y="170" text-anchor="middle" fill="var(--color-success)" font-size="9">least code</text>
+
+    <rect x="222" y="20" width="196" height="160" rx="10" fill="var(--color-surface)" stroke="var(--color-warning)"/>
+    <text x="320" y="44" text-anchor="middle" fill="var(--color-warning)" font-size="11" font-weight="700">2 · Hosted callback</text>
+    <text x="320" y="66" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">mcp.oauth.login</text>
+    <text x="320" y="82" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">+ HTTPS redirectUri</text>
+    <text x="320" y="108" text-anchor="middle" fill="var(--color-text)" font-size="9">Your host receives the</text>
+    <text x="320" y="122" text-anchor="middle" fill="var(--color-text)" font-size="9">callback; runtime still</text>
+    <text x="320" y="136" text-anchor="middle" fill="var(--color-text)" font-size="9">owns the protocol and</text>
+    <text x="320" y="150" text-anchor="middle" fill="var(--color-text)" font-size="9">the credentials</text>
+    <text x="320" y="170" text-anchor="middle" fill="var(--color-warning)" font-size="9">centralised redirect</text>
+
+    <rect x="434" y="20" width="196" height="160" rx="10" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="532" y="44" text-anchor="middle" fill="var(--color-success)" font-size="11" font-weight="700">3 · Host-managed</text>
+    <text x="532" y="66" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">onMcpAuthRequest</text>
+    <text x="532" y="108" text-anchor="middle" fill="var(--color-text)" font-size="9">You own authorisation</text>
+    <text x="532" y="122" text-anchor="middle" fill="var(--color-text)" font-size="9">AND refresh. Return a</text>
+    <text x="532" y="136" text-anchor="middle" fill="var(--color-text)" font-size="9">token (or cancel).</text>
+    <text x="532" y="170" text-anchor="middle" fill="var(--color-success)" font-size="9">max control</text>
+  </svg>
+</div>
+
+<h4>Model 1 &amp; 2 — runtime-managed, via RPC</h4>
+
+<p>Wait until the server enters the <code>needs-auth</code> state, then call <code>session.rpc.mcp.oauth.login</code>. Without a redirect URI the runtime opens a local callback listener (model 1); with a trusted public HTTPS redirect URI your host receives the callback while the runtime keeps owning the protocol (model 2):</p>
+
+<pre><code>// mcp.oauth.login  (session.rpc.mcp.oauth.login)
+{
+  "serverName": "remote-mcp",
+  "redirectUri": "https://agent.example.com/oauth/callback"
+}</code></pre>
+
+<p>The selected static, CIMD, or dynamically registered OAuth client <strong>must advertise that exact URI</strong>. The URI must use HTTPS and must not contain a query or fragment. When browser interaction is required the result carries <code>authorizationUrl</code> and <code>authorizationId</code> — open the URL in the user's browser and retain the ID against the target session.</p>
+
+<pre><code>// mcp.oauth.complete  (session.rpc.mcp.oauth.complete)
+{
+  "authorizationId": "&lt;opaque-state&gt;",
+  "callbackUrl": "https://agent.example.com/oauth/callback?code=...&amp;state=..."
+}</code></pre>
+
+<div class="callout-warn callout">
+  <strong>Build <code>callbackUrl</code> from your configured public origin and path, plus the callback's original query.</strong> Do not pass an internal service URL, and do not trust client-supplied <code>Forwarded</code> or <code>X-Forwarded-*</code> headers — that is a header-injection path to making the runtime accept a callback it should reject. The runtime validates origin, port, path, state, and the OAuth response before accepting delivery; token exchange, persistence, and MCP reconnect then continue asynchronously.
+</div>
+
+<h4>Model 3 — host-managed, via <code>onMcpAuthRequest</code></h4>
+
+<pre><code>const session = await client.createSession({
+  onMcpAuthRequest: async (request) =&gt; ({
+    accessToken: await myIdentityProvider.getToken(request.serverUrl),
+  }),
+});</code></pre>
+
+<p>The callback fires whenever an MCP server responds with a <code>401 WWW-Authenticate</code> challenge, and supports initial auth, refresh, reauth, and upscope flows. Return a token, or cancel the request.</p>
+
+<div class="callout-warn callout">
+  <strong>Do not register a host-managed OAuth handler for an attempt that uses a runtime-managed hosted callback.</strong> Pick one model per attempt or the two owners will fight over the same credential — the runtime will be mid-PKCE while your callback also tries to answer. A related historical bug is worth knowing about because it is diagnostic: an SDK once sent MCP OAuth <code>registerInterest</code> <em>before</em> <code>session.resume</code>, producing <code>Session not found</code> errors on resume with <code>onMcpAuthRequest</code> configured. If you see that string, suspect an SDK-version issue rather than your config.
+</div>
+
+<h3>Session-scoped MCP diagnostics: your actual debugging tool</h3>
+
+<p>Forget printf-debugging an MCP server. The SDK exposes bounded, in-memory, session-scoped diagnostics:</p>
+
+<pre><code>import { approveAll, CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+const stop = new AbortController();
+const appendLine = (line: string) =&gt; console.log(line);
+
+await client.start();
+const session = await client.createSession({
+  onPermissionRequest: approveAll,
+  diagnostics: { sources: { mcp: { level: "debug" } } },
+});
+
+try {
+  let cursor: string | undefined;
+  while (!stop.signal.aborted) {
+    const page = await session.rpc.diagnostics.read({
+      sources: ["mcp"],
+      cursor,
+      max: 100,
+      waitMs: 30_000,
+    });
+    if (page.cursorStatus === "expired") {
+      appendLine("MCP diagnostic entries were dropped.");
+    }
+    for (const entry of page.entries) {
+      const detail = entry.details.data ? ` ${entry.details.data}` : "";
+      appendLine(
+        `${entry.timestamp} [${entry.level}] [${entry.source}:${entry.details.serverName}] ` +
+        `${entry.message}${detail}`,
+      );
+    }
+    cursor = page.cursor;
+  }
+} finally {
+  await session.disconnect();
+  await client.stop();
+}</code></pre>
+
+<table>
+  <tr><th>Property</th><th>Detail</th></tr>
+  <tr><td>Opt-in</td><td>Every source defaults to <code>off</code>. Levels: <code>error</code>, <code>warning</code>, <code>info</code>, <code>debug</code>, <code>trace</code> — <strong>separate from the client's process-level <code>logLevel</code></strong></td></tr>
+  <tr><td>Read semantics</td><td>Explicitly select <code>sources: ["mcp"]</code>; reading does <strong>not</strong> enable capture. One stoppable read loop per output surface, retaining its cursor.</td></tr>
+  <tr><td>Retention</td><td>Capped at 1,024 records / 4 MiB per session; individual records capped at 16 KiB and flagged <code>truncated</code> when shortened</td></tr>
+  <tr><td>Read bounds</td><td>Defaults to 100 records, maximum 500. Reads do not consume other readers' data.</td></tr>
+  <tr><td>Cursors</td><td>Every successful read returns a cursor and status — <em>including empty reads</em>. Keep it even when nothing arrives. A cursor belongs to its source selection; start without one if you change the selection. Use <code>droppedCount</code> on an expired cursor to show known loss.</td></tr>
+  <tr><td>Persistence</td><td>Neither records nor capture settings are saved in session history</td></tr>
+  <tr><td>Lazy startup</td><td>Enabling or reading diagnostics does not start a server. Use <code>session.rpc.mcp.startServer({ serverName })</code> to troubleshoot initialisation without a model request.</td></tr>
+</table>
+
+<p>Re-enabling after <code>configure({ sources: { mcp: { level: "off" } } })</code> can resume capture for the same live connection and its existing <code>connectionId</code>. Omitting <code>diagnostics</code> on a <em>resident</em> resume preserves the current configuration; a cold-loaded session needs a fresh opt-in.</p>
+
+<div class="callout-warn callout">
+  <strong>Treat every diagnostic entry as sensitive.</strong> <code>warning</code> and above can include server stderr; <code>debug</code> and <code>trace</code> can additionally include MCP payloads, <strong>tool arguments</strong>, and paths. The runtime strips configured and structurally recognised credentials from HTTP diagnostics before entries reach the API, but that is not a guarantee about arbitrary server-provided secrets. Only selected metadata (<code>Content-Type</code>, <code>Accept</code>, <code>MCP-Protocol-Version</code>) is eligible for capture and its values are still untrusted. Auth headers, cookies, session IDs, query values, URL userinfo, and fragments are omitted — but <strong>URL paths are retained</strong>, so never put credentials in a path segment. Do not auto-upload this to your telemetry pipeline.
+</div>
+
+<h3>The MCP debugging playbook</h3>
+
+<table>
+  <tr><th>Symptom</th><th>First checks</th></tr>
+  <tr><td><strong>Server won't start</strong> (no tools, no errors)</td><td>Use an absolute command path; <code>chmod +x</code>; check shared libraries with <code>ldd</code>; set <code>cwd</code> explicitly. Then reproduce it by hand — run exactly the command, from exactly the expected working directory, that the SDK would run.</td></tr>
+  <tr><td><strong>Server runs, no tools appear</strong></td><td>Did you set <code>tools: ["*"]</code> or a name list? (It must be explicit.) Does the server actually implement <code>tools/list</code>? Did the <code>initialize</code> handshake complete and did it handle <code>notifications/initialized</code>?</td></tr>
+  <tr><td><strong>Tools listed but never called</strong></td><td>Almost always prompting. "What's the weather?" is vague; "Use the weather tool to get the current temperature in Seattle" names the capability. Also check <code>defer</code> — a deferred tool may need tool search to surface.</td></tr>
+  <tr><td><strong>Timeouts / JSON-RPC errors</strong></td><td>Raise <code>timeout</code>; test the protocol manually by piping <code>initialize</code> → <code>notifications/initialized</code> → <code>tools/list</code> to the server.</td></tr>
+</table>
+
+<h3>MCP prompts and the pre-call hook</h3>
+
+<p>Two narrower surfaces complete the picture. First, prompt retrieval — useful when a server publishes curated prompts you want as first-class UI:</p>
+
+<table>
+  <tr><th>Operation</th><th>TypeScript</th><th>Notes</th></tr>
+  <tr><td>List prompts</td><td><code>session.rpc.mcp.prompts.list({ serverName, cursor? })</code></td><td>One page of typed definitions plus optional <code>nextCursor</code></td></tr>
+  <tr><td>Get a prompt</td><td><code>session.rpc.mcp.prompts.get({ serverName, promptName, arguments? })</code></td><td>Argument values are strings. Omitting <code>arguments</code> leaves the MCP request's arguments <em>absent</em>; passing <code>{}</code> sends an explicitly empty dictionary — the runtime preserves that distinction.</td></tr>
+</table>
+
+<p>These target one connected server; they do not merge results across servers. Content is <strong>not flattened into text</strong> — inspect each block's <code>type</code> before interpreting it, and note that returned messages are <em>not</em> automatically sent to the model; your application decides what to do with them. Refresh after an <code>mcp.prompts.list_changed</code> session event.</p>
+
+<p>Second, the <strong>pre-MCP-tool-call hook</strong>: it lets you set, replace, or remove <code>meta</code> on an outbound MCP tool call. That is the seam for injecting correlation IDs, tenancy tags, or trace metadata into a server's calls without touching the server or the tool schema.</p>
+
+<div class="quiz-block" id="quiz-7">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You attach a <code>skills</code> list to a custom agent, and the parent session has skills loaded. What does a sub-agent that omits <code>skills</code> receive?</p>
+  <div class="quiz-opts" data-q="0" data-answer="d">
+    <button class="quiz-btn" data-opt="a">All parent skills, inherited automatically</button>
+    <button class="quiz-btn" data-opt="b">Skill names only, loaded lazily on demand</button>
+    <button class="quiz-btn" data-opt="c">Only skills the parent explicitly marks inheritable</button>
+    <button class="quiz-btn" data-opt="d">No skill content — skills are opt-in and sub-agents do not inherit them</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which MCP OAuth model keeps the runtime in charge of PKCE, state, token persistence, and refresh while your host merely receives the callback?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Host-managed via <code>onMcpAuthRequest</code></button>
+    <button class="quiz-btn" data-opt="b">Runtime-managed with a hosted callback — <code>mcp.oauth.login</code> plus a trusted public HTTPS <code>redirectUri</code></button>
+    <button class="quiz-btn" data-opt="c">Runtime-managed loopback with no redirect URI</button>
+    <button class="quiz-btn" data-opt="d">Static <code>headers</code> auth on the server config</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Why is <code>onPreToolUse</code>-style path checking <em>not</em> the right primary defence for MCP tool calls?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Because the strongest control is upstream: <code>tools: ["*"]</code> / an explicit allowlist per server, plus <code>disabledMcpServers</code>, decides whether the tool exists at all</button>
+    <button class="quiz-btn" data-opt="b">Because MCP tool calls bypass hooks entirely</button>
+    <button class="quiz-btn" data-opt="c">Because MCP tools cannot be permission-checked</button>
+    <button class="quiz-btn" data-opt="d">Because path traversal is impossible over MCP</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/skills.md" target="_blank" rel="noopener">Skills (loading, disabling, providers)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/plugin-directories.md" target="_blank" rel="noopener">Plugin directories</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/customization-locations.md" target="_blank" rel="noopener">Customization discovery locations</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/mcp.md" target="_blank" rel="noopener">Using MCP servers (config, tool filters, diagnostics)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/troubleshooting/mcp-debugging.md" target="_blank" rel="noopener">MCP server debugging guide</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-7');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

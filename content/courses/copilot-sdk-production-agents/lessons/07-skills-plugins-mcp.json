@@ -1,0 +1,4 @@
+{
+  "title": "Extending the Agent — Skills, Plugins, and MCP",
+  "description": "SKILL.md modules and providers, plugin directory layout and loading, MCP server types and tool allowlists, all three MCP OAuth ownership models, and session-scoped diagnostics."
+}
