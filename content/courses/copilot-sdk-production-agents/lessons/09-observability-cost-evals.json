@@ -1,0 +1,4 @@
+{
+  "title": "Observability, Cost Control, and Evals",
+  "description": "TelemetryConfig and trace propagation, the full usage/billing API surface, session and workflow budgets, and a six-layer eval strategy built on deterministic replay."
+}

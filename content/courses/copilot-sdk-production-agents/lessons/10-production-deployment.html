@@ -1,0 +1,290 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 10: Production Deployment — Auth, Scaling, and Multi-Tenancy</h2>
+
+<p>Everything so far ran as one user on one machine. Production means many users, credentials you do not control, storage that disappears, and a bill you have to explain. This lesson is the deployment layer — and it is mostly a story about <em>identity</em>, because in this SDK identity determines isolation, billing, and capability all at once.</p>
+
+<h3>The authentication priority order</h3>
+
+<p>When several credentials are configured, exactly one wins. Knowing the order is how you debug "it's using the wrong account":</p>
+
+<ol>
+  <li>An <strong>explicit SDK token</strong> (passed in code)</li>
+  <li><strong>Direct Copilot API environment authentication</strong></li>
+  <li><strong>Environment-variable GitHub tokens</strong> — server-to-server installation tokens use this path</li>
+  <li><strong>Stored Copilot CLI credentials</strong> (the interactive sign-in)</li>
+  <li><strong>GitHub CLI credentials</strong></li>
+</ol>
+
+<table>
+  <tr><th>Method</th><th>Use case</th><th>Copilot subscription needed?</th></tr>
+  <tr><td>GitHub signed-in user</td><td>Interactive apps where users sign in with GitHub</td><td>Yes</td></tr>
+  <tr><td>GitHub OAuth app</td><td>Acting on behalf of users via OAuth</td><td>Yes</td></tr>
+  <tr><td>Environment variables</td><td>CI/CD, automation, server-to-server</td><td>Yes</td></tr>
+  <tr><td>Server-to-server</td><td>Organisation-attributed automation, direct org billing</td><td><strong>No</strong> user subscription — org policy required</td></tr>
+  <tr><td>BYOK</td><td>Your own API keys (Foundry, OpenAI, Anthropic, more)</td><td><strong>No</strong></td></tr>
+</table>
+
+<h4>Token types — one of these is a trap</h4>
+
+<table>
+  <tr><th>Prefix</th><th>Type</th><th>Supported</th></tr>
+  <tr><td><code>gho_</code></td><td>OAuth user access token</td><td>✅</td></tr>
+  <tr><td><code>ghu_</code></td><td>GitHub App user access token</td><td>✅</td></tr>
+  <tr><td><code>github_pat_</code></td><td>Fine-grained personal access token</td><td>✅</td></tr>
+  <tr><td><code>ghp_</code></td><td>Classic personal access token</td><td>❌ <strong>Not supported (deprecated)</strong></td></tr>
+</table>
+
+<p>For a web app acting for a signed-in user, pass their token explicitly and make sure the SDK does not fall back to whatever the machine happens to be logged in as:</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient({
+    gitHubToken: userAccessToken,  // from your OAuth flow
+    useLoggedInUser: false,        // do NOT use stored CLI credentials
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong><code>useLoggedInUser: false</code> is the line that makes multi-user apps correct.</strong> Omit it and a request from user A can silently run as whoever the host is signed in as — a cross-tenant leak that looks like a working feature until someone reads the audit log. In multi-user server mode, pass a per-session <code>gitHubToken</code> so <em>each session</em> runs with the correct GitHub identity.
+</div>
+
+<h3>Rotating session-scoped tokens — the right pattern for services</h3>
+
+<p>Do not store one long-lived token per service and hope. Set a <strong>token provider</strong> per session; the runtime calls it for the effective GitHub host and tells you whether the request is <code>initial</code> or <code>refresh</code>:</p>
+
+<pre><code>const session = await client.createSession({
+    gitHubTokenProvider: async ({ host, sessionId, reason }) =&gt; {
+        const token = await acquireGitHubToken({ host, sessionId, reason });
+        return {
+            kind: "token",
+            accessToken: token.value,
+            expiresIn: token.secondsRemaining,
+        };
+    },
+});</code></pre>
+
+<table>
+  <tr><th>Rule</th><th>Detail</th></tr>
+  <tr><td><code>expiresIn</code> is <strong>required</strong></td><td>The positive number of seconds remaining <em>when the callback completes</em>. Production GitHub tokens typically last 8 hours, so <code>8 * 60 * 60</code> is a common value.</td></tr>
+  <tr><td>Return a tagged result or an explicit cancellation</td><td>Not a bare string</td></tr>
+  <tr><td>Do <strong>not</strong> set both a static per-session token and the provider</td><td>Pick one — otherwise the priority order becomes your bug</td></tr>
+</table>
+
+<p>The callback receives <code>host</code> (the effective GitHub host), <code>sessionId</code>, and <code>reason</code> (<code>initial</code> or <code>refresh</code>). The session ID is absent only when a cloud session has not yet received its ID.</p>
+
+<h3>BYOK — your own keys, and the memory rule</h3>
+
+<pre><code>const session = await client.createSession({
+  sessionId: "user-123-task-456",
+  model: "gpt-5.2-codex",
+  provider: {
+    type: "azure",
+    endpoint: "https://my-resource.openai.azure.com",
+    apiKey: process.env.AZURE_OPENAI_KEY,
+    deploymentId: "my-gpt-deployment",
+  },
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>API keys are never persisted — you must re-provide <code>provider</code> on every resume.</strong> This is a security feature, and it is the single most common BYOK bug: the session resumes fine, then fails at the first model call because the credential is gone. Related: the BYOK callback field was renamed <code>getBearerToken</code> → <code>bearerTokenProvider</code>, and <code>ProviderTokenArgs</code> now carries <code>sessionId</code> for per-session token scoping. If you are on an older SDK, that rename is a silent break.
+</div>
+
+<p>For Azure, prefer <strong>managed identity</strong> over API keys — no secret in your environment, no rotation chore, and the credential is bound to the workload's identity rather than to a string someone copied into a config file.</p>
+
+<h3>Server-to-server — organisation-attributed automation</h3>
+
+<p>When the automation belongs to an organisation rather than a person, use a GitHub Actions or GitHub App installation token. Two properties make this the right choice for org automation: it needs <strong>no user subscription</strong> (organisation policy is what gates it), and usage is attributed to the organisation for direct billing. Installation tokens travel via the environment-variable path in the authentication priority order.</p>
+
+<h3>Multi-tenancy — the non-negotiable baseline</h3>
+
+<pre><code>import { CopilotClient, RuntimeConnection } from "@github/copilot-sdk";
+
+const client = new CopilotClient({
+    mode: "empty",
+    baseDirectory: `/var/lib/my-app/copilot/${runtimeInstanceId}`,
+    sessionIdleTimeoutSeconds: 900,
+    connection: RuntimeConnection.forUri(process.env.COPILOT_RUNTIME_URL!),
+});
+
+const session = await client.createSession({
+    sessionId: `user-${user.id}-${crypto.randomUUID()}`,
+    model: "gpt-5.4",
+    availableTools: ["custom:lookupOrder", "custom:createTicket"],
+    gitHubToken: user.githubToken,
+    sessionLimits: { maxAiCredits: 30 },
+    onPermissionRequest: permissionHandler,
+});</code></pre>
+
+<table>
+  <tr><th>Option</th><th>What it buys you</th></tr>
+  <tr><td><code>mode: "empty"</code></td><td>No ambient OS tools, no bundled skills, no implicit plugins — <strong>required</strong> for shared/multi-user scenarios</td></tr>
+  <tr><td><code>availableTools</code></td><td>Explicit capability allowlist per session</td></tr>
+  <tr><td><code>baseDirectory</code></td><td>Sets <code>COPILOT_HOME</code> for a runtime instance — isolates state, credentials, and session data per process, pod, worker, or tenant boundary</td></tr>
+  <tr><td><code>sessionIdleTimeoutSeconds</code></td><td>Reaps abandoned sessions instead of leaking them</td></tr>
+  <tr><td><code>sessionFs</code></td><td>Routes session file I/O through your storage — for ephemeral disk, object storage, or tenant-aware paths</td></tr>
+  <tr><td>Per-session <code>gitHubToken</code></td><td>Correct identity per tenant</td></tr>
+  <tr><td><code>sessionLimits</code></td><td>Per-tenant budget ceiling</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>The isolation the runtime gives you is <em>session-level</em>. The rest is yours.</strong> The docs are explicit that with <code>mode: "copilot-cli"</code> OS filesystem access is shared through the host process, which is why that mode must not be used for multi-user server mode. Session-level isolation means user-specific model and state information is scoped to a session rather than global shared state — it does <em>not</em> mean the runtime enforces your authorisation. You must still validate that a caller is entitled to the session ID they present before resuming or deleting it.
+</div>
+
+<h3>Two topologies, one trade-off</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 620 210" xmlns="http://www.w3.org/2000/svg">
+    <rect x="14" y="24" width="270" height="164" rx="10" fill="var(--color-surface)" stroke="var(--color-success)"/>
+    <text x="149" y="48" text-anchor="middle" fill="var(--color-success)" font-size="12" font-weight="700">Pattern 1 · CLI per user</text>
+    <text x="149" y="74" text-anchor="middle" fill="var(--color-text)" font-size="10">Separate process per user</text>
+    <text x="149" y="92" text-anchor="middle" fill="var(--color-text)" font-size="10">Separate credentials per user</text>
+    <text x="149" y="118" text-anchor="middle" fill="var(--color-success)" font-size="10">Strongest isolation boundary</text>
+    <text x="149" y="140" text-anchor="middle" fill="var(--color-danger)" font-size="10">Higher resource cost</text>
+    <text x="149" y="166" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">regulated data · per-user creds · hard walls</text>
+
+    <rect x="336" y="24" width="270" height="164" rx="10" fill="var(--color-surface)" stroke="var(--color-warning)"/>
+    <text x="471" y="48" text-anchor="middle" fill="var(--color-warning)" font-size="12" font-weight="700">Pattern 2 · Shared CLI</text>
+    <text x="471" y="74" text-anchor="middle" fill="var(--color-text)" font-size="10">One runtime, many sessions</text>
+    <text x="471" y="92" text-anchor="middle" fill="var(--color-text)" font-size="10">Logical isolation only</text>
+    <text x="471" y="118" text-anchor="middle" fill="var(--color-success)" font-size="10">Resource efficient</text>
+    <text x="471" y="140" text-anchor="middle" fill="var(--color-warning)" font-size="10">Requires mode: "empty" + per-session tokens</text>
+    <text x="471" y="166" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">many light users · you own tools and auth</text>
+  </svg>
+</div>
+
+<p>Pattern 1 is recommended when you need the strongest boundary or genuinely separate process credentials per user. Pattern 2 is the efficient default for many light users, and it is only safe when the application — not the runtime — controls tools, auth, and session IDs.</p>
+
+<h4>Where the CLI runs</h4>
+
+<pre><code>// SDK spawns and owns the CLI (default, stdio)
+const a = new CopilotClient();
+
+// SDK spawns the CLI with extra arguments
+const b = new CopilotClient({
+  connection: RuntimeConnection.forStdio({ args: ["--plugin-dir", "./plugins/x"] }),
+});
+
+// Connect to an already-running headless CLI server
+const c = new CopilotClient({
+  connection: RuntimeConnection.forUri("http://127.0.0.1:8080"),
+});</code></pre>
+
+<p>Mode C is the production shape for containers and serverless: the CLI runs as its own process or sidecar, and your application scales independently. Remember the consequence from Lesson 1 — extra args are only forwarded when the SDK spawns the CLI, so with <code>forUri</code> you pass flags to the runtime's own command line.</p>
+
+<h4>Deployment checklist</h4>
+
+<table>
+  <tr><th>Concern</th><th>Do this</th></tr>
+  <tr><td>Container filesystem</td><td><code>~/.copilot/session-state/</code> must be <strong>writable</strong> — mount a persistent volume or route storage through <code>sessionFs</code>. An ephemeral filesystem silently turns every "resume" into a "create".</td></tr>
+  <tr><td>Runtime state isolation</td><td><code>baseDirectory</code> per pod/worker/tenant</td></tr>
+  <tr><td>Abandoned sessions</td><td><code>sessionIdleTimeoutSeconds</code>, plus your own retention sweep using structured session IDs</td></tr>
+  <tr><td>Session IDs</td><td>Encode ownership and purpose; validate the caller is entitled to them before resume/delete</td></tr>
+  <tr><td>Credentials</td><td>Per-session token provider with <code>expiresIn</code>; never a shared long-lived token</td></tr>
+  <tr><td>Capability</td><td><code>mode: "empty"</code> + <code>availableTools</code></td></tr>
+  <tr><td>Approvals</td><td>Real permission handler — <code>approveAll</code> throws under managed settings and destroys the guardrail story everywhere else</td></tr>
+  <tr><td>Budget</td><td><code>sessionLimits.maxAiCredits</code> per session, plus workflow limits for any multi-agent work</td></tr>
+  <tr><td>Telemetry</td><td><code>telemetry.otlpEndpoint</code> wired; decide <code>captureContent</code> deliberately</td></tr>
+  <tr><td>Versions</td><td>Pin SDK <em>and</em> CLI together — they are a pair, and several surfaces are experimental</td></tr>
+  <tr><td>Evals</td><td>Replay-based suite in CI with a cost ceiling (Lesson 9)</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Two remaining experimental surfaces, flagged honestly.</strong> The <strong>in-process runtime</strong> — hosting the runtime inside your application process with no separate CLI process — exists and can simplify deployment, but it is documented as experimental. And <strong>remote/cloud sessions</strong> (sharing a session to GitHub web and mobile via Mission Control, or running on GitHub-hosted compute through the <code>cloud</code> option) change where state lives and how provenance propagates — remember from Lesson 8 that Mission Control may include a message <code>source</code> in its local echo without carrying it in the remote HTTP request. Validate the remote path against your isolation requirements before depending on it.
+</div>
+
+<div class="quiz-block" id="quiz-10">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. A multi-user web app signs users in via OAuth. Which SDK configuration is correct, and what breaks without it?</p>
+  <div class="quiz-opts" data-q="0" data-answer="c">
+    <button class="quiz-btn" data-opt="a"><code>gitHubToken</code> alone — the SDK prefers it automatically</button>
+    <button class="quiz-btn" data-opt="b"><code>useLoggedInUser: true</code> so each user inherits host credentials</button>
+    <button class="quiz-btn" data-opt="c"><code>gitHubToken: userToken</code> <strong>and</strong> <code>useLoggedInUser: false</code> — otherwise a request can silently run as whoever the host is signed in as</button>
+    <button class="quiz-btn" data-opt="d">Environment variables — they take priority over an explicit token</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why must a session-level <code>gitHubTokenProvider</code> return <code>expiresIn</code>, and what value is typical?</p>
+  <div class="quiz-opts" data-q="1" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It is optional metadata for logging; any value works</button>
+    <button class="quiz-btn" data-opt="b">It is required — the positive seconds remaining when the callback completes, so the runtime knows when to refresh. Production GitHub tokens typically last 8 hours (<code>8 * 60 * 60</code>).</button>
+    <button class="quiz-btn" data-opt="c">It sets the session's idle timeout</button>
+    <button class="quiz-btn" data-opt="d">It is required only for OAuth app tokens, not GitHub App tokens</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Your containerised deployment "loses" sessions on every restart. What is the most likely cause and the correct fix?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a"><code>~/.copilot/session-state/</code> is on an ephemeral filesystem and must be writable — mount a persistent volume or route storage through <code>sessionFs</code></button>
+    <button class="quiz-btn" data-opt="b">Session IDs are random and therefore unreadable — switch to structured IDs</button>
+    <button class="quiz-btn" data-opt="c"><code>mode: "empty"</code> disables persistence — use <code>copilot-cli</code> mode in containers</button>
+    <button class="quiz-btn" data-opt="d">The CLI must be bundled in the image; external runtimes cannot persist sessions</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/auth/authenticate.md" target="_blank" rel="noopener">Authentication methods and priority order</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/auth/byok.md" target="_blank" rel="noopener">Bring your own key (BYOK)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/auth/server-to-server-tokens.md" target="_blank" rel="noopener">Server-to-server authentication</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/azure-managed-identity.md" target="_blank" rel="noopener">Azure Managed Identity with Microsoft Foundry</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/scaling.md" target="_blank" rel="noopener">Scaling and multi-tenancy</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/backend-services.md" target="_blank" rel="noopener">Backend services (headless CLI over TCP)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/in-process-runtime.md" target="_blank" rel="noopener">In-process runtime (experimental)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-10');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

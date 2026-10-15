@@ -1,0 +1,377 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 9: Observability, Cost Control, and Evals</h2>
+
+<p>Three questions decide whether an agent survives contact with production: <em>what is it doing</em>, <em>what is it costing</em>, and <em>how do I know it still works</em>. The SDK answers all three with real APIs — and, unusually for an agent framework, it has a genuine answer for the third that is not "ask a model to grade it".</p>
+
+<h3>Part 1 — Telemetry</h3>
+
+<p>Opt in by passing a <code>TelemetryConfig</code> on the <strong>client</strong>. That is all most applications ever need: the CLI exports its own spans to your OTLP endpoint.</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient({
+  telemetry: {
+    otlpEndpoint: "http://localhost:4318",
+  },
+});</code></pre>
+
+<table>
+  <tr><th>Option</th><th>Purpose</th></tr>
+  <tr><td><code>otlpEndpoint</code></td><td>OTLP HTTP endpoint URL</td></tr>
+  <tr><td><code>otlpProtocol</code></td><td><code>"http/json"</code> or <code>"http/protobuf"</code> for all signals</td></tr>
+  <tr><td><code>exporterType</code></td><td><code>"otlp-http"</code> or <code>"file"</code></td></tr>
+  <tr><td><code>filePath</code></td><td>Path for JSON-lines trace output (dev/offline diagnostics)</td></tr>
+  <tr><td><code>sourceName</code></td><td>Instrumentation scope name</td></tr>
+  <tr><td><code>captureContent</code></td><td><strong>Whether to capture message content</strong></td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong><code>captureContent</code> is a privacy switch, not a verbosity switch.</strong> Several attributes require it — including <code>gen_ai.skill.description</code>, <code>gen_ai.skill.source.uri</code>, and <code>process.executable.path</code>. With content capture on, prompts and tool payloads can land in your tracing backend. Decide deliberately, and treat your trace store with the same sensitivity as your logs. Note also that while <em>managed</em> telemetry settings are unresolved, pending tracking buffers only capture-independent facts — descriptions, source URIs, and executable paths observed before the policy resolves are omitted even if capture is later enabled. The final policy governs replay, and a disabled or cancelled tracking session discards the buffer.
+</div>
+
+<h4>Trace context propagation — the advanced path</h4>
+
+<p>If your application already creates its own OpenTelemetry spans and wants them in the <em>same distributed trace</em> as the CLI's, Node.js needs an <code>onGetTraceContext</code> callback. The SDK calls it before <code>session.create</code>, <code>session.resume</code>, and <code>session.send</code>:</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+import { propagation, context } from "@opentelemetry/api";
+
+const client = new CopilotClient({
+  telemetry: { otlpEndpoint: "http://localhost:4318" },
+  onGetTraceContext: () =&gt; {
+    const carrier: Record&lt;string, string&gt; = {};
+    propagation.inject(context.active(), carrier);
+    return carrier; // { traceparent: "00-...", tracestate: "..." }
+  },
+});</code></pre>
+
+<p>Python, Go, and .NET inject automatically when their OpenTelemetry/Activity API is configured — no callback needed. In Node the SDK has <strong>no OpenTelemetry dependency</strong>, so the inbound direction is raw strings on the tool invocation, which you restore by hand:</p>
+
+<pre><code>import { defineTool } from "@github/copilot-sdk";
+import { propagation, context, trace } from "@opentelemetry/api";
+
+const myTool = defineTool("my-tool", {
+  description: "Do work",
+  handler: async (args, invocation) =&gt; {
+    // The CLI's span context arrives as raw traceparent/tracestate strings
+    const carrier = {
+      traceparent: invocation.traceparent,
+      tracestate: invocation.tracestate,
+    };
+    const parentCtx = propagation.extract(context.active(), carrier);
+
+    const tracer = trace.getTracer("my-app");
+    return context.with(parentCtx, () =&gt;
+      tracer.startActiveSpan("my-tool", async (span) =&gt; {
+        try {
+          return await doWork(args);
+        } finally {
+          span.end();
+        }
+      })
+    );
+  },
+});</code></pre>
+
+<p>This is what lets a "handle tool call" span in your app appear nested inside the CLI's "execute tool" span — so a slow request is attributable to <em>your</em> downstream call rather than looking like model latency.</p>
+
+<h4>Skill and process attributes</h4>
+
+<p>The runtime follows the OpenTelemetry GenAI skill semantic conventions by <em>refining existing <code>execute_tool</code> spans</em> rather than adding a separate skill operation. A loader is named <code>execute_tool skill {skill}</code>; an unambiguously identified resource or script becomes <code>execute_tool {tool} {skill} {resource}</code> with a skill-relative resource name.</p>
+
+<table>
+  <tr><th>Attribute</th><th>Notes</th></tr>
+  <tr><td><code>gen_ai.skill.name</code>, <code>gen_ai.skill.resource.name</code></td><td>Available independently of content capture</td></tr>
+  <tr><td><code>gen_ai.skill.description</code>, <code>gen_ai.skill.source.uri</code></td><td>Require <strong>content capture</strong>. Local source values are <em>file URIs</em>, not bare paths.</td></tr>
+  <tr><td><code>process.executable.name</code></td><td>The directly launched executable (e.g. the shell launcher) — not a guessed command token</td></tr>
+  <tr><td><code>process.executable.path</code></td><td>Absolute known path; requires content capture</td></tr>
+  <tr><td><code>process.exit.code</code></td><td>Integer including zero when a command-executing tool reports an exit; unavailable exits and pre-spawn failures are omitted</td></tr>
+</table>
+
+<p>A few semantics worth knowing so you do not misread a dashboard: poll tools do not inherit process attributes from the command they read. Sandboxed executable identities are omitted when the backend does not expose them. And <strong>a nonzero exit does not imply the tool itself failed.</strong> Preloaded skills produce invocation events without a fabricated tool span; repeated preparation of the same selected-agent skill context emits one receipt, while changed content or provenance emits another, and child sessions report their own preloads independently.</p>
+
+<div class="callout">
+  <strong>These are breaking renames — update your dashboards.</strong> Use <code>gen_ai.skill.name</code> instead of <code>github.copilot.tool.parameters.skill_name</code> or <code>github.copilot.skill.name</code>, and <code>gen_ai.skill.source.uri</code> instead of <code>github.copilot.skill.path</code>. The <code>github.copilot.skill.invoked</code> event and its content, source-category, trigger, and plugin fields remain Copilot-specific. The skill attributes are at Development stability; the process attributes are Release Candidate.
+</div>
+
+<h3>Part 2 — Cost: two mechanisms, six signals</h3>
+
+<p>The SDK surfaces usage through <strong>events</strong> (ephemeral, real-time, per-call) and <strong>RPCs</strong> (request/response, accumulated). Knowing which to call is the whole game:</p>
+
+<table>
+  <tr><th>Signal</th><th>API</th><th>Use it for</th></tr>
+  <tr><td>Per-call token counts</td><td><code>assistant.usage</code> event</td><td>A live cost or token meter as a turn runs</td></tr>
+  <tr><td>Context-window utilization</td><td><code>session.usage_info</code> event</td><td>Live context pressure</td></tr>
+  <tr><td>Context-window breakdown</td><td><code>session.metadata.contextInfo</code> (RPC)</td><td>Context usage on resume, before any new turn</td></tr>
+  <tr><td>Accumulated totals</td><td><code>session.usage.getMetrics</code> (RPC)</td><td>Final cost summary for a turn or session</td></tr>
+  <tr><td>Per-model pricing</td><td><code>models.list</code> (RPC)</td><td>Estimating cost <em>before</em> running work</td></tr>
+  <tr><td>Account quota</td><td><code>account.getQuota</code> (RPC)</td><td>Warning users before they exhaust their plan</td></tr>
+</table>
+
+<pre><code>// Real-time, per model API call — fires once per call, INCLUDING sub-agent calls
+session.on("assistant.usage", (event) =&gt; {
+  const { model, inputTokens, outputTokens, cost } = event.data;
+  console.log(`${model}: in=${inputTokens ?? 0} out=${outputTokens ?? 0} cost=${cost ?? 0}`);
+});
+
+// Accumulated session totals — the cleanest way to read AI credit cost
+const metrics = await session.rpc.usage.getMetrics();
+
+const aiCredits = (metrics.totalNanoAiu ?? 0) / 1e9;
+console.log(`AI credits used: ${aiCredits.toFixed(6)}`);
+console.log(`Premium requests: ${metrics.totalPremiumRequestCost}`);
+
+for (const [model, m] of Object.entries(metrics.modelMetrics)) {
+  if (!m) continue;
+  console.log(
+    `${model}: in=${m.usage.inputTokens} out=${m.usage.outputTokens} nanoAiu=${m.totalNanoAiu ?? 0}`,
+  );
+}</code></pre>
+
+<p>Fields on <code>assistant.usage</code> are worth a long look — this single event is the most information-dense thing the runtime emits:</p>
+
+<table>
+  <tr><th>Field</th><th>What it gives you</th></tr>
+  <tr><td><code>inputTokens</code>, <code>outputTokens</code></td><td>Volume</td></tr>
+  <tr><td><code>reasoningTokens</code></td><td>Output tokens spent on chain-of-thought — a <em>subset</em> of output</td></tr>
+  <tr><td><code>cacheReadTokens</code>, <code>cacheWriteTokens</code>, <code>cacheExpiresAt</code></td><td>Prompt-cache effectiveness and expiry — the fastest way to explain a cost change</td></tr>
+  <tr><td><code>duration</code>, <code>timeToFirstTokenMs</code>, <code>interTokenLatencyMs</code></td><td>Latency decomposition: queueing/dispatch vs generation throughput</td></tr>
+  <tr><td><code>model</code>, <code>reasoningEffort</code></td><td>Which model and effort actually served the call</td></tr>
+  <tr><td><code>apiEndpoint</code></td><td><code>"/chat/completions"</code> · <code>"/v1/messages"</code> · <code>"/responses"</code> · <code>"ws:/responses"</code> — <strong>which API shape served the turn</strong></td></tr>
+  <tr><td><code>initiator</code></td><td>What triggered the call — e.g. <code>"sub-agent"</code>; absent for user-initiated</td></tr>
+  <tr><td><code>apiCallId</code>, <code>serviceRequestId</code>, <code>providerCallId</code></td><td>Provider completion ID, Copilot service request ID, GitHub request ID — your correlation handles for a support ticket</td></tr>
+  <tr><td><code>finishReason</code>, <code>contentFilterTriggered</code></td><td>Did the response stop naturally, hit length, or get filtered?</td></tr>
+  <tr><td><code>quotaSnapshots</code>, <code>copilotUsage</code></td><td>Per-quota resource usage and an itemised token cost breakdown</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>Two accuracy traps in cost reporting.</strong> (1) Cost is in <strong>nano-AI units</strong> (<code>totalNanoAiu</code>). The docs divide by <code>1e9</code> as an SI convenience but say explicitly that the conversion to AI credits and the meaning of premium-request accounting are defined by GitHub Copilot billing, not the SDK — <em>verify against GitHub's billing docs before surfacing anything currency-like to a user.</em> (2) <code>assistant.usage</code> is <strong>ephemeral</strong>: delivered live, <em>not</em> replayed on resume. If you want totals after the fact, call <code>session.usage.getMetrics</code>; if you want history, you must persist the events yourself.
+</div>
+
+<div class="callout-token">
+  <strong>Token angle — the metric that predicts your bill best is cache behaviour + turn count.</strong> Watch <code>cacheReadTokens</code> against <code>inputTokens</code>: a healthy agent reuses prompt cache heavily across turns. A session where cache reads collapse is one where something is invalidating the prefix every turn — usually a hook that rewrites the prompt (<code>modifiedPrompt</code>, <code>modifiedTransformedPrompt</code>) or a tool returning volatile content early in context. And remember turns <em>are</em> API calls: cost spikes are almost always more round-trips, not a pricier model.
+</div>
+
+<h3>Budgets: making runaway agents impossible</h3>
+
+<p>Two independent budget layers exist, and you want both.</p>
+
+<h4>Session budget</h4>
+
+<pre><code>const session = await client.createSession({
+    onPermissionRequest: approveAll,
+    sessionLimits: {
+        maxAiCredits: 30,      // soft cap for the current accounting window
+    },
+});
+
+const resumed = await client.resumeSession(session.sessionId, {
+    onPermissionRequest: approveAll,
+    sessionLimits: { maxAiCredits: 30 },
+});</code></pre>
+
+<div class="callout-warn callout">
+  <strong>It is a <em>soft</em> cap, and the reason matters.</strong> Usage is checked <em>after</em> model calls return — so one response can exceed the configured value before the runtime blocks the next model call. Size it with that slack in mind, and handle the exhausted-budget flow rather than treating it as a hard wall.
+</div>
+
+<p>Four events let you build real budget UX:</p>
+
+<table>
+  <tr><th>Event</th><th>When</th><th>Key fields</th></tr>
+  <tr><td><code>session.session_limits_changed</code></td><td>Active limits changed (a <code>null</code> value means none are active)</td><td><code>sessionLimits.maxAiCredits?</code></td></tr>
+  <tr><td><code>session.usage_checkpoint</code></td><td>Runtime records durable aggregate usage for resume and accounting</td><td><code>totalNanoAiu</code>, <code>totalPremiumRequests?</code></td></tr>
+  <tr><td><code>session_limits_exhausted.requested</code></td><td>Budget exhausted — needs a user decision before continuing</td><td><code>requestId</code>, <code>maxAiCredits</code>, <code>usedAiCredits</code></td></tr>
+  <tr><td><code>session_limits_exhausted.completed</code></td><td>The exhausted-limit prompt was resolved</td><td><code>requestId</code>, <code>response.action</code>, <code>response.additionalAiCredits?</code>, <code>response.maxAiCredits?</code></td></tr>
+</table>
+
+<pre><code>session.on((event) =&gt; {
+    if (event.type === "session_limits_exhausted.requested") {
+        showBudgetDialog({
+            requestId: event.data.requestId,
+            maxAiCredits: event.data.maxAiCredits,
+            usedAiCredits: event.data.usedAiCredits,
+        });
+    }
+});</code></pre>
+
+<h4>Workflow budget — the multi-agent guardrail</h4>
+
+<p>Dynamic workflows carry their own limits, overridable per invocation, and this is the layer that actually contains a fleet:</p>
+
+<table>
+  <tr><th>Limit</th><th>Semantics</th></tr>
+  <tr><td><code>maxConcurrentSubagents</code></td><td>Concurrency cap. Extra subagents <strong>wait in a queue</strong> — backpressure, not failure.</td></tr>
+  <tr><td><code>maxTotalSubagents</code></td><td>Cumulative admission cap. Beyond it the attempt fails with kind <code>maxTotalSubagents</code>.</td></tr>
+  <tr><td><code>timeoutSeconds</code></td><td>Accumulated <em>active-execution</em> time across attempts (extension body, subprocess waits, queued-agent waits, sleeps). Time <em>between</em> attempts is excluded. Soft — running work may take time to stop.</td></tr>
+  <tr><td><code>maxAiCredits</code></td><td>Budget for the whole run's subagent subtree <em>including descendants</em>. Soft and post-paid; accounting is <strong>fail-closed</strong> — an accounting failure stops a budgeted run rather than permitting untracked use.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>An omitted constraint is not a safe default here.</strong> An omitted <code>maxConcurrentSubagents</code> falls back to <code>maxTotalSubagents</code>, so a declared total cap also bounds concurrency — but omit both and that dimension is unbounded. Conversely, the docs are blunt about guessing: set a ceiling from real knowledge of what the workflow costs or because the user named one. A guessed ceiling does not make a run safer — it stops a healthy run partway with <code>workflow_limit_reached</code> <em>after that run has already spent credits</em>. SDK-initiated <code>run</code> and <code>resume</code> do not request permission, so a ceiling only exists if you set it.
+</div>
+
+<p>Limit breaches use reject-and-retry semantics: the attempt ends with run status <code>error</code> and <code>failure.type: workflow_limit_reached</code>, and the run <strong>keeps its ID, arguments, journal, and accounting</strong>. Resume it with a raised limit when more work is approved — previously consumed resources still count.</p>
+
+<h3>Part 3 — Evals: six layers, cheapest first</h3>
+
+<p>Agent evaluation is hard for one structural reason: <strong>non-determinism enters at three layers</strong> — the model's sampling, your tools' side effects, and the loop's control flow (how many turns it takes). Teams that only test at one layer ship regressions at the other two.</p>
+
+<p>The SDK gives you a much stronger foundation than usual, because its own test suite solves the hard part: <strong>a local replaying CAPI proxy.</strong> E2E runs go against a proxy that replays recorded model exchanges from YAML snapshots, and the harness prints <code>Listening: http://...</code> for tests to parse and configure against. That architecture is directly copyable, and it is the single best idea in this lesson:</p>
+
+<div class="callout-success callout">
+  <strong>Record once, replay forever.</strong> Capture your real model exchanges (including tool-call turns) and replay them deterministically in CI. Your agent then executes the <em>same trajectory</em> on every run, so assertions about events, tool calls, hook decisions, and budgets become ordinary deterministic tests. Model responses stop being a source of flake and become a versioned fixture — and you can replay a production failure forever.
+</div>
+
+<table>
+  <tr><th>#</th><th>Layer</th><th>What you assert</th><th>Why it ranks here</th></tr>
+  <tr>
+    <td>1</td><td><strong>Unit — pure code</strong></td>
+    <td>Tool handlers, redaction functions, path validators, budget arithmetic</td>
+    <td>Cheapest, fastest, zero flake. The tool-factory pattern from Lesson 4 exists precisely so handlers are testable without a live session.</td>
+  </tr>
+  <tr>
+    <td>2</td><td><strong>Guardrail evals</strong></td>
+    <td><code>onPreToolUse</code> denies <code>../../etc/passwd</code> and <code>/srv/ws-evil</code>; <code>onPostToolUse</code> redacts a planted key; the permission ladder returns the intended <code>kind</code></td>
+    <td>Guardrails are pure functions of the request, so these are deterministic <em>and</em> they test your highest-consequence logic. Encode every past incident as a case. Highest value per line of test code in the whole system.</td>
+  </tr>
+  <tr>
+    <td>3</td><td><strong>Contract / schema</strong></td>
+    <td>Structured output parses against your schema; a tool's declared schema matches what the handler expects</td>
+    <td>Catches the silent breakage: a model returning plausible prose where a typed object was required.</td>
+  </tr>
+  <tr>
+    <td>4</td><td><strong>Trajectory</strong></td>
+    <td>Tool-call sequence and arguments from <code>tool.execution_start</code> / <code>tool.execution_complete</code>; turn count within budget; forbidden tools never called; no <code>resultType: "failure"</code> streaks</td>
+    <td>Tests the <em>process</em>, which is where most agent regressions live. Composes perfectly with snapshot replay — same input, assert the same trajectory.</td>
+  </tr>
+  <tr>
+    <td>5</td><td><strong>Outcome / artifact</strong></td>
+    <td>The code the agent wrote actually <em>runs</em>; the tests it wrote actually <em>pass</em>; the file it produced validates</td>
+    <td>The only layer that proves the work is real. Corollary worth carving on the wall: <strong>an agent's self-report is not evidence.</strong> "Completed successfully" is a claim; a passing test suite is proof.</td>
+  </tr>
+  <tr>
+    <td>6</td><td><strong>LLM-judge</strong></td>
+    <td>Subjective quality — usefulness, tone, summary faithfulness</td>
+    <td>Last, and never alone. It is non-deterministic, costs tokens on every CI run, drifts as models change, and needs its own calibration against human labels.</td>
+  </tr>
+</table>
+
+<h4>Running it: the loop that keeps agents honest</h4>
+
+<ol>
+  <li><strong>Freeze the world.</strong> Pin the SDK <em>and</em> CLI. A version bump can change event shape, default compaction, and prompt assembly — all of which invalidate prior evals.</li>
+  <li><strong>Replay in CI.</strong> Reuse the record-and-replay idea so layers 3–4 are deterministic.</li>
+  <li><strong>Treat prompt edits as code changes.</strong> A skill file, a system message, a tool description, a <code>modifiedPrompt</code> hook — each can invalidate behaviour and each should trigger the suite. Tool descriptions are prompt engineering that runs on every call; they deserve review like code.</li>
+  <li><strong>Grow a regression corpus from production.</strong> Every failure becomes a fixture. This is the compounding asset — replayable incidents, not anecdotes.</li>
+  <li><strong>Track operating metrics alongside pass/fail.</strong> Turns per task, tokens per task, tool error rate, compaction frequency per session, permission denial rate, and retry counts from <code>onErrorOccurred</code> / <code>onAgentStop</code>. Most "quality" regressions announce themselves as a metric moving before any test goes red.</li>
+  <li><strong>Put a budget in CI.</strong> Fail the eval run if tokens or AI credits exceed a ceiling for the fixed corpus. Without this, an eval suite is the one place cost grows silently.</li>
+</ol>
+
+<h4>Eval anti-patterns</h4>
+
+<table>
+  <tr><th>Anti-pattern</th><th>Why it fails</th></tr>
+  <tr><td>Judging with the same model that generated the output</td><td>Correlated blind spots read as high quality</td></tr>
+  <tr><td>An LLM judge with no rubric</td><td>Unfalsifiable scores that cannot be reproduced or argued with</td></tr>
+  <tr><td>Only testing the happy path</td><td>Your guardrails exist for the unhappy path — that is the part with incidents</td></tr>
+  <tr><td>Trusting the agent's summary of its own work</td><td>A self-report. Verify the artifact.</td></tr>
+  <tr><td>One golden transcript for everything</td><td>Prompts evolve; snapshots must be regenerated deliberately, not ignored when they differ</td></tr>
+  <tr><td>No cost ceiling on the eval suite</td><td>Evals quietly become your largest line item</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-9">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You want a cost summary <em>after</em> a session completes. Which call, and why not the obvious event?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>assistant.usage</code> — it aggregates automatically</button>
+    <button class="quiz-btn" data-opt="b"><code>session.usage.getMetrics</code> — <code>assistant.usage</code> is ephemeral and is not replayed on resume</button>
+    <button class="quiz-btn" data-opt="c"><code>account.getQuota</code> — it reports per-session totals</button>
+    <button class="quiz-btn" data-opt="d"><code>session.metadata.contextInfo</code> — it includes cost</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why is a session's <code>maxAiCredits</code> described as a <em>soft</em> cap?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Because users can raise it from the CLI at any time</button>
+    <button class="quiz-btn" data-opt="b">Because it only counts the main agent, not sub-agents</button>
+    <button class="quiz-btn" data-opt="c">Because usage is checked <em>after</em> model calls return, so one response can exceed the value before the next call is blocked</button>
+    <button class="quiz-btn" data-opt="d">Because it resets on every turn</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. Which eval layer should carry the most weight for an agent that edits code, and why is the cheapest layer so valuable?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Outcome/artifact — running the produced artifact proves the work; and guardrail evals are pure functions of the request, so they are deterministic <em>and</em> cover the highest-consequence logic</button>
+    <button class="quiz-btn" data-opt="b">LLM-judge — it captures what tests cannot; cheapest layer is cheapest</button>
+    <button class="quiz-btn" data-opt="c">Transcript review — a human reads every run; guardrails need no tests</button>
+    <button class="quiz-btn" data-opt="d">Turn count — it correlates with quality; cheapest layer is the schema check</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/observability/opentelemetry.md" target="_blank" rel="noopener">OpenTelemetry instrumentation (config, propagation, skill/process attributes)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/usage-and-billing.md" target="_blank" rel="noopener">Usage and billing metrics (full API decision guide)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/session-limits.md" target="_blank" rel="noopener">Session limits and budget events</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/nodejs/docs/workflows.md" target="_blank" rel="noopener">Dynamic workflows — limits, journaling, and observability APIs</a></li>
+  <li><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/" target="_blank" rel="noopener">OpenTelemetry GenAI semantic conventions</a></li>
+  <li><a href="https://docs.github.com/en/copilot/managing-copilot/understanding-and-managing-copilot-usage" target="_blank" rel="noopener">GitHub Copilot billing (source of truth for credit conversion)</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-9');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

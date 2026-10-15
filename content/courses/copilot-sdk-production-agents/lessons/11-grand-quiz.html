@@ -1,0 +1,266 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+  .score-panel { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-elevated); text-align: center; }
+  .score-panel .grade { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); }
+  .score-panel .progress { color: var(--color-text-secondary); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
+
+<h2>Lesson 11: Grand Quiz — Production Agents with the GitHub Copilot SDK</h2>
+
+<p>Twenty questions, two per lesson, spanning Foundations (1–2), State (3–4), Guardrails (5–6), Extension (7–8), and Operations (9–10). Answer all twenty to see your grade. If something catches you out, the lesson number is worth revisiting before you ship.</p>
+
+<div class="quiz-block" id="quiz-11">
+  <h3>🧠 Grand Quiz</h3>
+
+  <p class="quiz-q">1. What is the SDK's actual role in a Copilot SDK application?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It implements the agentic tool-use loop in your process</button>
+    <button class="quiz-btn" data-opt="b">It is a typed transport layer speaking JSON-RPC to the Copilot CLI, which owns the loop</button>
+    <button class="quiz-btn" data-opt="c">It calls the model provider directly and manages prompts</button>
+    <button class="quiz-btn" data-opt="d">It is a UI framework for agent front-ends</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Which single setting removes ambient OS tools, bundled skills, and implicit plugins, and why is it required for shared servers?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a"><code>streaming: true</code></button>
+    <button class="quiz-btn" data-opt="b"><code>infiniteSessions</code></button>
+    <button class="quiz-btn" data-opt="c"><code>mode: "empty"</code> — the app must explicitly decide what each session can reach</button>
+    <button class="quiz-btn" data-opt="d"><code>disabledSkills: []</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. A prompt produces three <code>assistant.turn_start</code>/<code>assistant.turn_end</code> pairs. What does that tell you?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Three LLM API calls were made — there are no hidden planning, evaluation, or completion-check calls</button>
+    <button class="quiz-btn" data-opt="b">Three tools were executed</button>
+    <button class="quiz-btn" data-opt="c">Three sub-agents were spawned</button>
+    <button class="quiz-btn" data-opt="d">The session compacted three times</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+
+  <p class="quiz-q">4. Which envelope field distinguishes sub-agent events from root-agent events, and what is its value on the root agent?</p>
+  <div class="quiz-opts" data-q="3" data-answer="d">
+    <button class="quiz-btn" data-opt="a"><code>ephemeral</code> — <code>true</code></button>
+    <button class="quiz-btn" data-opt="b"><code>parentId</code> — an empty string</button>
+    <button class="quiz-btn" data-opt="c"><code>type</code> — prefixed with <code>root.</code></button>
+    <button class="quiz-btn" data-opt="d"><code>agentId</code> — absent for the root agent and session-level events</button>
+  </div>
+  <div class="quiz-feedback" data-q="3"></div>
+
+  <p class="quiz-q">5. What is <em>not</em> persisted in session state, with a direct design consequence?</p>
+  <div class="quiz-opts" data-q="4" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Conversation history — so you must replay it yourself</button>
+    <button class="quiz-btn" data-opt="b">Provider API keys and in-memory tool state — so BYOK must re-provide <code>provider</code> on resume and tools must be stateless</button>
+    <button class="quiz-btn" data-opt="c"><code>plan.md</code> — so planning must live in your database</button>
+    <button class="quiz-btn" data-opt="d">Tool call results — so caching is impossible</button>
+  </div>
+  <div class="quiz-feedback" data-q="4"></div>
+
+  <p class="quiz-q">6. Why should a <code>clear_context</code> tool set <code>isTerminal: true</code>?</p>
+  <div class="quiz-opts" data-q="5" data-answer="c">
+    <button class="quiz-btn" data-opt="a">So its result is not persisted to the event log</button>
+    <button class="quiz-btn" data-opt="b">So it bypasses the permission handler</button>
+    <button class="quiz-btn" data-opt="c">So a successful clear ends the turn, preventing another model call against the freshly cleared window before the seeded turn</button>
+    <button class="quiz-btn" data-opt="d">So it can only be invoked once per session</button>
+  </div>
+  <div class="quiz-feedback" data-q="5"></div>
+
+  <p class="quiz-q">7. A tool handler returns <code>undefined</code> on its happy path. What does the runtime report?</p>
+  <div class="quiz-opts" data-q="6" data-answer="d">
+    <button class="quiz-btn" data-opt="a">A failure with an empty error message</button>
+    <button class="quiz-btn" data-opt="b">A retry of the tool call</button>
+    <button class="quiz-btn" data-opt="c"><code>resultType: "rejected"</code></button>
+    <button class="quiz-btn" data-opt="d">An empty <strong>success</strong> — which is how silent false-passes in agent pipelines happen</button>
+  </div>
+  <div class="quiz-feedback" data-q="6"></div>
+
+  <p class="quiz-q">8. A tool returns <code>resultType: "failure"</code>. Which hook observes it, and what does it receive?</p>
+  <div class="quiz-opts" data-q="7" data-answer="a">
+    <button class="quiz-btn" data-opt="a"><code>onPostToolUseFailure</code> — only <code>error</code> (a string), not the full result object</button>
+    <button class="quiz-btn" data-opt="b"><code>onPostToolUse</code> — the full <code>toolResult</code></button>
+    <button class="quiz-btn" data-opt="c"><code>onPreToolUse</code> — the arguments that caused it</button>
+    <button class="quiz-btn" data-opt="d"><code>onErrorOccurred</code> — with <code>errorContext: "tool_execution"</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="7"></div>
+
+  <p class="quiz-q">9. Which <code>onPreToolUse</code> return value hands the decision to the permission handler rather than resolving it?</p>
+  <div class="quiz-opts" data-q="8" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>"allow"</code></button>
+    <button class="quiz-btn" data-opt="b"><code>"ask"</code></button>
+    <button class="quiz-btn" data-opt="c"><code>"deny"</code></button>
+    <button class="quiz-btn" data-opt="d">Returning <code>null</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="8"></div>
+
+  <p class="quiz-q">10. Why is <code>onPostToolUse</code> the right place to redact secrets, and what should it return when nothing matched?</p>
+  <div class="quiz-opts" data-q="9" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It runs before the tool executes, preventing the leak — return <code>{}</code></button>
+    <button class="quiz-btn" data-opt="b">It runs asynchronously outside the loop, so the cost is free — return <code>undefined</code></button>
+    <button class="quiz-btn" data-opt="c">It fires before the value is persisted into history, which is replayed on every later model call — return <code>null</code> when unchanged</button>
+    <button class="quiz-btn" data-opt="d">It is the only hook that may rewrite a string — return the original string</button>
+  </div>
+  <div class="quiz-feedback" data-q="9"></div>
+
+  <p class="quiz-q">11. A session has <code>enableManagedSettings: true</code> and you pass <code>onPermissionRequest: approveAll</code>. What happens?</p>
+  <div class="quiz-opts" data-q="10" data-answer="b">
+    <button class="quiz-btn" data-opt="a">It is honoured with a logged warning</button>
+    <button class="quiz-btn" data-opt="b"><code>approveAll</code> throws — write a custom handler and check <code>managedApprovalRequired</code></button>
+    <button class="quiz-btn" data-opt="c">It silently becomes a custom handler</button>
+    <button class="quiz-btn" data-opt="d">It works, but only for <code>read</code> and <code>write</code> kinds</button>
+  </div>
+  <div class="quiz-feedback" data-q="10"></div>
+
+  <p class="quiz-q">12. Which permission decision is most dangerous in a multi-tenant system, and what scope does it grant?</p>
+  <div class="quiz-opts" data-q="11" data-answer="d">
+    <button class="quiz-btn" data-opt="a"><code>"approve-once"</code> — it applies to every future call</button>
+    <button class="quiz-btn" data-opt="b"><code>"user-not-available"</code> — it escalates to a human</button>
+    <button class="quiz-btn" data-opt="c"><code>"no-result"</code> — it auto-approves silently</button>
+    <button class="quiz-btn" data-opt="d"><code>"approve-permanently"</code> — it persists the approval across sessions (currently URL domains), so audit it hardest</button>
+  </div>
+  <div class="quiz-feedback" data-q="11"></div>
+
+  <p class="quiz-q">13. A custom agent has a <code>skills</code> list; a sub-agent omits the field. What does the sub-agent receive?</p>
+  <div class="quiz-opts" data-q="12" data-answer="a">
+    <button class="quiz-btn" data-opt="a">No skill content — skills are opt-in per agent and sub-agents do not inherit from the parent</button>
+    <button class="quiz-btn" data-opt="b">All parent skills automatically</button>
+    <button class="quiz-btn" data-opt="c">Skill names only, loaded lazily</button>
+    <button class="quiz-btn" data-opt="d">Whatever <code>skillDirectories</code> contains, in full</button>
+  </div>
+  <div class="quiz-feedback" data-q="12"></div>
+
+  <p class="quiz-q">14. Which MCP OAuth model keeps the runtime owning PKCE, state, persistence and refresh while your host merely receives the callback?</p>
+  <div class="quiz-opts" data-q="13" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Host-managed via <code>onMcpAuthRequest</code></button>
+    <button class="quiz-btn" data-opt="b">Runtime-managed with a hosted callback — <code>mcp.oauth.login</code> plus a trusted public HTTPS <code>redirectUri</code></button>
+    <button class="quiz-btn" data-opt="c">Runtime-managed loopback with no redirect URI</button>
+    <button class="quiz-btn" data-opt="d">Static <code>headers</code> on the server config</button>
+  </div>
+  <div class="quiz-feedback" data-q="13"></div>
+
+  <p class="quiz-q">15. You want the main agent unable to run a context-heavy tool so it must delegate. Which setting?</p>
+  <div class="quiz-opts" data-q="14" data-answer="c">
+    <button class="quiz-btn" data-opt="a">Session-level <code>excludedTools</code></button>
+    <button class="quiz-btn" data-opt="b"><code>infer: false</code> on the custom agent</button>
+    <button class="quiz-btn" data-opt="c"><code>defaultAgent.excludedTools</code> — hidden from the default agent, still available to sub-agents</button>
+    <button class="quiz-btn" data-opt="d"><code>disabledMcpServers</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="14"></div>
+
+  <p class="quiz-q">16. The agent has already committed to a destructive tool call. You send a steering message. What is the guarantee?</p>
+  <div class="quiz-opts" data-q="15" data-answer="d">
+    <button class="quiz-btn" data-opt="a">The call is cancelled before it executes</button>
+    <button class="quiz-btn" data-opt="b">The turn aborts and restarts with the new instruction</button>
+    <button class="quiz-btn" data-opt="c">The message is dropped because a call is in flight</button>
+    <button class="quiz-btn" data-opt="d">None — steering is best-effort and takes effect after that call completes, still within the turn</button>
+  </div>
+  <div class="quiz-feedback" data-q="15"></div>
+
+  <p class="quiz-q">17. You need a reliable completion signal for a headless job. Which event, and why not the other?</p>
+  <div class="quiz-opts" data-q="16" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>session.task_complete</code> — it is persisted so it always arrives</button>
+    <button class="quiz-btn" data-opt="b"><code>session.idle</code> — always emitted when the loop ends; <code>task_complete</code> is optional and gated on the model signalling it</button>
+    <button class="quiz-btn" data-opt="c"><code>assistant.turn_end</code> on the last turn — it is unambiguous</button>
+    <button class="quiz-btn" data-opt="d"><code>session.shutdown</code> — it fires as soon as the work is done</button>
+  </div>
+  <div class="quiz-feedback" data-q="16"></div>
+
+  <p class="quiz-q">18. Why is <code>maxAiCredits</code> a <em>soft</em> cap for both sessions and workflows?</p>
+  <div class="quiz-opts" data-q="17" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Usage is settled after model calls return, so completed or parallel turns can exceed the value before the run stops</button>
+    <button class="quiz-btn" data-opt="b">Because users can always raise it mid-run</button>
+    <button class="quiz-btn" data-opt="c">Because it only counts the main agent's calls</button>
+    <button class="quiz-btn" data-opt="d">Because it resets on every resume</button>
+  </div>
+  <div class="quiz-feedback" data-q="17"></div>
+
+  <p class="quiz-q">19. A multi-user app passes each user's OAuth token. Which extra flag is required, and what breaks without it?</p>
+  <div class="quiz-opts" data-q="18" data-answer="c">
+    <button class="quiz-btn" data-opt="a"><code>approveAll</code> — requests stall otherwise</button>
+    <button class="quiz-btn" data-opt="b"><code>mode: "copilot-cli"</code> — filesystem access is needed</button>
+    <button class="quiz-btn" data-opt="c"><code>useLoggedInUser: false</code> — without it a request can silently run as whoever the host is signed in as</button>
+    <button class="quiz-btn" data-opt="d"><code>streaming: true</code> — tokens are only forwarded on streaming sessions</button>
+  </div>
+  <div class="quiz-feedback" data-q="18"></div>
+
+  <p class="quiz-q">20. In a container, "resume" silently behaves like "create" after every restart. Most likely cause?</p>
+  <div class="quiz-opts" data-q="19" data-answer="d">
+    <button class="quiz-btn" data-opt="a">Session IDs are random and therefore unreadable</button>
+    <button class="quiz-btn" data-opt="b"><code>mode: "empty"</code> disables persistence</button>
+    <button class="quiz-btn" data-opt="c">The CLI must be bundled in the image to persist sessions</button>
+    <button class="quiz-btn" data-opt="d"><code>~/.copilot/session-state/</code> is on an ephemeral, non-writable filesystem — mount a volume or route storage through <code>sessionFs</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="19"></div>
+
+  <div class="score-panel" id="quiz-11-score" style="display:none">
+    <div class="progress" id="quiz-11-progress">Answered 0 of 20</div>
+    <div id="quiz-11-result"></div>
+  </div>
+</div>
+
+<h3>Where To Go Next</h3>
+<ul>
+  <li>Wire up <code>telemetry.otlpEndpoint</code> and <code>sessionLimits</code> on your first real deployment — both are one-line wins.</li>
+  <li>Write the guardrail evals from Lesson 9 layer 2 before your next prompt change.</li>
+  <li>Read the <a href="https://github.com/github/copilot-sdk/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a> — several surfaces you relied on here are explicitly experimental and will move.</li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-11');
+  if (!qb) return;
+  var TOTAL = 20;
+  var correct = 0;
+  var answered = {};
+  var answeredCount = 0;
+  var scorePanel = document.getElementById('quiz-11-score');
+  var progressEl = document.getElementById('quiz-11-progress');
+  var resultEl = document.getElementById('quiz-11-result');
+
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    if (answered[qn]) return;
+    answered[qn] = true;
+    answeredCount++;
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      correct++;
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+    progressEl.textContent = 'Answered ' + answeredCount + ' of ' + TOTAL;
+    if (answeredCount === TOTAL) {
+      var grade, msg;
+      if (correct >= 18) { grade = 'A'; msg = 'Outstanding. You could ship a production agent with this material and defend every choice.'; }
+      else if (correct >= 15) { grade = 'B'; msg = 'Strong grasp. Re-read the lessons for whichever questions tripped you before you deploy.'; }
+      else if (correct >= 11) { grade = 'C'; msg = 'Solid foundation. The guardrails and orchestration lessons are worth a second pass — they carry the most production risk.'; }
+      else { grade = 'D'; msg = 'Go back through the lessons. Start with Lessons 2, 5, and 8; everything else builds on them.'; }
+      resultEl.innerHTML = '<div class="grade">' + grade + '</div>' +
+        '<p style="margin:0.5rem 0 0">You scored <strong>' + correct + ' of ' + TOTAL + '</strong>. ' + msg + '</p>';
+      scorePanel.style.display = 'block';
+    }
+  });
+})();
+</script>

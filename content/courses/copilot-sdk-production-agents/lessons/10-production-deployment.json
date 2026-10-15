@@ -1,0 +1,4 @@
+{
+  "title": "Production Deployment — Auth, Scaling, and Multi-Tenancy",
+  "description": "Authentication priority and token types, rotating per-session tokens, BYOK and Azure managed identity, server-to-server auth, and the two deployment topologies with their isolation guarantees."
+}
