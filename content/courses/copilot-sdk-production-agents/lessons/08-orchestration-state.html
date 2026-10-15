@@ -1,0 +1,408 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 8: Orchestration and State Management</h2>
+
+<p>This is the lesson that decides whether your agent is a toy or a system. Multi-agent orchestration is genuinely easy to start and genuinely hard to keep coherent — because the hard part is never "spawn a worker". It is <em>state</em>: who owns which unit of work, what happens when one fails, and how the orchestrator knows what is ready.</p>
+
+<h3>Part 1 — Custom agents as delegation targets</h3>
+
+<p>A <span class="glossary-term">custom agent</span> is a named definition — prompt plus tool scope — that the runtime can delegate to inside a single session. When a user's request matches an agent's expertise, the runtime runs it as a <strong>sub-agent</strong> in an isolated context and streams lifecycle events back to the parent.</p>
+
+<pre><code>import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+await client.start();
+
+const session = await client.createSession({
+  model: "gpt-5.4",
+  customAgents: [
+    {
+      name: "researcher",
+      displayName: "Research Agent",
+      description: "Explores codebases and answers questions using read-only tools",
+      tools: ["grep", "glob", "view"],
+      prompt: "You are a research assistant. Analyze code and answer questions. Do not modify any files.",
+    },
+    {
+      name: "editor",
+      displayName: "Editor Agent",
+      description: "Makes targeted code changes",
+      tools: ["view", "edit", "bash"],
+      prompt: "You are a code editor. Make minimal, surgical changes to files as requested.",
+    },
+  ],
+  onPermissionRequest: async () =&gt; ({ kind: "approve-once" }),
+});</code></pre>
+
+<table>
+  <tr><th>Property</th><th>Required</th><th>Description</th></tr>
+  <tr><td><code>name</code></td><td>✅</td><td>Unique identifier</td></tr>
+  <tr><td><code>prompt</code></td><td>✅</td><td>The agent's system prompt</td></tr>
+  <tr><td><code>displayName</code></td><td>—</td><td>Human-readable name shown in events</td></tr>
+  <tr><td><code>description</code></td><td>—</td><td><strong>What the agent does — this is what the runtime matches intent against</strong></td></tr>
+  <tr><td><code>tools</code></td><td>—</td><td>Tool names the agent may use. <code>null</code> or omitted = <strong>all</strong> tools</td></tr>
+  <tr><td><code>mcpServers</code></td><td>—</td><td>MCP servers specific to this agent</td></tr>
+  <tr><td><code>infer</code></td><td>—</td><td>Whether the runtime may auto-select this agent (default <code>true</code>)</td></tr>
+  <tr><td><code>skills</code></td><td>—</td><td>Skill names to preload eagerly into the agent's context</td></tr>
+  <tr><td><code>model</code></td><td>—</td><td>Model to use while this agent runs</td></tr>
+  <tr><td><code>reasoningEffort</code></td><td>—</td><td>Reasoning effort while this agent runs</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong><code>tools: null</code> means "all tools", not "no tools".</strong> The default is full inheritance of the session's tool surface. Use explicit lists to enforce least privilege — a "researcher" that silently holds <code>edit</code> and <code>bash</code> is a researcher only by name, and the model will use them when the prompt is ambiguous.
+</div>
+
+<p>Two session-level knobs control which agent is live:</p>
+
+<pre><code>const session = await client.createSession({
+  customAgents: [ { name: "researcher", prompt: "..." }, { name: "editor", prompt: "..." } ],
+  agent: "researcher",          // pre-select — active from the very first prompt
+});
+// Equivalent to calling session.rpc.agent.select() after creation, minus the extra round-trip.</code></pre>
+
+<p>You can also pin a different model and reasoning effort per agent — useful for making a cheap explorer and an expensive editor. One precedence subtlety is worth knowing because it is a frequent "why did my effort setting not apply?" question: when <code>reasoningEffort</code> is omitted, the SDK sends no per-agent override. The runtime then resolves in order — a per-call client option, the resolved model's default, or the agent definition — and <strong>inherits the parent session's effort only when the sub-agent runs the same model as the parent</strong>. If the sub-agent resolves to a different model, it falls back to that model's default instead.</p>
+
+<h3>The orchestrator pattern: agent-exclusive tools</h3>
+
+<p>The most useful orchestration primitive here is <code>defaultAgent.excludedTools</code>. It hides tools from the <em>default agent</em> — the built-in agent that handles turns when no custom agent is selected — while leaving them available to sub-agents. The effect is that the main agent <em>cannot</em> do the heavy work itself; it must delegate.</p>
+
+<pre><code>import { CopilotClient, defineTool, approveAll } from "@github/copilot-sdk";
+import { z } from "zod";
+
+const heavyContextTool = defineTool("analyze-codebase", {
+    description: "Performs deep analysis of the codebase, generating extensive context",
+    parameters: z.object({ query: z.string() }),
+    handler: async ({ query }) =&gt; {
+        return { analysis: "..." };
+    },
+});
+
+const session = await client.createSession({
+    tools: [heavyContextTool],
+    defaultAgent: {
+        excludedTools: ["analyze-codebase"],
+    },
+    customAgents: [
+        {
+            name: "researcher",
+            description: "Deep codebase analysis agent with access to heavy-context tools",
+            tools: ["analyze-codebase"],
+            prompt: "You perform thorough codebase analysis using the analyze-codebase tool.",
+        },
+    ],
+});</code></pre>
+
+<table>
+  <tr><th>Filter</th><th>Scope</th><th>Effect</th></tr>
+  <tr><td><code>availableTools</code></td><td>Session-wide</td><td>Allowlist — only these tools exist for anyone</td></tr>
+  <tr><td><code>excludedTools</code></td><td>Session-wide</td><td>Blocklist — blocked for everyone</td></tr>
+  <tr><td><code>defaultAgent.excludedTools</code></td><td><strong>Main agent only</strong></td><td>Hidden from the main agent, available to sub-agents</td></tr>
+</table>
+
+<p>Precedence: session-level <code>availableTools</code>/<code>excludedTools</code> apply first, globally; <code>defaultAgent.excludedTools</code> is applied on top, restricting only the main agent. If a tool appears in both a session-level exclusion and <code>defaultAgent.excludedTools</code>, the <strong>session-level exclusion wins</strong> — the tool is unavailable to everyone. Mechanically: excluded tools are still <em>registered</em> (handlers are available), they are simply absent from the main agent's tool list.</p>
+
+<div class="callout-token">
+  <strong>Token angle — this is the highest-leverage orchestration trick in the SDK.</strong> The reason to hide a heavy tool from the main agent is not purity, it is context. A tool that returns thousands of tokens of analysis pollutes the orchestrator's window for the rest of the session, triggering compaction and degrading every subsequent decision. Forcing the heavy read into a sub-agent keeps the orchestrator's context small and cheap while the expensive tokens are burned once, in a context that gets discarded.
+</div>
+
+<h3>Part 2 — Watching the tree</h3>
+
+<pre><code>session.on((event) =&gt; {
+    if (event.type === "subagent.started") {
+        console.log(`Started ${event.data.agentDisplayName}`);
+    }
+    if (event.type === "subagent.completed") {
+        console.log(`Completed ${event.data.agentDisplayName}`);
+    }
+});</code></pre>
+
+<p>Plus <code>subagent.failed</code>, <code>subagent.selected</code>, and <code>subagent.deselected</code>. For rendering, remember that sub-agent assistant events carry an envelope-level <code>agentId</code> — so a tree UI keys off <code>agentId</code> and the message stream stays separable per agent. To filter tools or arguments <em>before</em> a sub-agent's calls run, use <code>onPreToolUse</code> / <code>onPostToolUse</code>, which fire correctly for sub-agent activity, and the <code>onSubagentStart</code> / <code>onSubagentStop</code> hooks for injecting context into a child's first prompt or replacing its response.</p>
+
+<h3>Part 3 — State: a taxonomy before any API</h3>
+
+<p>Almost every broken orchestration traces to state living in the wrong place. Decide this <em>before</em> writing code:</p>
+
+<table>
+  <tr><th>Kind of state</th><th>Where it belongs</th><th>Why not elsewhere</th></tr>
+  <tr><td><strong>Conversation history</strong></td><td>Runtime (session checkpoints)</td><td>You cannot out-engineer the runtime's compaction</td></tr>
+  <tr><td><strong>Coordination state</strong> — what work exists, who owns it, dependencies</td><td>Explicit store: SQL todos (the canonical pattern) or your own table</td><td>Implicit shared memory does not exist between sub-agents</td></tr>
+  <tr><td><strong>Durable business state</strong> — orders, tickets, users</td><td>Your database, behind a tool</td><td>Session state is not transactional and can be compacted away</td></tr>
+  <tr><td><strong>Session metadata</strong> — tenant, feature flags, stage</td><td><code>session.metadata</code> RPC</td><td>Survives resume; does not pollute the model's context</td></tr>
+  <tr><td><strong>Plan state</strong></td><td><code>plan.md</code> in the session workspace</td><td>Runtime-managed, visible in plan mode</td></tr>
+  <tr><td><strong>Artifacts</strong> — generated files</td><td>Session <code>files/</code> or your object store</td><td>Context is for reasoning, not storage</td></tr>
+  <tr><td><strong>Anything in a tool handler's memory</strong></td><td><strong>Nowhere.</strong> Externalise it.</td><td>In-memory tool state is <em>not persisted</em> and is lost on resume</td></tr>
+</table>
+
+<div class="callout">
+  <strong>The one-line rule:</strong> the session is a <em>reasoning</em> context, not a <em>system of record</em>. Everything that must survive a resume, a compaction, a crash, or a second worker goes in a store you control and is reached through a tool.
+</div>
+
+<h3>Part 4 — The blackboard: SQL todos as coordination state</h3>
+
+<p>The canonical coordination model in this SDK is a small SQL todo table. It is not ceremony — it is what makes "who does what next" answerable by a query instead of by a conversation.</p>
+
+<pre><code>CREATE TABLE todos (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'pending'
+);
+
+CREATE TABLE todo_deps (
+    todo_id TEXT,
+    depends_on TEXT,
+    PRIMARY KEY (todo_id, depends_on)
+);</code></pre>
+
+<pre><code>pending  ->  in_progress  ->  done
+                          \->  blocked</code></pre>
+
+<p>A worker's contract is five lines long, and the strictness is the point:</p>
+
+<ol>
+  <li>Claim <strong>exactly one</strong> ready todo by setting <code>status = 'in_progress'</code>.</li>
+  <li>Work only on that todo's scope.</li>
+  <li>Store its result in the conversation or the task output.</li>
+  <li>Set <code>status = 'done'</code> when complete.</li>
+  <li>Set <code>status = 'blocked'</code> with a reason when it cannot proceed.</li>
+</ol>
+
+<p>And the orchestrator finds ready work with one query — the piece that makes dependencies real rather than aspirational:</p>
+
+<pre><code>SELECT t.*
+FROM todos t
+WHERE t.status = 'pending'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM todo_deps td
+      JOIN todos dep ON td.depends_on = dep.id
+      WHERE td.todo_id = t.id
+        AND dep.status != 'done'
+  );</code></pre>
+
+<div class="callout-success callout">
+  <strong>Why a blackboard beats conversation for coordination.</strong> A sub-agent is <em>stateless across calls</em> — it does not remember the previous worker's reasoning. Passing coordination through conversation means every worker pays to re-read every other worker's narrative, and correctness depends on the model's summarisation of it. A todo table makes dependencies explicit, cheap to read, and <strong>queryable by your code as well as the model's</strong>. Three practical wins: idempotency (a claimed row is a lock), resumability (restart and the table still says where you were), and observability (a dashboard reads the same table).
+</div>
+
+<h3>Part 5 — Fleet mode</h3>
+
+<p>Fleet mode is the runtime's built-in pattern for dispatching multiple sub-agents in parallel via the <code>task</code> tool, using SQL todos as the shared coordination state. The wire method is <code>session.fleet.start</code>:</p>
+
+<pre><code>const result = await session.rpc.fleet.start({
+    prompt: "Refactor each SDK package independently, then summarize the changes.",
+});
+
+if (result.started) {
+    console.log("Fleet mode started");
+}</code></pre>
+
+<p>From a plan-mode UI you get there by returning the exit action — <code>autopilot_fleet</code> rather than <code>autopilot</code> — when the approved plan already contains independent work items.</p>
+
+<table>
+  <tr><th>Good fits</th><th>Avoid</th></tr>
+  <tr><td>Multi-file refactors where each worker owns a file, package, or language SDK</td><td>Sequential tasks where step 2 needs step 1's concrete output</td></tr>
+  <tr><td>Batch reviews where each worker checks a separate diff, module, or alert group</td><td>Tightly coupled edits where workers contend for the same files</td></tr>
+  <tr><td>Parallel research across independent repositories or feature areas</td><td>Small tasks one agent finishes quickly anyway</td></tr>
+  <tr><td>Documentation refreshes, one worker per page</td><td>Work needing continuous shared reasoning rather than clear ownership</td></tr>
+  <tr><td>Migrations where each worker validates its own slice</td><td>—</td></tr>
+</table>
+
+<h4>The rules that keep a fleet from thrashing</h4>
+
+<ul>
+  <li><strong>Decompose before starting.</strong> Fleet mode dispatches; it does not plan. If the split is unclear, you get contention, not parallelism.</li>
+  <li><strong>Minimise dependencies between todos.</strong> Every dependency is lost parallelism — and the ready-work query is doing real work only when the graph is mostly wide.</li>
+  <li><strong>Give every todo a durable ID, a clear title, and a complete description.</strong></li>
+  <li><strong>One owner per todo, one todo at a time per worker.</strong></li>
+  <li><strong>Background workers for genuinely parallel work; synchronous calls for validation gates.</strong> And do not dispatch a <em>single</em> background sub-agent — use a synchronous call, or batch several in parallel.</li>
+  <li><strong>Give each worker complete context.</strong> Sub-agents are stateless across calls. Include file paths, commands, expected outputs, and constraints in the prompt; do not assume it can infer them from the parent's history.</li>
+  <li><strong>Avoid overlapping file ownership</strong> unless the parent will reconcile conflicts explicitly.</li>
+  <li><strong>Require a structured report:</strong> what changed, how it was validated, what remains blocked.</li>
+  <li><strong>The parent verifies the combined result.</strong> Fleet mode does not remove the need for parent review — parallel workers can produce mutually inconsistent assumptions that the orchestrator must reconcile.</li>
+</ul>
+
+<div class="callout-warn callout">
+  <strong>Fleet mode's honest limitations.</strong> The binding is <em>experimental</em> in several SDKs — pin both SDK and CLI. Sub-agent lifecycle hook inputs identify the parent session but <strong>do not yet carry a shared tool-call ID</strong> for correlating with <code>subagent.*</code> events, so cross-referencing hook data to events is currently imperfect. Plugin-provided sub-agent types are configured at the <em>runtime</em> layer via <code>--plugin-dir</code>; there is no SDK-level registration helper. Java native typed bindings for <code>session.fleet.start</code> were not found on the audited branch. And whether the SQL todos pattern is a stable contract for SDK consumers is still an open question in the docs — treat the schema as a convention you own, not an API you depend on.
+</div>
+
+<h3>Part 6 — Steering and queueing: state transitions on a live agent</h3>
+
+<p>Two ways to send a message while the agent is already working, selected by the <code>mode</code> field on <code>MessageOptions</code>:</p>
+
+<table>
+  <tr><th>Mode</th><th>Behaviour</th><th>Use case</th></tr>
+  <tr><td><code>"immediate"</code> (steering)</td><td>Injected into the <strong>current</strong> LLM turn</td><td>"Actually, don't create that file — use a different approach"</td></tr>
+  <tr><td><code>"enqueue"</code> (queueing, default)</td><td>Queued, processed <strong>after</strong> the current turn finishes</td><td>"After this, also fix the tests"</td></tr>
+</table>
+
+<pre><code>const session = await client.createSession({
+    model: "gpt-5.4",
+    onPermissionRequest: async () =&gt; ({ kind: "approve-once" }),
+});
+
+// Start a long-running task
+await session.send({ prompt: "Refactor the authentication module to use sessions" });
+
+// Steer it mid-turn
+await session.send({ prompt: "Actually, use JWT tokens instead of sessions", mode: "immediate" });
+
+// Queue follow-ups — each starts its own full turn, FIFO
+await session.send({ prompt: "Add unit tests for the auth module", mode: "enqueue" });
+await session.send({ prompt: "Update the README with setup instructions", mode: "enqueue" });</code></pre>
+
+<h4>How they actually work — the part that determines your guarantees</h4>
+
+<table>
+  <tr><th></th><th>Steering (<code>"immediate"</code>)</th><th>Queueing (<code>"enqueue"</code>)</th></tr>
+  <tr>
+    <td>Mechanism</td>
+    <td>Added to the runtime's <code>ImmediatePromptProcessor</code> queue; injected into the conversation before the next LLM request within the current turn</td>
+    <td>Added to the session's <code>itemQueue</code> as a <code>QueuedItem</code>; <code>processQueuedItems()</code> runs when the session goes idle</td>
+  </tr>
+  <tr><td>Ordering</td><td>Best-effort within the turn</td><td>Strict FIFO, one full turn each</td></tr>
+  <tr><td>If the turn ends first</td><td>Automatically moved to the regular queue</td><td>—</td></tr>
+  <tr><td>If steering was pending at turn end</td><td>—</td><td>Moved to the <strong>front</strong> of the queue</td></tr>
+  <tr><td>Completion</td><td>—</td><td>Processing continues until the queue is empty, then the session emits idle</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>Steering is best-effort, not a rollback.</strong> If the agent has already committed to a tool call, steering takes effect <em>after that call completes</em> — still within the same turn, but the side effect has already happened. For anything irreversible, enqueue a corrective turn instead, or gate the dangerous call behind <code>onPreToolUse</code> so a steer can still change the decision.
+</div>
+
+<h4>Provenance: telling agent input from human authorisation</h4>
+
+<pre><code>await session.send({
+  prompt: "Here are the results you asked for.",
+  source: "agent-sender-id",       // serialises as agent-&lt;id&gt;
+  mode: "enqueue",
+});</code></pre>
+
+<p>The typed APIs also support <code>user</code> and <code>system</code>. Use <code>system</code> for internal application context — <em>not</em> as a substitute for an identified agent. Provenance lets the runtime distinguish agent input from human authorisation while keeping its agent-message steering behaviour.</p>
+
+<div class="callout-warn callout">
+  <strong>Derive the sender ID from trusted application metadata, never from message text.</strong> If the sender identity comes from the content of the message, anything that can write a message can impersonate a sender. Two more cautions: a successful <code>send</code> acknowledgement confirms <em>acceptance</em>, not consumption — do not auto-resend because no reply appeared, and remember <code>sendAndWait</code> can complete on an idle event with no assistant message at all. And remote backends do not necessarily preserve <code>source</code> end to end: Mission Control may include it in its local echo without carrying it in the remote HTTP request, so a local source event is <strong>not</strong> proof the remote worker received that provenance.
+</div>
+
+<h3>Part 7 — Handoffs and context lifecycle</h3>
+
+<p>When a workflow changes phase — research is done, now implement — you have two options. Resume the same session with a reconfigured model and tools (Lesson 3), or hard-reset the conversation with <code>clearContext</code>, seeding the fresh window with a prompt. The second is the sharper tool: it preserves session identity, configuration, and the event log while removing the model-facing conversation, which is exactly what you want when the previous phase's transcripts are now noise.</p>
+
+<pre><code>// In-session handoff tool: terminal on success, never deferred
+defineTool("clear_context", {
+  description: "Clear the conversation and start a fresh context window",
+  parameters: z.object({ prompt: z.string() }),
+  isTerminal: true,
+  defer: "never",
+  handler: async ({ prompt }) =&gt; {
+    const { messagesCleared } = await session.rpc.history.clearContext({ prompt });
+    return `Cleared ${messagesCleared} messages.`;
+  },
+});</code></pre>
+
+<h3>Part 8 — Anti-patterns, ranked by how much time they cost</h3>
+
+<table>
+  <tr><th>Anti-pattern</th><th>What happens</th><th>Fix</th></tr>
+  <tr><td>Coordination through conversation</td><td>Workers re-read each other's narratives; correctness rides on summarisation</td><td>SQL todos / an owned table</td></tr>
+  <tr><td>Module-level state in a tool handler</td><td>Works until the first resume or a second worker — in-memory state is <em>not</em> persisted</td><td>Externalise to a store; keep handlers stateless</td></tr>
+  <tr><td>Non-idempotent side effects</td><td>A retried turn duplicates work — once per resume, once per retry, once per nudge</td><td>Idempotency keys, upserts, "claim row then act"</td></tr>
+  <tr><td>Fanning out with no ownership map</td><td>Two workers edit the same file; reconciliation lands on the parent, late</td><td>One owner per unit; explicit dependency edges</td></tr>
+  <tr><td>Dispatching a single background sub-agent</td><td>Coordination overhead for zero parallelism</td><td>Synchronous call, or batch several</td></tr>
+  <tr><td>Sub-agents assumed to know the parent's context</td><td>They are stateless across calls and will guess</td><td>Full context in the worker prompt</td></tr>
+  <tr><td>Unbounded autonomy with no budget</td><td>An autopilot nudge loop or an agent-stop loop runs until someone notices</td><td><code>sessionLimits.maxAiCredits</code> + a bounded retry counter (Lesson 9)</td></tr>
+  <tr><td>Trusting the workers' summary</td><td>"Completed successfully" is a self-report, not evidence</td><td>Parent verifies the combined result; require a verifiable handle</td></tr>
+</table>
+
+<div class="quiz-block" id="quiz-8">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. You want the main agent to be unable to perform a heavy analysis itself, so it must delegate. Which setting?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a"><code>excludedTools</code> at session level</button>
+    <button class="quiz-btn" data-opt="b"><code>defaultAgent.excludedTools</code> — hides it from the main agent while leaving it available to sub-agents</button>
+    <button class="quiz-btn" data-opt="c"><code>infer: false</code> on the custom agent</button>
+    <button class="quiz-btn" data-opt="d"><code>disabledSkills</code></button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. Why is an explicit coordination store (the SQL-todo blackboard) better than letting sub-agents coordinate through conversation?</p>
+  <div class="quiz-opts" data-q="1" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Sub-agents are stateless across calls, so dependencies must be explicit — a queryable table is cheaper to read, supports idempotency and resumability, and your code can read it too</button>
+    <button class="quiz-btn" data-opt="b">Conversation history is not persisted by the runtime</button>
+    <button class="quiz-btn" data-opt="c">Sub-agents cannot read the parent's conversation at all, even when given context</button>
+    <button class="quiz-btn" data-opt="d">SQL avoids token costs entirely, unlike all other tool results</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. The agent has just committed to a destructive tool call. You send a steering message (<code>mode: "immediate"</code>). What happens?</p>
+  <div class="quiz-opts" data-q="2" data-answer="c">
+    <button class="quiz-btn" data-opt="a">The tool call is cancelled and replaced with the steered instruction</button>
+    <button class="quiz-btn" data-opt="b">The session aborts the turn and restarts it with the new instruction</button>
+    <button class="quiz-btn" data-opt="c">Steering is best-effort — it takes effect after that call completes, still within the turn, so the side effect already happened</button>
+    <button class="quiz-btn" data-opt="d">The steering message is silently dropped if a tool call is in flight</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/custom-agents.md" target="_blank" rel="noopener">Custom agents and sub-agent orchestration</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/fleet-mode.md" target="_blank" rel="noopener">Fleet mode (SQL todos, lifecycle, limitations)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/steering-and-queueing.md" target="_blank" rel="noopener">Steering and queueing</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/context-management.md" target="_blank" rel="noopener">Context clearing and handoffs</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-8');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

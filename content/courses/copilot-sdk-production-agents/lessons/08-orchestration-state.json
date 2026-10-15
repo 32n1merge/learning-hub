@@ -1,0 +1,4 @@
+{
+  "title": "Orchestration and State Management",
+  "description": "Custom agents as delegation targets, agent-exclusive tools, steering vs queueing, the SQL-todo blackboard pattern, fleet mode, and a taxonomy of where each kind of state belongs."
+}
