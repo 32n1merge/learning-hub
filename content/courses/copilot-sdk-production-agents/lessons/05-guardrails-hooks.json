@@ -1,0 +1,4 @@
+{
+  "title": "Guardrails I — Hooks",
+  "description": "All ten session hooks, their exact inputs and outputs, how hooks compose, and the guardrail patterns that hold up: allowlists, path jail, secret redaction, audit logs, and retry policy."
+}

@@ -1,0 +1,337 @@
+<style>
+  .lesson-content h2 { color: var(--color-accent); margin: 2rem 0 0.75rem; font-size: 1.5rem; }
+  .lesson-content h3 { color: var(--color-text); margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+  .lesson-content p { margin: 0.75rem 0; line-height: 1.7; }
+  .payoff-diagram { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1.5rem 0; text-align: center; }
+  .payoff-diagram svg { max-width: 100%; height: auto; }
+  .callout { border-left: 3px solid var(--color-accent); padding: 0.75rem 1rem; margin: 1.25rem 0; background: var(--color-elevated); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .callout-warn { border-left-color: var(--color-danger); }
+  .callout-success { border-left-color: var(--color-success); }
+  .callout-token { border-left-color: var(--color-warning); }
+  .callout strong { color: var(--color-accent); }
+  .callout-warn strong { color: var(--color-danger); }
+  .callout-success strong { color: var(--color-success); }
+  .callout-token strong { color: var(--color-warning); }
+  .glossary-term { font-weight: 600; color: var(--color-accent); }
+  code { background: var(--color-elevated); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+  pre { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; line-height: 1.6; font-size: 0.88rem; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; }
+  th, td { padding: 0.6rem 0.9rem; border: 1px solid var(--color-border); text-align: left; }
+  th { background: var(--color-elevated); font-weight: 600; }
+  .quiz-block { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .quiz-block h3 { margin-top: 0; }
+  .quiz-q { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .quiz-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-elevated); color: var(--color-text); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; transition: all var(--transition-fast); }
+  .quiz-btn:hover { border-color: var(--color-accent); background: var(--color-surface); }
+  .quiz-btn.correct { background: var(--color-success); border-color: var(--color-success); color: #000; }
+  .quiz-btn.wrong { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .quiz-feedback { min-height: 1.5rem; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+
+<h2>Lesson 6: Guardrails II — Permissions, Modes, and Sandboxing</h2>
+
+<p>Hooks let you express <em>policy</em>. Permissions are how that policy becomes an enforceable <em>decision</em>. They are two layers of the same mechanism, and knowing which layer to use is most of the skill.</p>
+
+<h3>Two layers, one gate</h3>
+
+<div class="payoff-diagram">
+  <svg viewBox="0 0 620 190" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arw4" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="var(--color-text-secondary)"/>
+      </marker>
+    </defs>
+    <rect x="10" y="66" width="150" height="58" rx="9" fill="var(--color-elevated)" stroke="var(--color-warning)"/>
+    <text x="85" y="90" text-anchor="middle" fill="var(--color-warning)" font-size="11" font-weight="700">onPreToolUse</text>
+    <text x="85" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">policy · conditional logic</text>
+
+    <rect x="236" y="66" width="150" height="58" rx="9" fill="var(--color-elevated)" stroke="var(--color-accent)"/>
+    <text x="311" y="90" text-anchor="middle" fill="var(--color-accent)" font-size="11" font-weight="700">onPermissionRequest</text>
+    <text x="311" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">decision · approvals</text>
+
+    <rect x="462" y="66" width="150" height="58" rx="9" fill="var(--color-surface)" stroke="var(--color-border)"/>
+    <text x="537" y="90" text-anchor="middle" fill="var(--color-text)" font-size="11" font-weight="700">execute or not</text>
+    <text x="537" y="108" text-anchor="middle" fill="var(--color-text-secondary)" font-size="9">enforced by the CLI</text>
+
+    <line x1="160" y1="95" x2="232" y2="95" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw4)"/>
+    <line x1="386" y1="95" x2="458" y2="95" stroke="var(--color-text-secondary)" stroke-width="1.5" marker-end="url(#arw4)"/>
+    <text x="196" y="86" text-anchor="middle" fill="var(--color-text-secondary)" font-size="8">"ask"</text>
+    <text x="196" y="118" text-anchor="middle" fill="var(--color-text-secondary)" font-size="8">allow/deny short-circuit</text>
+
+    <text x="310" y="40" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">"allow" and "deny" end the decision here — the permission handler is never called</text>
+    <text x="310" y="162" text-anchor="middle" fill="var(--color-text-secondary)" font-size="10">"ask" is the only bridge between the two layers</text>
+  </svg>
+</div>
+
+<p>When you supply <code>onPermissionRequest</code>, it is called <strong>before the agent executes each tool</strong> — file writes, shell commands, MCP calls, custom tools alike — and returns a decision. Two properties govern the whole system:</p>
+
+<ul>
+  <li>If <code>onPreToolUse</code> returns <code>"allow"</code> or <code>"deny"</code>, the permission handler is not consulted for that call.</li>
+  <li>If no <code>onPermissionRequest</code> handler is registered at all, permission requests are emitted as <code>permission.requested</code> <strong>events and left pending</strong> for a consumer to resolve with the pending-permission RPC.</li>
+</ul>
+
+<h3>The request tells you what is being asked</h3>
+
+<pre><code>import type { PermissionRequest, PermissionRequestResult } from "@github/copilot-sdk";
+
+const session = await client.createSession({
+  model: "gpt-5",
+  onPermissionRequest: (request: PermissionRequest, invocation): PermissionRequestResult =&gt; {
+    if ("managedApprovalRequired" in request && request.managedApprovalRequired === true) {
+      // Leave it pending for the host's human-facing confirmation flow.
+      return { kind: "no-result" };
+    }
+
+    // request.kind — what type of operation is being requested:
+    //   "shell"       — executing a shell command
+    //   "write"       — writing or editing a file
+    //   "read"        — reading a file
+    //   "mcp"         — calling an MCP tool
+    //   "custom-tool" — calling one of your registered tools
+    //   "url"         — fetching a URL
+    //   "memory"      — storing or retrieving persistent session memory
+    //   "hook"        — invoking a server-side hook or integration
+    //   (additional kinds may be added; include a default case in handlers)
+
+    if (request.kind === "shell") {
+      return { kind: "reject", feedback: "Shell commands are not allowed." };
+    }
+
+    return { kind: "approve-once" };
+  },
+});</code></pre>
+
+<table>
+  <tr><th>Field</th><th>Available for</th><th>Use</th></tr>
+  <tr><td><code>kind</code></td><td>Always</td><td>The coarse category of operation</td></tr>
+  <tr><td><code>toolCallId</code></td><td>Tool-driven requests</td><td>Join to <code>tool.execution_*</code> events and your own logs</td></tr>
+  <tr><td><code>toolName</code></td><td><code>custom-tool</code>, <code>mcp</code></td><td>Name-based policy</td></tr>
+  <tr><td><code>fileName</code></td><td><code>write</code></td><td>Path-based policy</td></tr>
+  <tr><td><code>fullCommandText</code></td><td><code>shell</code></td><td>Command inspection — <strong>the single most important field to validate</strong></td></tr>
+  <tr><td><code>managedApprovalRequired</code></td><td>Managed sessions</td><td>Check <em>before</em> any automatic approval</td></tr>
+</table>
+
+<div class="callout-warn callout">
+  <strong>Always include a <code>default</code> case.</strong> The runtime reserves the right to add kinds — <code>url</code>, <code>memory</code>, and <code>hook</code> are all examples of categories that exist beyond the obvious file/shell pair. A handler with an exhaustive switch over today's kinds silently mis-approves tomorrow's.
+</div>
+
+<h3>The decision ladder</h3>
+
+<p>Approval scopes are <strong>present-tense</strong>: they describe the decision to apply, not the outcome reported back on session events. Choose the narrowest that keeps your product usable.</p>
+
+<table>
+  <tr><th>Decision</th><th>Meaning</th><th>Extra fields</th><th>Risk</th></tr>
+  <tr><td><code>"approve-once"</code></td><td>Allow this single request</td><td>—</td><td>✅ Lowest</td></tr>
+  <tr><td><code>"approve-for-session"</code></td><td>Allow, and remember for the rest of the session</td><td><code>approval?</code> (rule to remember), <code>domain?</code> (URL approvals)</td><td>Medium — a resumed session may keep it</td></tr>
+  <tr><td><code>"approve-for-location"</code></td><td>Allow and persist for this project location (git root or cwd)</td><td><code>approval</code>, <code>locationKey</code></td><td>High — survives restarts</td></tr>
+  <tr><td><code>"approve-permanently"</code></td><td>Allow and persist across sessions (currently URL domains)</td><td><code>domain</code></td><td>⚠️ Highest — audit these</td></tr>
+  <tr><td><code>"reject"</code></td><td>Deny the request</td><td><code>feedback?</code> — surfaced to the agent</td><td>Safe; feedback helps recovery</td></tr>
+  <tr><td><code>"user-not-available"</code></td><td>Deny because no human is present to confirm</td><td>—</td><td>Safe — the right answer for headless runs</td></tr>
+  <tr><td><code>"no-result"</code></td><td>Suppress <em>this client's</em> answer so another connected client can answer</td><td>—</td><td>Only for multi-client hosts</td></tr>
+</table>
+
+<div class="callout-success callout">
+  <strong><code>reject</code> beats silence.</strong> A rejection with <code>feedback</code> goes back to the model as information: "Shell commands are not allowed" lets the agent choose a different approach and finish the task. A bare denial teaches it nothing, so it retries the same thing — you get the same refusal, more turns, and a confused user. Always explain the refusal.
+</div>
+
+<h3>Approve-all, and the one place it breaks</h3>
+
+<pre><code>import { CopilotClient, approveAll } from "@github/copilot-sdk";
+
+const session = await client.createSession({
+  model: "gpt-5",
+  onPermissionRequest: approveAll,
+});</code></pre>
+
+<p>Fine for local development and for sessions where your hooks already gate everything. The trap: <strong>when <code>enableManagedSettings</code> is true for the session, <code>approveAll</code> throws.</strong> Managed sessions exist precisely so an organisation's policy cannot be bypassed by application code. For those, write a custom handler — and note that request-level <code>managedApprovalRequired</code> remains available as the signal for a human-facing confirmation step.</p>
+
+<div class="callout-warn callout">
+  <strong>Do not reach for <code>approveAll</code> in a server deployment just because it makes things work.</strong> It converts every guardrail into a suggestion. If your design is "hooks decide, permissions rubber-stamp", write <code>onPermissionRequest: async () =&gt; ({ kind: "approve-once" })</code> — same effect, but the intent is legible in review, and it will not silently start auto-approving a category you forgot to handle in the hook.
+</div>
+
+<h3>Session modes: <code>copilot-cli</code> vs <code>empty</code></h3>
+
+<p>The client's <code>mode</code> decides how much ambient capability exists <em>before</em> your configuration is applied. This is the most consequential single setting in multi-user deployments.</p>
+
+<table>
+  <tr><th></th><th><code>mode: "copilot-cli"</code> (default)</th><th><code>mode: "empty"</code></th></tr>
+  <tr><td>Tools</td><td>Ambient CLI tools — filesystem, search, shell</td><td><strong>Explicit only.</strong> Nothing is exposed unless your app registers or allows it</td></tr>
+  <tr><td>Built-in skills</td><td>Ambient</td><td>All runtime-bundled skills excluded — the SDK sends an empty <code>includedBuiltinSkills</code> list</td></tr>
+  <tr><td>Plugins</td><td>Ambient</td><td>Empty <code>installedPlugins</code> list — none loaded implicitly</td></tr>
+  <tr><td>Host filesystem</td><td>Reachable through ambient tools</td><td>Not exposed unless you disclose it</td></tr>
+  <tr><td>Intended for</td><td>CLI-like coding agents on a workstation</td><td>Multi-user servers, shared runtimes, tenants</td></tr>
+</table>
+
+<pre><code>import { CopilotClient, RuntimeConnection } from "@github/copilot-sdk";
+
+const client = new CopilotClient({
+  mode: "empty",
+  connection: RuntimeConnection.forUri(process.env.COPILOT_RUNTIME_URL!),
+});
+
+const session = await client.createSession({
+  sessionId: `user-${user.id}-${crypto.randomUUID()}`,
+  model: "gpt-5.4",
+  availableTools: ["custom:lookupOrder", "custom:createTicket"],
+  gitHubToken: user.githubToken,
+  onPermissionRequest: permissionHandler,
+});</code></pre>
+
+<p>You can still opt back <em>in</em> selectively: <code>includedBuiltinSkills</code> allows particular bundled skills the same way <code>availableTools</code> allows particular bundled tools, and your own custom skills remain usable regardless.</p>
+
+<div class="callout-token">
+  <strong>Token angle:</strong> <code>mode: "empty"</code> is the rare change that improves security and cost simultaneously. Ambient tool definitions and bundled skill descriptions are prompt content on every turn. In <code>copilot-cli</code> mode a session pays for a capability surface it may never use; in <code>empty</code> mode it pays only for what you named.
+</div>
+
+<h3>Agent modes: interactive, plan, autopilot, shell</h3>
+
+<p>Separately from the client's <code>mode</code>, an <em>agent</em> mode governs how much autonomy the loop assumes. You will see it as the <code>agentMode</code> field in session events, with four values:</p>
+
+<table>
+  <tr><th>Agent mode</th><th>Behaviour</th><th>You should…</th></tr>
+  <tr><td><code>"interactive"</code></td><td>Normal chat. No nudge for <code>task_complete</code>.</td><td>Keep a human in the loop; expect no completion signal</td></tr>
+  <tr><td><code>"plan"</code></td><td>The agent plans and asks to exit plan mode before acting</td><td>Handle <code>exit_plan_mode.requested</code> and choose an exit action</td></tr>
+  <tr><td><code>"autopilot"</code></td><td>Autonomous. The CLI nudges for <code>task_complete</code> when the loop ends without it.</td><td>Budget for extra turns; rely on <code>session.idle</code></td></tr>
+  <tr><td><code>"shell"</code></td><td>Shell-oriented agent mode</td><td>Gate <code>shell</code> permission requests hard</td></tr>
+</table>
+
+<p>Plan mode is worth understanding because it is where human approval composes with autonomy. When the model proposes exiting plan mode, you receive <code>exit_plan_mode.requested</code> (carrying <code>requestId</code>, <code>summary</code>, <code>planContent</code>, and the available <code>actions</code>) and you reply with an exit action:</p>
+
+<pre><code>type ExitPlanModeAction =
+  | "exit_only"
+  | "interactive"
+  | "autopilot"
+  /** Exit plan mode and continue with parallel autonomous workers. */
+  | "autopilot_fleet";</code></pre>
+
+<p>Use <code>autopilot_fleet</code> when the approved plan already contains independent work items — it hands off directly to parallel workers (Lesson 8). Use <code>autopilot</code> for a single autonomous worker, and <code>interactive</code> when the human should stay in the loop.</p>
+
+<h3>Managed network policy for client-owned browsers</h3>
+
+<p>If your agent can drive a browser, URL navigation becomes a permission surface. The SDK exposes a pure, sessionless evaluation API for organisation policy so you can check a destination <em>before</em> opening it:</p>
+
+<pre><code>// A reusable policy context — from account/device policy, or the session's retained policy
+const permissionsContext =
+  (await client.rpc.managedSettings.resolve({ selectionId })).permissionsContext;
+// or, for the session's retained policy:
+// const { permissionsContext } = await session.rpc.managedSettings.get();
+
+const { results, failClosed } = await client.rpc.managedSettings.permissions.evaluate({
+  context: permissionsContext,
+  operations: [{ kind: "url", url: "https://docs.example.com/guide" }],
+});</code></pre>
+
+<table>
+  <tr><th>Verdict</th><th>Meaning</th></tr>
+  <tr><td><code>deny</code></td><td>Blocks navigation</td></tr>
+  <tr><td><code>ask</code></td><td>Requires approval</td></tr>
+  <tr><td><code>allow</code></td><td>Approved under managed policy</td></tr>
+  <tr><td><code>unmanaged</code></td><td>No managed rule — your normal permission flow still applies</td></tr>
+</table>
+
+<p>Operational details that matter more than they look: the call performs <strong>no policy discovery, I/O, prompting, or sandbox changes</strong> — so reuse an in-memory context for repeated checks and refresh it when managed policy changes. Results come back one per operation, in input order. An invalid URL rejects the batch. Unknown policy either rejects or returns <code>failClosed: true</code> with everything denied.</p>
+
+<div class="callout-warn callout">
+  <strong>Check every navigation, redirect, and new-window destination — and treat errors as denials.</strong> Do not navigate on an error, and treat an absent <code>permissionsContext</code> from an older runtime as <em>unsupported evaluation</em>, not as "unmanaged, so go ahead". Also keep the distinction straight: these APIs evaluate permission rules, they do not replace browser security, user permissions, or sandbox policy. In particular <code>permissions.limitTo</code> neither enables the sandbox nor changes <code>sandbox.userPolicy.network</code> — configure network restrictions explicitly.
+</div>
+
+<h3>Defence in depth: what each layer actually stops</h3>
+
+<table>
+  <tr><th>Layer</th><th>Mechanism</th><th>Stops</th></tr>
+  <tr><td>1. Capability</td><td><code>mode: "empty"</code> + <code>availableTools</code> allowlist</td><td>The tool never exists, so it can never be called</td></tr>
+  <tr><td>2. Scope</td><td><code>tools</code> per custom agent, <code>defaultAgent.excludedTools</code></td><td>Wrong agent gets the wrong capability</td></tr>
+  <tr><td>3. Path containment</td><td><code>workingDirectory</code>, workspace-relative APIs, path-jail hook</td><td>Reads/writes outside the intended root</td></tr>
+  <tr><td>4. Policy</td><td><code>onPreToolUse</code> — allow/deny/ask, <code>modifiedArgs</code></td><td>Dangerous arguments, conditional violations</td></tr>
+  <tr><td>5. Approval</td><td><code>onPermissionRequest</code> decision ladder</td><td>Unreviewed actions; gives humans a seam</td></tr>
+  <tr><td>6. Egress</td><td><code>onPostToolUse</code> redaction</td><td>Secrets and PII reaching history and the model</td></tr>
+  <tr><td>7. Network</td><td>Managed network policy evaluation</td><td>Navigating to a disallowed destination</td></tr>
+  <tr><td>8. Budget</td><td><code>sessionLimits.maxAiCredits</code></td><td>Runaway spend (Lesson 9)</td></tr>
+</table>
+
+<div class="callout-success callout">
+  <strong>Layer 1 is the only layer that is not code you can get wrong.</strong> A tool excluded from the session is unavailable even if every hook has a bug. This is why <code>mode: "empty"</code> plus <code>availableTools</code> is the backbone of the multi-tenant story, and why the docs say plainly: do not use <code>mode: "copilot-cli"</code> for multi-user server mode.
+</div>
+
+<h3>Where approvals live on disk (and why it matters for tenants)</h3>
+
+<p>Runtime-owned durable permission choices use the session filesystem when you configure one, under the provider's <code>sessionStatePath</code>:</p>
+
+<table>
+  <tr><th>File</th><th>Contains</th></tr>
+  <tr><td><code>permissions.json</code></td><td>Top-level <code>locations</code> map with <code>tool_approvals</code> and <code>allowed_directories</code></td></tr>
+  <tr><td><code>settings.json</code></td><td>Top-level <code>allowedUrls</code> and <code>sandbox</code></td></tr>
+  <tr><td><code>config.json</code></td><td>Top-level <code>trustedFolders</code></td></tr>
+</table>
+
+<p>Session-filesystem approval operations deliberately do <strong>not</strong> import or fall back to the host's <code>permissions-config.json</code>, URL or sandbox settings, or folder trust — and they do not write back to those host files, even when the provider errors. A provider error is not permission to use host consent. URL deny rules stay authoritative, and folder trust uses provider paths without host Git discovery.</p>
+
+<div class="callout-warn callout">
+  <strong>The isolation boundary is yours to enforce.</strong> The runtime does not add session-ID partitions to these files, and sessions sharing a provider namespace <em>share</em> remembered grants. Use distinct namespaces per tenant, authorise access to each, and reconnect resumed sessions to their original namespace. Protect transcripts — including durable permission events — with the same tenant isolation you apply to approval metadata.
+</div>
+
+<div class="quiz-block" id="quiz-6">
+  <h3>🧠 Knowledge Check</h3>
+
+  <p class="quiz-q">1. Your <code>onPreToolUse</code> returns <code>"allow"</code>. Does <code>onPermissionRequest</code> still run for that call?</p>
+  <div class="quiz-opts" data-q="0" data-answer="b">
+    <button class="quiz-btn" data-opt="a">Yes — permission is always evaluated, hooks only observe</button>
+    <button class="quiz-btn" data-opt="b">No — <code>"allow"</code> and <code>"deny"</code> short-circuit the permission handler; only <code>"ask"</code> defers to it</button>
+    <button class="quiz-btn" data-opt="c">Only if the tool is a custom tool, not a built-in</button>
+    <button class="quiz-btn" data-opt="d">Only when streaming is disabled</button>
+  </div>
+  <div class="quiz-feedback" data-q="0"></div>
+
+  <p class="quiz-q">2. A session sets <code>enableManagedSettings: true</code>. What happens if you pass <code>onPermissionRequest: approveAll</code>?</p>
+  <div class="quiz-opts" data-q="1" data-answer="c">
+    <button class="quiz-btn" data-opt="a">It is honoured, but a warning is logged</button>
+    <button class="quiz-btn" data-opt="b">It silently downgrades to a custom handler</button>
+    <button class="quiz-btn" data-opt="c"><code>approveAll</code> throws — write a custom handler and check <code>managedApprovalRequired</code></button>
+    <button class="quiz-btn" data-opt="d">It works only for <code>read</code> and <code>write</code> request kinds</button>
+  </div>
+  <div class="quiz-feedback" data-q="1"></div>
+
+  <p class="quiz-q">3. In <code>mode: "empty"</code>, what must your application do that it did not have to do in <code>copilot-cli</code> mode?</p>
+  <div class="quiz-opts" data-q="2" data-answer="a">
+    <button class="quiz-btn" data-opt="a">Explicitly opt in to every tool, MCP server, workspace path, and bundled skill it wants available</button>
+    <button class="quiz-btn" data-opt="b">Provide its own model credentials via BYOK</button>
+    <button class="quiz-btn" data-opt="c">Implement the tool-use loop itself</button>
+    <button class="quiz-btn" data-opt="d">Persist sessions manually to disk</button>
+  </div>
+  <div class="quiz-feedback" data-q="2"></div>
+</div>
+
+<h3>Further Reading</h3>
+<ul>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/setup/multi-tenancy.md" target="_blank" rel="noopener">Multi-tenancy and server deployments</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/nodejs/README.md#permission-handling" target="_blank" rel="noopener">Permission handling (result kinds reference)</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/hooks.md" target="_blank" rel="noopener">Working with hooks — permission control use case</a></li>
+  <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/features/fleet-mode.md" target="_blank" rel="noopener">Fleet mode — plan-mode exit actions</a></li>
+</ul>
+
+<script>
+(function() {
+  var qb = document.getElementById('quiz-6');
+  if (!qb) return;
+  qb.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-btn');
+    if (!btn || btn.disabled) return;
+    var opts = btn.parentElement;
+    var qn = opts.getAttribute('data-q');
+    var ans = opts.getAttribute('data-answer');
+    var fb = qb.querySelector('.quiz-feedback[data-q="' + qn + '"]');
+    opts.querySelectorAll('.quiz-btn').forEach(function(b) { b.disabled = true; });
+    if (btn.getAttribute('data-opt') === ans) {
+      btn.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-success)">✅ Correct!</span>';
+    } else {
+      btn.classList.add('wrong');
+      var c = opts.querySelector('.quiz-btn[data-opt="' + ans + '"]');
+      if (c) c.classList.add('correct');
+      fb.innerHTML = '<span style="color:var(--color-danger)">❌ The correct answer is highlighted.</span>';
+    }
+  });
+})();
+</script>

@@ -1,0 +1,4 @@
+{
+  "title": "Guardrails II — Permissions, Modes, and Sandboxing",
+  "description": "The permission decision ladder, request kinds, session and agent modes, mode: \"empty\" as the multi-tenant baseline, managed network policy, and defence in depth."
+}
